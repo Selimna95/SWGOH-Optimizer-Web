@@ -7,20 +7,20 @@
   <meta name="description" content="SWGOH Optimizer Web V19 — roster, mods et optimisation dans le navigateur">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
-  <title>SWGOH Optimizer Web V21</title>
+  <title>SWGOH Optimizer Web V22</title>
 </head>
 <body>
 <div class="scanlines"></div>
 <header class="topbar">
-  <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V21</span></div>
+  <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V22</span></div>
   <div id="runtime" class="status">INITIALISATION PYTHON…</div>
 </header>
 <main class="layout">
   <aside class="sidebar">
     <button class="nav active" data-page="dashboard">DASHBOARD</button>
-    <button class="nav" data-page="optimizer">OPTIMIZER</button>
-    <button class="nav" data-page="mods-analysis">ANALYSE MODS</button>
     <button class="nav" data-page="data">DONNÉES</button>
+    <button class="nav" data-page="mods-analysis">ANALYSE MODS</button>
+    <button class="nav" data-page="optimizer">OPTIMIZER</button>
     <button class="nav" data-page="help">AIDE</button>
     <div class="side-note">100% navigateur<br>aucun PC serveur</div>
   </aside>
@@ -30,12 +30,12 @@
         <div>
           <div class="eyebrow">LOCAL WEB APPLICATION</div>
           <h1>SWGOH Optimizer</h1>
-          <p>V21 reprend l’analyse des mods du projet Windows V176 : récapitulatif Speed, sélection personnage/faction, détail des 6 mods équipés et inventaire complet.</p>
+          <p>V22 reprend l’analyse des mods du projet Windows V176 : récapitulatif Speed, sélection personnage/faction, détail des 6 mods équipés et inventaire complet.</p>
         </div>
         <div class="online-loader">
           <label>ALLY CODE<input id="allyCode" inputmode="numeric" maxlength="11" placeholder="123-456-789"></label>
           <button id="loadPlayer" class="primary">CHARGER MON PROFIL</button>
-          <label class="secondary-upload" id="jsonImportControl">OU IMPORTER JSON<input id="fileInput" type="file" accept=".json,application/json"></label>
+          <label class="secondary-upload" id="jsonImportControl" hidden>OU IMPORTER JSON<input id="fileInput" type="file" accept=".json,application/json"></label>
         </div>
       </div>
       <div class="cards">
@@ -159,6 +159,10 @@
           <button class="data-tab active" data-dataset="characters">PERSONNAGES <span id="tabCharsCount">0</span></button>
           <button class="data-tab" data-dataset="ships">VAISSEAUX <span id="tabShipsCount">0</span></button>
           <button class="data-tab" data-dataset="mods">MODS <span id="tabModsCount">0</span></button>
+        </div>
+        <div class="data-character-filters" id="dataCharacterFilters">
+          <label>FACTION<select id="dataFactionFilter"><option value="">Toutes les factions</option></select></label>
+          <label>CÔTÉ<select id="dataSideFilter"><option value="ALL">TOUS</option><option value="LIGHT">CÔTÉ LUMINEUX</option><option value="DARK">CÔTÉ OBSCUR</option><option value="MIXED">NEUTRE</option></select></label>
         </div>
         <div class="mod-filters" id="modFilters" hidden>
           <label>SET<select id="modSetFilter"><option value="">Tous les sets</option></select></label>

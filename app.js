@@ -330,16 +330,40 @@ function getFilteredMods(){
 }
 function displayModStat(name,value){const n=String(name||'');return `${n} ${num(value,1)}${n.endsWith(' %')?'%':''}`;}
 function modSecondaries(m){const arr=[];for(let i=1;i<=4;i++){const s=m[`secondary_${i}_stat`],v=m[`secondary_${i}_value`];if(s)arr.push(displayModStat(s,v));}return arr.join(' · ');}
+function renderDataCharacterFilters(){
+  const fs=$('dataFactionFilter'), side=$('dataSideFilter'), box=$('dataCharacterFilters');
+  if(!fs||!side||!box)return;
+  box.hidden=currentDataset!=='characters';
+  const current=fs.value||'';
+  const factions=allFactions();
+  fs.innerHTML='<option value="">Toutes les factions</option>'+factions.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
+  if(factions.includes(current)) fs.value=current;
+}
+function openCharacterModsAnalysis(key){
+  analysisSelectedCharacter=key;
+  const c=rosterCharacters.find(x=>characterKey(x)===key);
+  if(c){ analysisFaction='Toutes les factions'; analysisMode='character'; }
+  showPage('mods-analysis');
+  setAnalysisTab('report');
+}
 function renderDataTable(){
   const q=String($('dataSearch').value||'').trim().toLowerCase();let rows=[];
   if(currentDataset==='characters'){
-    rows=rosterCharacters.filter(c=>JSON.stringify(c).toLowerCase().includes(q)).sort((a,b)=>String(a.name||a.baseId).localeCompare(String(b.name||b.baseId),'fr'));
+    renderDataCharacterFilters();
+    const faction=$('dataFactionFilter')?.value||'';
+    const side=$('dataSideFilter')?.value||'ALL';
+    rows=rosterCharacters.filter(c=>{
+      if(faction && !(factionMap[characterKey(c)]||[]).includes(faction)) return false;
+      if(side!=='ALL' && characterAlignmentFromFactions(c)!==side) return false;
+      return JSON.stringify(c).toLowerCase().includes(q);
+    }).sort((a,b)=>String(a.name||a.baseId).localeCompare(String(b.name||b.baseId),'fr'));
     $('dataTableMeta').textContent=`${rows.length} personnage(s) affiché(s) sur ${rosterCharacters.length}`;
-    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Personnage</th><th>Base ID</th><th>Niveau</th><th>Gear</th><th>Étoiles</th><th>Puissance</th><th>Profil</th></tr></thead><tbody>${rows.map(c=>{const p=profileForCharacter(c);return `<tr><td><strong>${esc(c.name||c.character||c.baseId)}</strong></td><td>${esc(c.baseId||c.base_id||'')}</td><td>${num(c.level)}</td><td>${num(c.gear)}</td><td>${num(c.stars)}★</td><td>${num(c.power)}</td><td>${p?'<span class="ok-badge">KYBER</span>':'<span class="muted-badge">—</span>'}</td></tr>`}).join('')}</tbody></table>`:'<div class="empty">Aucun personnage ne correspond à la recherche.</div>';
+    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Personnage</th><th>Niveau</th><th>Gear</th><th>Relic</th><th>Étoiles</th><th>Puissance</th><th>Analyse mods</th></tr></thead><tbody>${rows.map(c=>{const relic=Number(c.relic_tier??c.relicTier??0)||0;return `<tr><td><strong>${esc(c.name||c.character||c.baseId)}</strong></td><td>${num(c.level)}</td><td>${num(c.gear||c.gear_level)}</td><td>${relic?'R'+num(relic):'—'}</td><td>${num(c.stars||c.rarity)}★</td><td>${num(c.power||c.power_rating||c.powerRating)}</td><td><button type="button" class="detail-mods-btn data-action-btn" data-data-analysis="${esc(characterKey(c))}">VOIR L’ANALYSE</button></td></tr>`}).join('')}</tbody></table>`:'<div class="empty">Aucun personnage ne correspond aux filtres.</div>';
+    $('dataTable').querySelectorAll('[data-data-analysis]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();openCharacterModsAnalysis(btn.dataset.dataAnalysis);}));
   } else if(currentDataset==='ships'){
     rows=rosterShips.filter(c=>JSON.stringify(c).toLowerCase().includes(q)).sort((a,b)=>String(a.name||a.baseId).localeCompare(String(b.name||b.baseId),'fr'));
     $('dataTableMeta').textContent=`${rows.length} vaisseau(x) affiché(s) sur ${rosterShips.length}`;
-    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Vaisseau</th><th>Base ID</th><th>Niveau</th><th>Gear</th><th>Étoiles</th><th>Puissance</th></tr></thead><tbody>${rows.map(c=>`<tr><td><strong>${esc(c.name||c.character||c.baseId)}</strong></td><td>${esc(c.baseId||c.base_id||'')}</td><td>${num(c.level)}</td><td>${num(c.gear)}</td><td>${num(c.stars)}★</td><td>${num(c.power)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucun vaisseau ne correspond à la recherche.</div>';
+    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Vaisseau</th><th>Niveau</th><th>Gear</th><th>Étoiles</th><th>Puissance</th></tr></thead><tbody>${rows.map(c=>`<tr><td><strong>${esc(c.name||c.character||c.baseId)}</strong></td><td>${num(c.level)}</td><td>${num(c.gear)}</td><td>${num(c.stars)}★</td><td>${num(c.power)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucun vaisseau ne correspond à la recherche.</div>';
   } else {
     const filterBox=$('modFilters'); if(filterBox)filterBox.hidden=false;
     if(!modFiltersReady)prepareModFilters();
@@ -351,8 +375,8 @@ function renderDataTable(){
   }
 }
 
-$('loadPlayer').addEventListener('click',loadRemotePlayer);$('allyCode').addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay').addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||'';$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});$('dataSearch').addEventListener('input',renderDataTable);['modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
-document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.data-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');currentDataset=btn.dataset.dataset;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=currentDataset!=='mods';if(ms)ms.hidden=currentDataset!=='mods';renderDataTable();}));
+$('loadPlayer').addEventListener('click',loadRemotePlayer);$('allyCode').addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay').addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||'';$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});$('dataSearch').addEventListener('input',renderDataTable);['dataFactionFilter','dataSideFilter','modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
+document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.data-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');currentDataset=btn.dataset.dataset;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=currentDataset!=='mods';if(ms)ms.hidden=currentDataset!=='mods';renderDataCharacterFilters();renderDataTable();}));
 
 
 function getOptimizerWorker() {
