@@ -96,27 +96,110 @@ function slotFromShape(shape){
   const s=String(shape||'').toLowerCase();
   return ({transmitter:'Square',receiver:'Arrow',processor:'Diamond','holo-array':'Triangle','data-bus':'Circle',multiplexer:'Cross'})[s]||shape;
 }
+function firstText(root, selectors) {
+  for (const sel of selectors) {
+    const n = root.querySelector(sel);
+    if (n) {
+      const t = n.textContent?.trim();
+      if (t) return t;
+    }
+  }
+  return '';
+}
+function firstAttr(root, selectors, attr) {
+  for (const sel of selectors) {
+    const n = root.querySelector(sel);
+    const v = n?.getAttribute(attr);
+    if (v) return v;
+  }
+  return '';
+}
+function parseNumberValue(v) {
+  const m = String(v ?? '').replace(/\s/g,'').match(/[+-]?[0-9]+(?:[.,][0-9]+)?/);
+  return m ? Number(m[0].replace(',','.')) : 0;
+}
+function parseStatGeneric(node) {
+  if (!node) return {stat:'', value:0};
+  const label = firstText(node, ['.statmod-stat-label','[class*="statmod-stat-label"]','[data-stat-name]']) || node.getAttribute?.('data-stat-name') || '';
+  const raw = firstText(node, ['.statmod-stat-value','[class*="statmod-stat-value"]','[data-stat-value]']) || node.getAttribute?.('data-stat-value') || node.textContent || '';
+  return {stat: label.trim(), value: parseNumberValue(raw)};
+}
 function parseModsPage(doc,page){
+  const nodes = [...doc.querySelectorAll('.collection-mod, [class*="collection-mod"], [data-mod-id], [data-id].mod')];
   const result=[];
-  doc.querySelectorAll('.collection-mod').forEach((node,idx)=>{
-    const alt=node.querySelector('.statmod-img')?.getAttribute('alt')||'';
-    const words=alt.trim().split(/\s+/); const shape=words[words.length-1]||''; const set=words.length>=4?words.slice(2,-1).join(' '):'';
-    const primary=statFromNode(node.querySelector('.statmod-stats-1 .statmod-stat'));
-    const secondary=[]; node.querySelectorAll('.statmod-stats-2 .statmod-stat').forEach(x=>secondary.push(statFromNode(x)));
-    const char=node.querySelector('img.char-portrait-img')?.getAttribute('alt')||'';
-    const level=textNumber(node.querySelector('.statmod-level')?.textContent||'0'); const rarity=node.querySelectorAll('.statmod-pip').length;
-    result.push(normalizeMod({game_id:node.getAttribute('data-id')||`gg-${page}-${idx}`,slot:slotFromShape(shape),set_name:set,rarity,level,primary_stat:primary.stat,primary_value:primary.value,secondary_stats:secondary,character:char},page*100+idx));
+  nodes.forEach((node,idx)=>{
+    const alt = firstAttr(node,['.statmod-img','img[class*="statmod-img"]'],'alt');
+    const words = alt.trim().split(/\s+/).filter(Boolean);
+    let shape = words.at(-1) || '';
+    let set = words.length >= 5 ? words.slice(2,-1).join(' ') : (words.length >= 4 ? words[2] : '');
+    const primary = parseStatGeneric(node.querySelector('.statmod-stats-1 .statmod-stat, [class*="statmod-stats-1"] [class*="statmod-stat"]'));
+    const secondary=[...node.querySelectorAll('.statmod-stats-2 .statmod-stat, [class*="statmod-stats-2"] [class*="statmod-stat"]')].map(parseStatGeneric).filter(x=>x.stat);
+    const char=firstAttr(node,['img.char-portrait-img','img[class*="char-portrait-img"]'],'alt');
+    const level=parseNumberValue(firstText(node,['.statmod-level','[class*="statmod-level"]']));
+    const rarity=node.querySelectorAll('.statmod-pip, [class*="statmod-pip"]').length;
+    const id=node.getAttribute('data-id') || node.getAttribute('data-mod-id') || `gg-${page}-${idx}`;
+    if (shape || set || primary.stat || secondary.length) {
+      result.push(normalizeMod({game_id:id,slot:slotFromShape(shape),set_name:set,rarity,level,primary_stat:primary.stat,primary_value:primary.value,secondary_stats:secondary,character:char},page*1000+idx));
+    }
   });
   return result.filter(Boolean);
 }
 function parseCharacters(doc){
   const result=[];
-  doc.querySelectorAll('.collection-char-list .collection-char').forEach(node=>{
-    const name=node.querySelector('.collection-char-name-link')?.textContent?.trim(); if(!name)return;
-    const level=textNumber(node.querySelector('.char-portrait-full-level')?.textContent||'0'); let gear=0;
-    const portrait=node.querySelector('.player-char-portrait'); for(let i=1;i<=13;i++)if(portrait?.classList.contains(`char-portrait-full-gear-t${i}`))gear=i;
-    const stars=[...node.querySelectorAll('.star')].filter(x=>!x.classList.contains('star-inactive')).length; result.push({name,level,gear,stars});
-  }); return result;
+  const nodes=[...doc.querySelectorAll('.collection-char-list .collection-char, .collection-char, [class*="collection-char"]')];
+  const seen=new Set();
+  for(const node of nodes){
+    const name=firstText(node,['.collection-char-name-link','[class*="collection-char-name"]','a[href*="/character/"]']);
+    if(!name || seen.has(name)) continue;
+    seen.add(name);
+    const level=parseNumberValue(firstText(node,['.char-portrait-full-level','[class*="char-portrait-full-level"]']));
+    let gear=0; const portrait=node.querySelector('.player-char-portrait,[class*="player-char-portrait"]');
+    for(let i=1;i<=13;i++) if(portrait?.classList.contains(`char-portrait-full-gear-t${i}`)) gear=i;
+    const stars=[...node.querySelectorAll('.star, [class*="star"]')].filter(x=>!x.className.includes('inactive')).length;
+    result.push({name,level,gear,stars});
+  }
+  return result;
+}
+function looksLikeMod(o){
+  if(!o || typeof o!=='object') return false;
+  const keys=Object.keys(o).map(k=>k.toLowerCase());
+  return (keys.includes('slot') || keys.includes('slot_id') || keys.includes('modslot')) &&
+         (keys.includes('level') || keys.includes('pips') || keys.includes('rarity')) &&
+         (keys.includes('set') || keys.includes('set_id') || keys.includes('setname') || keys.includes('primary') || keys.includes('primary_stat'));
+}
+function looksLikeUnit(o){
+  if(!o || typeof o!=='object') return false;
+  const keys=Object.keys(o).map(k=>k.toLowerCase());
+  return (keys.includes('baseid') || keys.includes('base_id') || keys.includes('character')) &&
+         (keys.includes('level') || keys.includes('gear') || keys.includes('gearlevel') || keys.includes('starlevel'));
+}
+function walkObjects(value, fn, seen=new Set()){
+  if(!value || typeof value!=='object' || seen.has(value)) return;
+  seen.add(value); fn(value);
+  if(Array.isArray(value)) for(const x of value) walkObjects(x,fn,seen);
+  else for(const v of Object.values(value)) walkObjects(v,fn,seen);
+}
+function extractApiMods(json){
+  const out=[]; let i=0;
+  walkObjects(json,o=>{ if(looksLikeMod(o)) out.push(normalizeMod({...o,game_id:o.id||o.uid||o.modId||`api-${i}`},i++)); });
+  const seen=new Set(); return out.filter(m=>m && !seen.has(m.game_id) && seen.add(m.game_id));
+}
+function extractApiCharacters(json){
+  const out=[]; let i=0;
+  walkObjects(json,o=>{
+    if(!looksLikeUnit(o)) return;
+    const name=o.name||o.character||o.characterName||o.unitName||o.baseId||o.base_id;
+    if(!name) return;
+    out.push({name,baseId:o.baseId||o.base_id,level:Number(o.level||0),gear:Number(o.gearLevel||o.gear_level||o.gear||0),stars:Number(o.starLevel||o.stars||0),raw:o});
+    i++;
+  });
+  const seen=new Set(); return out.filter(x=>!seen.has(`${x.baseId||''}|${x.name}`)&&seen.add(`${x.baseId||''}|${x.name}`));
+}
+async function fetchJSON(url){
+  const r=await fetch(url,{headers:{'Accept':'application/json,text/plain,*/*'}});
+  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  const t=await r.text();
+  return JSON.parse(t);
 }
 
 async function loadRemotePlayer(){
@@ -127,15 +210,39 @@ async function loadRemotePlayer(){
   try{
     if(workerUrl()) log('Relais Cloudflare actif : récupération via relais sécurisé.'); else log('Aucun relais configuré : tentative directe depuis le navigateur.');
     const base=`https://swgoh.gg/p/${allyCode}`;
+    const relay=workerUrl();
+    let apiChars=[], apiMods=[];
+    if(relay){
+      log('Tentative API JSON SWGOH.GG via le Worker…');
+      try{
+        const api=await fetchJSON(`${relay}/?ally=${allyCode}&path=api-profile`);
+        apiChars=extractApiCharacters(api);
+        apiMods=extractApiMods(api);
+        log(`API : ${apiChars.length} personnages candidats, ${apiMods.length} mods candidats.`);
+      }catch(e){ log(`API profil indisponible : ${e.message}`); }
+      if(!apiMods.length){
+        try{
+          const apiModsJson=await fetchJSON(`${relay}/?ally=${allyCode}&path=api-mods`);
+          apiMods=extractApiMods(apiModsJson);
+          log(`API mods : ${apiMods.length} mods candidats.`);
+        }catch(e){ log(`API mods indisponible : ${e.message}`); }
+      }
+    }
     const profileText=await fetchText(`${base}/`); const profileDoc=parseHTML(profileText);
     const title=profileDoc.querySelector('h1')?.textContent?.trim()||'Joueur'; const bodyText=profileDoc.body.textContent||'';
     const rosterMatch=bodyText.match(/Roster\s+([0-9,]+)\s+units/i); const modsMatch=bodyText.match(/([0-9,]+)\s+Mods/i);
     log(`Profil SWGOH.GG trouvé : ${title}.`); if(rosterMatch)log(`Roster annoncé : ${rosterMatch[1]} unités.`); if(modsMatch)log(`Mods annoncés : ${modsMatch[1]}.`);
-    log('Lecture du roster…'); const chars=parseCharacters(parseHTML(await fetchText(`${base}/characters/`))); log(`${chars.length} personnages récupérés.`);
-    log('Lecture des mods (pages publiques)…'); const allMods=[];
-    for(let page=1;page<=50;page++){
-      const pageMods=parseModsPage(parseHTML(await fetchText(`${base}/mods/?page=${page}`)),page);
-      if(!pageMods.length)break; allMods.push(...pageMods); log(`Page mods ${page}: ${pageMods.length} mods.`); if(pageMods.length<30)break;
+    log('Lecture du roster…');
+    let chars=apiChars;
+    if(!chars.length) chars=parseCharacters(parseHTML(await fetchText(`${base}/characters/`)));
+    log(`${chars.length} personnages récupérés.`);
+    let allMods=apiMods;
+    if(!allMods.length){
+      log('Lecture des mods (pages publiques)…');
+      for(let page=1;page<=50;page++){
+        const pageMods=parseModsPage(parseHTML(await fetchText(`${base}/mods/?page=${page}`)),page);
+        if(!pageMods.length)break; allMods.push(...pageMods); log(`Page mods ${page}: ${pageMods.length} mods.`); if(pageMods.length<30)break;
+      }
     }
     const seen=new Set(); mods=allMods.filter(m=>{const id=m.game_id;if(seen.has(id))return false;seen.add(id);return true;});
     currentData={allyCode,name:title,characters:chars,mods}; $('modsCount').textContent=mods.length;$('charsCount').textContent=chars.length;fillCharacters(chars);
