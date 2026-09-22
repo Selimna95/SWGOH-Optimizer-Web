@@ -1,30 +1,14 @@
-V26 — Dashboard conservé après chargement + rafraîchissement visuel
+# SWGOH Optimizer Web V31
 
-# SWGOH Optimizer Web V25
+Static GitHub Pages application for SWGOH roster and mod analysis.
 
-Version navigateur de SWGOH Optimizer V176.
+### V31 — Réaffectation intelligente
+1. Open Analyse Mods.
+2. Open a character report or the mod inventory.
+3. Click an equipped mod.
+4. Click `RECHERCHER UNE RÉAFFECTATION`.
+5. Select the secondary to search.
+6. Search is restricted by default to Incomplets / Très faibles / Faibles.
+7. `Moyens` requires an explicit confirmation before it can be included.
 
-## Architecture
-
-- GitHub Pages : interface.
-- Cloudflare Worker : relais SWGOH.GG.
-- Pyodide : moteur Python.
-- Web Worker : optimisation sans blocage de l'interface.
-
-## V25 — Analyse Mods
-
-La version Web reprend maintenant la partie importante de l'analyse V176 :
-
-- ventilation des mods par tranches de Speed ;
-- détail des mods par personnage ;
-- sélection par faction puis personnage ;
-- audit 0/6, incomplet et niveaux de Speed ;
-- inventaire complet des mods ;
-- filtres set / slot / Speed / primaire / propriétaire / niveau ;
-- détail individuel d'un mod.
-
-Les tranches de Speed et les seuils de statut suivent les règles présentes dans V176.
-
-## Installation
-
-Déployer les fichiers du ZIP sur la branche `main` de GitHub Pages. V25 conserve le Worker d'optimisation de V17 et le relais Cloudflare V15/V17.
+The feature is intentionally rule-based: it does not use a score and never moves a mod automatically.

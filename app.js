@@ -3,6 +3,8 @@ let optimizerReady = false;
 let optimizerWorker = null;
 let optimizerRequestId = 0;
 let optimizerTimer = null;
+let reallocationSelectedModIndex = null;
+let reallocationMediumUnlocked = false;
 let currentData = null;
 let mods = [];
 let profiles = {};
@@ -568,6 +570,7 @@ function setAnalysisTab(tab){
   if(tab==='selection') renderSelectionPanel();
   if(tab==='report') renderCharacterReport();
   if(tab==='inventory') renderInventory();
+  if(tab==='reallocation') renderReallocationPanel();
 }
 function analysisCharacterRows(){
   const faction=analysisFaction||'Toutes les factions';
@@ -793,7 +796,7 @@ function showModInventoryDetail(index){
   const m=normalizeModForDisplay(raw), x=modSpeedMetrics(m);
   const modal=$('modDetailModal'); if(!modal)return;
   $('modDetailTitle').textContent=`${m.slot||'Mod'} · ${m.set_name||'—'}`;
-  $('modDetailBody').innerHTML=`<div class="modal-mod-grid">
+  $('modDetailBody').innerHTML=`<div class="modal-actions"><button type="button" class="primary" id="modalReallocationBtn">🔄 RECHERCHER UNE RÉAFFECTATION</button></div><div class="modal-mod-grid">
     <div><span>PROPRIÉTAIRE</span><b>${esc(m.character||'Libre')}</b></div>
     <div><span>SET</span><b>${esc(m.set_name||'—')}</b></div>
     <div><span>SLOT</span><b>${esc(m.slot||'—')}</b></div>
@@ -803,6 +806,7 @@ function showModInventoryDetail(index){
     <div><span>RARETÉ</span><b>${num(m.rarity)}★</b></div>
   </div><h3>SECONDAIRES</h3><ul>${[1,2,3,4].map(i=>m[`secondary_${i}_stat`]?`<li>${esc(m[`secondary_${i}_stat`])} : <strong>${num(m[`secondary_${i}_value`],1)}</strong></li>`:'').join('')||'<li>Aucune donnée secondaire.</li>'}</ul>`;
   modal.hidden=false;
+  $('modalReallocationBtn')?.addEventListener('click',()=>{closeModDetail();openReallocation(index);});
 }
 function closeModDetail(){if($('modDetailModal'))$('modDetailModal').hidden=true;}
 function prepareV18Filters(){
@@ -812,6 +816,100 @@ function prepareV18Filters(){
   if(setSel)setSel.innerHTML='<option value="">Tous les sets</option>'+sets.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
   if(primSel)primSel.innerHTML='<option value="">Toutes les primaires</option>'+primaries.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
 }
+function secondaryDisplayName(name){
+  const raw=String(name||'').trim();
+  const key=compactKey(raw);
+  const map={
+    SPEED:'Speed', OFFENSE:'Offense', DEFENSE:'Defense', HEALTH:'Health', PROTECTION:'Protection',
+    POTENCY:'Potency', TENACITY:'Tenacity', CRITICALCHANCE:'Critical Chance',
+    CRITICALAVOIDANCE:'Critical Avoidance', CRITICALDAMAGE:'Critical Damage'
+  };
+  return map[key]||raw;
+}
+function reallocationSecondaryOptions(){
+  const names=new Map();
+  for(const raw of mods){
+    const m=normalizeModForDisplay(raw);
+    for(let i=1;i<=4;i++) if(m[`secondary_${i}_stat`]){
+      const label=secondaryDisplayName(m[`secondary_${i}_stat`]);
+      names.set(compactKey(label),label);
+    }
+  }
+  return [...names.values()].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+function selectedReallocationMod(){
+  if(reallocationSelectedModIndex==null)return null;
+  return mods[reallocationSelectedModIndex] ? normalizeModForDisplay(mods[reallocationSelectedModIndex]) : null;
+}
+function setReallocationMod(index){
+  const m=mods[index]; if(!m)return;
+  reallocationSelectedModIndex=Number(index);
+  const selected=normalizeModForDisplay(m);
+  const select=$('reallocationSecondary');
+  if(select){
+    const opts=reallocationSecondaryOptions();
+    select.innerHTML='<option value="">Choisir une secondaire…</option>'+opts.map(x=>`<option value="${esc(compactKey(x))}">${esc(x)}</option>`).join('');
+    let found='';
+    for(let i=1;i<=4;i++) if(selected[`secondary_${i}_stat`]){found=compactKey(secondaryDisplayName(selected[`secondary_${i}_stat`]));break;}
+    if(found && opts.some(x=>compactKey(x)===found)) select.value=found;
+  }
+  const btn=$('reallocationSelectedModBtn');
+  if(btn)btn.textContent=`${selected.character||'Libre'} · ${selected.slot||'Mod'} · ${selected.set_name||'—'}`;
+  const info=$('reallocationInfo');
+  if(info)info.textContent=`Mod sélectionné : ${selected.slot||'—'} · ${selected.set_name||'—'} · ${selected.primary_stat||'—'} ${num(selected.primary_value,1)} · ${modSecondaries(selected)||'Aucune secondaire'}`;
+}
+function reallocationStatusAllowed(status){
+  if(status==='INCOMPLETS')return $('reallocationIncomplete')?.checked!==false;
+  if(status==='TRÈS FAIBLES')return $('reallocationVeryLow')?.checked!==false;
+  if(status==='FAIBLES')return $('reallocationLow')?.checked!==false;
+  if(status==='MOYENS')return reallocationMediumUnlocked && $('reallocationMedium')?.checked===true;
+  return false;
+}
+function renderReallocationResults(){
+  const box=$('reallocationResults'); if(!box)return;
+  const selected=selectedReallocationMod();
+  if(!selected){box.innerHTML='<div class="empty">Aucun mod sélectionné.</div>';return;}
+  const secondaryKey=compactKey($('reallocationSecondary')?.value||'');
+  if(!secondaryKey){box.innerHTML='<div class="empty">Choisissez la secondaire recherchée.</div>';return;}
+  const selectedOwner=compactKey(selected.character||'');
+  const rows=[];
+  for(const c of rosterCharacters){
+    if(selectedOwner && characterKey(c)===selectedOwner)continue;
+    const cm=getCharacterMods(c), st=v176ModStatus(cm);
+    if(!reallocationStatusAllowed(st.status))continue;
+    for(const m of cm){
+      let match=null;
+      for(let i=1;i<=4;i++){
+        const stat=m[`secondary_${i}_stat`];
+        if(stat && compactKey(secondaryDisplayName(stat))===secondaryKey){match={value:Number(m[`secondary_${i}_value`]||0),stat:secondaryDisplayName(stat)};break;}
+      }
+      if(match) rows.push({character:c,mod:m,status:st.status,class:st.class,value:match.value});
+    }
+  }
+  const order={'INCOMPLETS':0,'TRÈS FAIBLES':1,'FAIBLES':2,'MOYENS':3};
+  rows.sort((a,b)=>(order[a.status]??9)-(order[b.status]??9)||b.value-a.value||String(a.character.name||'').localeCompare(String(b.character.name||''),'fr'));
+  box.innerHTML=rows.length?`<div class="reallocation-count">${rows.length} mod(s) correspondant à <strong>${esc(secondaryDisplayName($('reallocationSecondary')?.value))}</strong></div><div class="reallocation-table-wrap"><table class="v18-table reallocation-table"><thead><tr><th>Personnage</th><th>État</th><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaire recherchée</th><th>Autres secondaires</th><th>Niveau</th></tr></thead><tbody>${rows.map(r=>{
+    const m=r.mod; const others=[]; for(let i=1;i<=4;i++){const stat=m[`secondary_${i}_stat`];if(stat&&compactKey(secondaryDisplayName(stat))!==secondaryKey)others.push(`${secondaryDisplayName(stat)} ${num(m[`secondary_${i}_value`],1)}`);}
+    return `<tr data-reallocation-mod-index="${m._index}"><td><strong>${esc(r.character.name||r.character.baseId)}</strong></td><td><span class="audit-badge ${r.class}">${esc(r.status)}</span></td><td>${esc(m.slot||'—')}</td><td>${esc(m.set_name||'—')}</td><td>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</td><td class="reallocation-match">${esc(r.value)}</td><td>${esc(others.join(' · ')||'—')}</td><td>${num(m.level)}</td></tr>`;
+  }).join('')}</tbody></table></div>`:'<div class="empty">Aucun mod correspondant dans les catégories actuellement autorisées.</div>';
+  box.querySelectorAll('[data-reallocation-mod-index]').forEach(row=>row.addEventListener('click',()=>showModInventoryDetail(Number(row.dataset.reallocationModIndex))));
+}
+function renderReallocationPanel(){
+  const select=$('reallocationSecondary'); if(!select)return;
+  const current=select.value;
+  const opts=reallocationSecondaryOptions();
+  select.innerHTML='<option value="">Choisir une secondaire…</option>'+opts.map(x=>`<option value="${esc(compactKey(x))}">${esc(x)}</option>`).join('');
+  if(current && opts.some(x=>compactKey(x)===current))select.value=current;
+  const selected=selectedReallocationMod();
+  if(selected) setReallocationMod(reallocationSelectedModIndex);
+  renderReallocationResults();
+}
+function openReallocation(index){
+  setReallocationMod(index);
+  showPage('mods-analysis');
+  setTimeout(()=>setAnalysisTab('reallocation'),0);
+}
+
 function renderModsAnalysis(){
   buildFactionMap(); prepareV18Filters();
   if(!analysisSelectedCharacter && rosterCharacters.length) analysisSelectedCharacter=characterKey(rosterCharacters[0]);
@@ -827,13 +925,13 @@ $('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];
 $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
   $('results').innerHTML='<div class="calculating">Préparation de l’optimisation…<br><small>Le calcul va maintenant s’exécuter dans un Worker séparé pour garder l’interface réactive.</small></div>';
-  if(!mods.length){$('optimizerError').textContent='Aucun mod disponible. Chargez d’abord votre profil.';return;}
+  if(!optimizerReady||!mods.length){$('optimizerError').textContent='Python ou mods non disponibles.';return;}
   const character=selectedCharacter();
   if(!character){$('optimizerError').textContent='Sélectionnez un personnage.';return;}
   const profile=await ensureSelectedKyberProfile();
   if(!profile){$('optimizerError').textContent=`Référence Kyber indisponible pour « ${character.name||character.baseId} ».`;$('results').innerHTML='';return;}
 
-  const nBuilds=Math.min(50,Math.max(1,Number($('buildCount').value)||5));
+  const nBuilds=Math.min(50,Math.max(1,Number($('buildCount').value)||10));
   const limitSlot=Math.min(150,Math.max(5,Number($('limitPerSlot').value)||80));
   $('runOptimizer').disabled=true;
   $('runOptimizer').textContent='CALCUL EN COURS…';
@@ -853,6 +951,14 @@ $('runOptimizer').addEventListener('click',async()=>{
   }
 });
 function renderResults(data){if(!data.length){$('results').textContent='Aucun build.';return;}$('results').innerHTML=data.map((r,i)=>`<article class="result"><div class="rank">#${i+1}</div><div><div class="result-head"><strong>Score ${Number(r.score).toFixed(2)}</strong></div><div class="stats">${Object.entries(r.stats||{}).map(([k,v])=>`${esc(k)}: ${typeof v==='number'?num(v,1):esc(v)}`).join(' · ')}</div><div class="build-grid">${(r.build||[]).map(m=>`<div class="mod-card"><strong>${esc(m.slot||'?')}</strong><span>${esc(m.set_name||m.set||'?')}</span><span>${esc(m.primary_stat||'?')} ${num(m.primary_value,1)}${String(m.primary_stat||'').endsWith(' %')?'%':''}</span><small>${esc([1,2,3,4].map(i=>m[`secondary_${i}_stat`]?displayModStat(m[`secondary_${i}_stat`],m[`secondary_${i}_value`]):'').filter(Boolean).join(' · '))}</small></div>`).join('')}</div></div></article>`).join('');}
+
+$('reallocationSecondary')?.addEventListener('change',renderReallocationResults);
+$('runReallocation')?.addEventListener('click',renderReallocationResults);
+$('unlockMediumSearch')?.addEventListener('click',()=>{
+  if(reallocationMediumUnlocked)return;
+  const ok=window.confirm('ATTENTION : vous allez autoriser la recherche de mods actuellement équipés sur des personnages classés MOYENS. Ces mods peuvent être utiles à leur propriétaire actuel. Voulez-vous vraiment élargir la recherche ?');
+  if(ok){reallocationMediumUnlocked=true;const cb=$('reallocationMedium');if(cb)cb.disabled=false;const b=$('unlockMediumSearch');if(b){b.textContent='🔓 MOYENS AUTORISÉS';b.disabled=true;} }
+});
 
 $('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';analysisSide='ALL';analysisStatus='TOUS';analysisAuditSpeed='TOUS';analysisAuditSort='priority';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';$('accountSummary').innerHTML='<span>Aucune donnée chargée.</span>';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
 

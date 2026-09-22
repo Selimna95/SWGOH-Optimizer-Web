@@ -19,7 +19,7 @@ self.onmessage = async (event) => {
     pyodide.globals.set("mods_json", JSON.stringify(data.mods || []));
     pyodide.globals.set("profile_json", JSON.stringify(data.profile || {}));
     pyodide.globals.set("base_stats_json", JSON.stringify(data.base_stats || {}));
-    pyodide.globals.set("n_builds", Number(data.n_builds || 5));
+    pyodide.globals.set("n_builds", Number(data.n_builds || 10));
     pyodide.globals.set("limit_slot", Number(data.limit_slot || 80));
     pyodide.globals.set("character_name", String(data.character_name || ""));
 

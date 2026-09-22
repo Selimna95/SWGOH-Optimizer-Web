@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
-  <meta name="description" content="SWGOH Optimizer Web V19 — roster, mods et optimisation dans le navigateur">
+  <meta name="description" content="SWGOH Optimizer Web V31 — roster, mods et optimisation dans le navigateur">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   <title>SWGOH Optimizer Web V28</title>
@@ -35,7 +35,7 @@
         <div>
           <div class="eyebrow">LOCAL WEB APPLICATION</div>
           <h1>SWGOH Optimizer</h1>
-          <p>V28 conserve les données validées la conversion Relic (R0 à R10) et le comptage Speed 6/6, tout en conservant l’analyse des mods du projet Windows V176 : récapitulatif Speed, sélection personnage/faction, détail des 6 mods équipés et inventaire complet.</p>
+          <p>V31 conserve les données validées la conversion Relic (R0 à R10) et le comptage Speed 6/6, tout en conservant l’analyse des mods du projet Windows V176 : récapitulatif Speed, sélection personnage/faction, détail des 6 mods équipés et inventaire complet.</p>
         </div>
         <div class="online-loader">
           <label>ALLY CODE<input id="allyCode" inputmode="numeric" maxlength="11" placeholder="123-456-789"></label>
@@ -85,6 +85,7 @@
           <button class="analysis-tab" data-analysis-tab="selection">PERSONNAGE / FACTION</button>
           <button class="analysis-tab" data-analysis-tab="report">RAPPORT PERSONNAGE</button>
           <button class="analysis-tab" data-analysis-tab="inventory">INVENTAIRE DES MODS</button>
+          <button class="analysis-tab" data-analysis-tab="reallocation">RÉAFFECTATION</button>
         </div>
       </div>
 
@@ -128,6 +129,32 @@
 
       <div class="analysis-panel panel" data-analysis-panel="report" hidden>
         <div id="characterReport" class="character-report"></div>
+      </div>
+
+      <div class="analysis-panel panel" data-analysis-panel="reallocation" hidden>
+        <div class="reallocation-header">
+          <div>
+            <div class="panel-title">RÉAFFECTATION INTELLIGENTE D’UN MOD</div>
+            <p class="reallocation-intro">Sélectionnez un mod, choisissez la secondaire recherchée et trouvez les mods actuellement équipés sur les personnages très faibles, faibles ou incomplets.</p>
+          </div>
+          <button type="button" class="detail-mods-btn" id="reallocationSelectedModBtn">AUCUN MOD SÉLECTIONNÉ</button>
+        </div>
+        <div class="reallocation-controls">
+          <label>SECONDAIRE RECHERCHÉE
+            <select id="reallocationSecondary"><option value="">Choisir une secondaire…</option></select>
+          </label>
+          <div class="reallocation-scope">
+            <span>PERSONNAGES À ANALYSER</span>
+            <label><input type="checkbox" id="reallocationIncomplete" checked disabled> Incomplets</label>
+            <label><input type="checkbox" id="reallocationVeryLow" checked disabled> Très faibles</label>
+            <label><input type="checkbox" id="reallocationLow" checked disabled> Faibles</label>
+            <button type="button" class="medium-lock" id="unlockMediumSearch">🔒 AUTORISER LES MOYENS</button>
+            <label class="medium-option"><input type="checkbox" id="reallocationMedium" disabled> Moyens</label>
+          </div>
+          <button type="button" class="primary" id="runReallocation">RECHERCHER LES MODS</button>
+        </div>
+        <div id="reallocationInfo" class="table-meta">Sélectionnez un mod dans un rapport ou dans l’inventaire.</div>
+        <div id="reallocationResults" class="reallocation-results"><div class="empty">Aucun mod sélectionné.</div></div>
       </div>
 
       <div class="analysis-panel panel" data-analysis-panel="inventory" hidden>
