@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <title>SWGOH Optimizer Web</title>
+</head>
+<body>
+  <div class="scanlines"></div>
+  <header class="topbar">
+    <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V1</span></div>
+    <div id="runtime" class="status">INITIALISATION PYTHON…</div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <button class="nav active" data-page="dashboard">DASHBOARD</button>
+      <button class="nav" data-page="optimizer">OPTIMIZER</button>
+      <button class="nav" data-page="data">DONNÉES</button>
+      <button class="nav" data-page="help">AIDE</button>
+      <div class="side-note">100% navigateur<br>aucun serveur Python</div>
+    </aside>
+
+    <section class="content">
+      <section id="dashboard" class="page active">
+        <div class="hero panel">
+          <div>
+            <div class="eyebrow">LOCAL WEB APPLICATION</div>
+            <h1>SWGOH Optimizer</h1>
+            <p>Version Web du moteur d'optimisation. Les calculs Python sont exécutés directement dans votre navigateur.</p>
+          </div>
+          <label class="upload big-upload">IMPORTER PLAYER_DATA.JSON<input id="fileInput" type="file" accept=".json,application/json"></label>
+        </div>
+        <div class="cards">
+          <div class="panel metric"><span>MODS CHARGÉS</span><strong id="modsCount">0</strong></div>
+          <div class="panel metric"><span>PERSONNAGES</span><strong id="charsCount">0</strong></div>
+          <div class="panel metric"><span>PYTHON</span><strong id="pythonState">—</strong></div>
+        </div>
+        <div class="panel log"><div class="panel-title">JOURNAL</div><pre id="log">En attente d'un fichier JSON…</pre></div>
+      </section>
+
+      <section id="optimizer" class="page">
+        <div class="panel controls">
+          <div class="panel-title">OPTIMISATION</div>
+          <div class="form-grid">
+            <label>Personnage<select id="character"></select></label>
+            <label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="10"></label>
+            <label>Limite / slot<input id="limitPerSlot" type="number" min="5" max="150" value="80"></label>
+            <button id="runOptimizer" class="primary">LANCER L'OPTIMISATION</button>
+          </div>
+          <div id="optimizerError" class="error"></div>
+        </div>
+        <div class="panel"><div class="panel-title">RÉSULTATS</div><div id="results" class="results empty">Importez d'abord vos données.</div></div>
+      </section>
+
+      <section id="data" class="page">
+        <div class="panel">
+          <div class="panel-title">DONNÉES LOCALES</div>
+          <p>Le fichier importé reste dans la mémoire de cette page. Aucun envoi vers un serveur n'est effectué par cette V1.</p>
+          <button id="clearData" class="danger">EFFACER LES DONNÉES</button>
+        </div>
+        <div class="panel"><div class="panel-title">FORMAT ACTUEL</div><pre id="dataInfo">Aucune donnée.</pre></div>
+      </section>
+
+      <section id="help" class="page">
+        <div class="panel help">
+          <div class="panel-title">MISE EN ROUTE</div>
+          <ol>
+            <li>Ouvrir cette application depuis un hébergement statique HTTPS.</li>
+            <li>Importer un <code>player_data.json</code> contenant une liste <code>mods</code> avec les champs slot/set/stats.</li>
+            <li>Choisir un personnage puis lancer l'optimisation.</li>
+          </ol>
+          <p><strong>Important :</strong> cette V1 ne lance pas Comlink.exe et ne fait pas de scraping de SWGOH.GG. La conversion des formats Comlink et les écrans complets GAC/Roster seront ajoutés ensuite.</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.28.2/full/pyodide.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
