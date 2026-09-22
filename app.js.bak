@@ -324,7 +324,7 @@ function getFilteredMods(){
   const slot=String($('modSlotFilter')?.value||'');
   const owner=String($('modOwnerFilter')?.value||'');
   const minLevel=Number($('modLevelFilter')?.value||0);
-  return mods.map((raw,i)=>({...normalizeModForDisplay(raw),_index:i})).filter(m=>{
+  return mods.map(normalizeModForDisplay).filter(m=>{
     const text=JSON.stringify(m).toLowerCase();
     if(q&&!text.includes(q))return false;
     if(set&&m.set_name!==set)return false;
@@ -459,7 +459,7 @@ function modOwnerKey(m){ return compactKey(m?.character??m?.baseId??m?.base_id??
 function getCharacterMods(c){
   if(!c) return [];
   const targets=new Set([characterKey(c),compactKey(c.name),compactKey(c.baseId),compactKey(c.base_id)].filter(Boolean));
-  return mods.map((raw,i)=>({...normalizeModForDisplay(raw),_index:i})).filter(m=>{
+  return mods.map(normalizeModForDisplay).filter(m=>{
     const owner=modOwnerKey(m);
     return owner && [...targets].some(t=>owner===t);
   }).slice(0,6).sort((a,b)=>({Square:0,Arrow:1,Diamond:2,Triangle:3,Circle:4,Cross:5}[a.slot]??99)-({Square:0,Arrow:1,Diamond:2,Triangle:3,Circle:4,Cross:5}[b.slot]??99));
