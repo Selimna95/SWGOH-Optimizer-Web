@@ -1,27 +1,113 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07111f">
-  <meta name="description" content="SWGOH Optimizer Web V8 - moteur Python dans le navigateur avec relais Cloudflare">
-  <link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css"><title>SWGOH Optimizer Web V8</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="SWGOH Optimizer Web V10 — roster, mods et optimisation dans le navigateur">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <title>SWGOH Optimizer Web V10</title>
 </head>
 <body>
 <div class="scanlines"></div>
-<header class="topbar"><div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V8</span></div><div id="runtime" class="status">INITIALISATION PYTHON…</div></header>
+<header class="topbar">
+  <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V10</span></div>
+  <div id="runtime" class="status">INITIALISATION PYTHON…</div>
+</header>
 <main class="layout">
-<aside class="sidebar"><button class="nav active" data-page="dashboard">DASHBOARD</button><button class="nav" data-page="optimizer">OPTIMIZER</button><button class="nav" data-page="data">DONNÉES</button><button class="nav" data-page="help">AIDE</button><div class="side-note">100% navigateur<br>aucun PC serveur</div></aside>
-<section class="content">
-<section id="dashboard" class="page active">
-<div class="hero panel"><div><div class="eyebrow">LOCAL WEB APPLICATION</div><h1>SWGOH Optimizer</h1><p>V8 utilise le relais Cloudflare Worker configuré pour contourner le blocage CORS du navigateur lors de la lecture des pages publiques SWGOH.GG. Les calculs Python restent exécutés localement dans votre navigateur.</p></div>
-<div class="online-loader"><label>ALLY CODE<input id="allyCode" inputmode="numeric" maxlength="11" placeholder="123-456-789"></label><button id="loadPlayer" class="primary">CHARGER MON PROFIL</button><label class="upload secondary-upload">OU IMPORTER JSON<input id="fileInput" type="file" accept=".json,application/json"></label></div></div>
-<div class="cards"><div class="panel metric"><span>MODS CHARGÉS</span><strong id="modsCount">0</strong></div><div class="panel metric"><span>PERSONNAGES</span><strong id="charsCount">0</strong></div><div class="panel metric"><span>VAISSEAUX</span><strong id="shipsCount">0</strong></div><div class="panel metric"><span>PYTHON</span><strong id="pythonState">—</strong></div></div>
-<div class="panel log"><div class="panel-title">JOURNAL</div><pre id="log">Entrez votre Ally Code pour charger le profil. Pour le chargement automatique, configurez d’abord le Worker dans AIDE.</pre></div>
-</section>
-<section id="optimizer" class="page"><div class="panel controls"><div class="panel-title">OPTIMISATION</div><div class="form-grid"><label>Personnage<select id="character"></select></label><label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="10"></label><label>Limite / slot<input id="limitPerSlot" type="number" min="5" max="150" value="80"></label><button id="runOptimizer" class="primary">LANCER L'OPTIMISATION</button></div><div id="optimizerError" class="error"></div></div><div class="panel"><div class="panel-title">RÉSULTATS</div><div id="results" class="results empty">Importez d'abord vos données.</div></div></section>
-<section id="data" class="page"><div class="panel"><div class="panel-title">DONNÉES LOCALES</div><p>Les données chargées sont traitées dans le navigateur. Le Worker ne sert que de relais de lecture vers les pages publiques SWGOH.GG lorsque vous l'avez configuré.</p><button id="clearData" class="danger">EFFACER LES DONNÉES</button></div><div class="panel"><div class="panel-title">FORMAT ACTUEL</div><pre id="dataInfo">Aucune donnée.</pre></div></section>
-<section id="help" class="page"><div class="panel help"><div class="panel-title">RELAIS CLOUDFLARE</div><p>Le navigateur bloque actuellement la lecture directe de SWGOH.GG à cause du CORS. V8 utilise donc un petit Cloudflare Worker gratuit. Il ne demande aucun logiciel à installer sur votre PC.</p><label>URL DU WORKER<input id="relayUrl" value="https://swgoh-optimizer-relay.lorg75017.workers.dev" placeholder="https://swgoh-optimizer-relay.votre-compte.workers.dev"></label><button id="saveRelay" class="primary save-relay">ENREGISTRER LE RELAIS</button><div id="relayState" class="relay-state">RELAIS PRÉCONFIGURÉ</div></div>
-<div class="panel help"><div class="panel-title">MISE EN ROUTE</div><ol><li>Le Worker Cloudflare est déjà configuré pour ce projet. Le fichier <code>cloudflare-worker/worker.js</code> est fourni pour réinstaller le relais si nécessaire.</li><li>Déployer le Worker et copier son adresse <code>workers.dev</code>.</li><li>Coller cette adresse dans le champ ci-dessus puis cliquer sur <strong>ENREGISTRER LE RELAIS</strong>.</li><li>Revenir au DASHBOARD, saisir l'Ally Code et cliquer sur <strong>CHARGER MON PROFIL</strong>.</li><li>Si SWGOH.GG refuse aussi la requête du Worker, le journal l'indiquera et l'import JSON restera disponible.</li></ol><p><strong>Important :</strong> le Worker ne reçoit pas votre mot de passe EA/jeu. Il ne fait qu'une requête publique vers SWGOH.GG.</p></div>
-<div class="panel help"><div class="panel-title">LIEN SWGOH.GG</div><p>Vous pouvez toujours vérifier manuellement votre page publique : <a id="swgohLink" href="https://swgoh.gg/" target="_blank" rel="noopener">SWGOH.GG</a>.</p></div></section>
-</section></main>
-<script src="https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js"></script><script src="app.js"></script>
-</body></html>
+  <aside class="sidebar">
+    <button class="nav active" data-page="dashboard">DASHBOARD</button>
+    <button class="nav" data-page="optimizer">OPTIMIZER</button>
+    <button class="nav" data-page="data">DONNÉES</button>
+    <button class="nav" data-page="help">AIDE</button>
+    <div class="side-note">100% navigateur<br>aucun PC serveur</div>
+  </aside>
+  <section class="content">
+    <section id="dashboard" class="page active">
+      <div class="hero panel">
+        <div>
+          <div class="eyebrow">LOCAL WEB APPLICATION</div>
+          <h1>SWGOH Optimizer</h1>
+          <p>V10 sépare maintenant clairement le roster en personnages et vaisseaux. Les données publiques SWGOH.GG sont récupérées via le relais Cloudflare et les calculs Python restent exécutés localement dans votre navigateur.</p>
+        </div>
+        <div class="online-loader">
+          <label>ALLY CODE<input id="allyCode" inputmode="numeric" maxlength="11" placeholder="123-456-789"></label>
+          <button id="loadPlayer" class="primary">CHARGER MON PROFIL</button>
+          <label class="secondary-upload">OU IMPORTER JSON<input id="fileInput" type="file" accept=".json,application/json"></label>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="panel metric"><span>MODS CHARGÉS</span><strong id="modsCount">0</strong></div>
+        <div class="panel metric"><span>PERSONNAGES</span><strong id="charsCount">0</strong></div>
+        <div class="panel metric"><span>VAISSEAUX</span><strong id="shipsCount">0</strong></div>
+        <div class="panel metric"><span>UNITÉS TOTALES</span><strong id="unitsCount">0</strong></div>
+        <div class="panel metric"><span>PYTHON</span><strong id="pythonState">—</strong></div>
+      </div>
+      <div class="panel quick-summary">
+        <div class="panel-title">ÉTAT DU COMPTE</div>
+        <div id="accountSummary" class="summary-grid"><span>Aucune donnée chargée.</span></div>
+      </div>
+      <div class="panel log"><div class="panel-title">JOURNAL</div><pre id="log">Entrez votre Ally Code pour charger le profil. Pour le chargement automatique, le Worker Cloudflare doit être configuré.</pre></div>
+    </section>
+
+    <section id="optimizer" class="page">
+      <div class="panel controls">
+        <div class="panel-title">OPTIMISATION V176</div>
+        <div class="form-grid">
+          <label>Personnage<select id="character"></select></label>
+          <label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="10"></label>
+          <label>Limite / slot<input id="limitPerSlot" type="number" min="5" max="150" value="80"></label>
+          <button id="runOptimizer" class="primary">LANCER L'OPTIMISATION</button>
+        </div>
+        <div id="characterInfo" class="character-info">Aucun personnage sélectionné.</div>
+        <div id="optimizerError" class="error"></div>
+      </div>
+      <div class="panel"><div class="panel-title">RÉSULTATS</div><div id="results" class="results empty">Chargez d'abord vos données.</div></div>
+    </section>
+
+    <section id="data" class="page">
+      <div class="panel data-toolbar">
+        <div class="panel-title">EXPLORATEUR DU ROSTER</div>
+        <div class="data-tabs">
+          <button class="data-tab active" data-dataset="characters">PERSONNAGES <span id="tabCharsCount">0</span></button>
+          <button class="data-tab" data-dataset="ships">VAISSEAUX <span id="tabShipsCount">0</span></button>
+          <button class="data-tab" data-dataset="mods">MODS <span id="tabModsCount">0</span></button>
+        </div>
+        <input id="dataSearch" class="data-search" type="search" placeholder="Rechercher un personnage, un vaisseau, un mod, un set…">
+      </div>
+      <div class="panel table-panel"><div id="dataTableMeta" class="table-meta">Aucune donnée.</div><div id="dataTable" class="data-table-wrap"><div class="empty">Chargez un profil pour afficher les données.</div></div></div>
+      <div class="panel"><div class="panel-title">SOURCE / DIAGNOSTIC</div><pre id="dataInfo">Aucune donnée.</pre></div>
+      <div class="panel"><button id="clearData" class="danger">EFFACER LES DONNÉES</button></div>
+    </section>
+
+    <section id="help" class="page">
+      <div class="panel help">
+        <div class="panel-title">RELAIS CLOUDFLARE</div>
+        <p>Le navigateur bloque la lecture directe de SWGOH.GG à cause du CORS. Le Worker Cloudflare sert uniquement de relais public vers SWGOH.GG.</p>
+        <label>URL DU WORKER<input id="relayUrl" value="https://swgoh-optimizer-relay.lorg75017.workers.dev" placeholder="https://swgoh-optimizer-relay.votre-compte.workers.dev"></label>
+        <button id="saveRelay" class="primary save-relay">ENREGISTRER LE RELAIS</button>
+        <div id="relayState" class="relay-state">RELAIS PRÉCONFIGURÉ</div>
+      </div>
+      <div class="panel help">
+        <div class="panel-title">ARCHITECTURE V10</div>
+        <ul>
+          <li>GitHub Pages : interface statique.</li>
+          <li>Cloudflare Worker : relais vers SWGOH.GG.</li>
+          <li>Pyodide : moteur Python dans le navigateur.</li>
+          <li>Les <strong>personnages</strong> et <strong>vaisseaux</strong> sont séparés par <code>combat_type</code>.</li>
+          <li>Les vaisseaux ne sont pas envoyés à l'optimiseur de mods personnages.</li>
+          <li>Les données restent dans le navigateur pendant la session.</li>
+        </ul>
+      </div>
+      <div class="panel help">
+        <div class="panel-title">LIEN SWGOH.GG</div>
+        <p>Vous pouvez vérifier manuellement votre page publique : <a id="swgohLink" href="https://swgoh.gg/" target="_blank" rel="noopener">SWGOH.GG</a>.</p>
+      </div>
+    </section>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

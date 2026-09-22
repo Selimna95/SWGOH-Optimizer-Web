@@ -1,6 +1,6 @@
-# SWGOH Optimizer Web — V9
+# SWGOH Optimizer Web — V10
 
-## État actuel
+## État
 
 - GitHub Pages : frontend statique
 - Pyodide : moteur Python dans le navigateur
@@ -8,17 +8,29 @@
 - Ally Code testé : 853-277-661
 - Profil public : Selimna
 - Mods récupérés : 1992
-- Unités possédées API : 406 au total, incluant personnages et vaisseaux
-- Les unités sont désormais séparées par `combat_type` :
-  - `1` = personnages
-  - `2` = vaisseaux
-- Le compteur PERSONNAGES n'inclut plus les vaisseaux.
-- Un compteur VAISSEAUX séparé est affiché.
-- L'optimiseur reçoit uniquement les personnages.
+- Unités possédées : 406
+- Personnages : 336
+- Vaisseaux : 70
 
-## Important
+## V10
 
-Le nombre « 406 unités » annoncé par le profil SWGOH.GG ne doit pas être présenté comme « 406 personnages ». Le projet conserve les vaisseaux séparément afin de pouvoir exploiter leurs données plus tard.
+La V10 ajoute un véritable explorateur de données :
+
+- tableau des 336 personnages ;
+- tableau des 70 vaisseaux ;
+- tableau des mods ;
+- recherche instantanée ;
+- détails niveau / gear / étoiles / puissance ;
+- séparation stricte personnages / vaisseaux ;
+- sélection de personnage dans l'optimiseur ;
+- affichage du statut du profil Kyber ;
+- rendu détaillé des six mods de chaque build retourné par Python.
+
+Les vaisseaux ne sont pas envoyés à l'optimiseur de mods personnages.
+
+## Limite actuelle
+
+Le fichier `python/kyber_profiles.json` embarqué dans cette version contient un nombre limité de profils de référence. Le roster complet peut être affiché, mais l'optimisation ne peut être lancée que pour les personnages disposant d'un profil Kyber dans ce fichier. L'étape suivante consiste à enrichir ces profils et/ou à reproduire les profils dynamiques de la version Windows.
 
 ## Infrastructure
 

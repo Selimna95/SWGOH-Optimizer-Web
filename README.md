@@ -1,27 +1,25 @@
-# SWGOH Optimizer Web
+# SWGOH Optimizer Web V10
 
-Version navigateur du SWGOH Optimizer V176 HUD Global.
+Version navigateur du projet SWGOH Optimizer V176.
 
 ## Architecture
 
-- GitHub Pages : interface web statique
-- Pyodide/WebAssembly : exécution de Python dans le navigateur
-- Cloudflare Worker : relais CORS vers les pages/API publiques SWGOH.GG
-- JSON : solution de secours pour l'import manuel
+- GitHub Pages pour l'interface
+- Pyodide pour exécuter Python côté navigateur
+- Cloudflare Worker pour relayer les requêtes publiques SWGOH.GG et contourner le CORS
+- JSON comme solution de secours
 
-## Données du roster
+## Données actuelles de test
 
-L'API publique utilisée renvoie des **unités**, pas uniquement des personnages. Le projet distingue désormais :
+Ally Code : `853-277-661`
 
-- `combat_type = 1` : personnages
-- `combat_type = 2` : vaisseaux
-
-Le compteur PERSONNAGES exclut donc les vaisseaux. Les vaisseaux sont conservés séparément dans `currentData.ships` pour une future gestion des fleets.
-
-Test validé avec le profil `Selimna` : 406 unités possédées au total et 1992 mods récupérables. Le nombre exact de personnages et de vaisseaux est calculé automatiquement par le navigateur à partir de `combat_type`.
+- 336 personnages
+- 70 vaisseaux
+- 406 unités au total
+- 1992 mods
 
 ## Déploiement
 
-Le contenu de cette archive est prévu pour être copié à la racine du dépôt GitHub Pages.
+Le contenu de ce ZIP est prévu pour être copié à la racine de la branche `main` du dépôt GitHub Pages.
 
-Ne pas modifier le Worker Cloudflare si le relais fonctionne.
+Le Worker Cloudflare est déjà opérationnel et ne doit pas être modifié pour cette étape.
