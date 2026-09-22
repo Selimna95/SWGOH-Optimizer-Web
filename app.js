@@ -1,5 +1,8 @@
 let pyodide = null;
 let optimizerReady = false;
+let optimizerWorker = null;
+let optimizerRequestId = 0;
+let optimizerTimer = null;
 let currentData = null;
 let mods = [];
 let profiles = {};
@@ -309,15 +312,71 @@ function renderDataTable(){
 $('loadPlayer').addEventListener('click',loadRemotePlayer);$('allyCode').addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay').addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||'';$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});$('dataSearch').addEventListener('input',renderDataTable);['modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
 document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.data-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');currentDataset=btn.dataset.dataset;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=currentDataset!=='mods';if(ms)ms.hidden=currentDataset!=='mods';renderDataTable();}));
 
+
+function getOptimizerWorker() {
+  if (optimizerWorker) return optimizerWorker;
+  optimizerWorker = new Worker('./optimizer-worker.mjs', { type: 'module' });
+  optimizerWorker.addEventListener('error', (event) => {
+    log('Erreur du Worker Python : ' + (event.message || 'erreur inconnue'));
+  });
+  return optimizerWorker;
+}
+
+function runOptimizationInWorker(character, profile, nBuilds, limitSlot) {
+  const worker = getOptimizerWorker();
+  const id = ++optimizerRequestId;
+  return new Promise((resolve, reject) => {
+    const started = performance.now();
+    const onMessage = (event) => {
+      const data = event.data || {};
+      if (data.id !== id) return;
+      if (data.type === 'status') {
+        $('results').innerHTML = `<div class="calculating">${esc(data.message || 'Calcul en cours…')}<br><small>Temps écoulé : ${Math.round((performance.now()-started)/1000)} s</small></div>`;
+        return;
+      }
+      worker.removeEventListener('message', onMessage);
+      if (data.type === 'done') {
+        resolve(JSON.parse(data.result));
+      } else {
+        reject(new Error(data.error || 'Erreur inconnue du Worker Python.'));
+      }
+    };
+    worker.addEventListener('message', onMessage);
+    worker.postMessage({ id, mods, profile, n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '' });
+  });
+}
+
 async function boot(){try{setRuntime('CHARGEMENT PYTHON…');pyodide=await loadPyodide();const optimizer=await fetch('python/optimizer.py').then(r=>r.text());const kyber=await fetch('python/kyber_profiles.json').then(r=>r.text());pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);pyodide.FS.writeFile('/home/pyodide/kyber_profiles.json',kyber);pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer, json`);profiles=JSON.parse(kyber);optimizerReady=true;$('pythonState').textContent='OK';setRuntime('PYTHON WEBASSEMBLY PRÊT',true);log('Moteur Python chargé dans le navigateur.');}catch(e){setRuntime('ERREUR PYTHON');$('pythonState').textContent='ERREUR';log('Erreur Python: '+e);}}
 
 $('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderDataTable();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
 
 $('runOptimizer').addEventListener('click',async()=>{
-  $('optimizerError').textContent='';$('results').innerHTML='<div class="calculating">Préparation de la référence Kyber…</div>';if(!optimizerReady||!mods.length){$('optimizerError').textContent='Python ou mods non disponibles.';return;}
-  const character=selectedCharacter();if(!character){$('optimizerError').textContent='Sélectionnez un personnage.';return;}
-  const profile=await ensureSelectedKyberProfile();if(!profile){$('optimizerError').textContent=`Référence Kyber indisponible pour « ${character.name||character.baseId} ».`;$('results').innerHTML='';return;}
-  try{pyodide.globals.set('mods_json',JSON.stringify(mods));pyodide.globals.set('profile_json',JSON.stringify(profile));pyodide.globals.set('n_builds',Math.min(50,Math.max(1,Number($('buildCount').value)||10)));pyodide.globals.set('limit_slot',Math.min(150,Math.max(5,Number($('limitPerSlot').value)||80)));const raw=pyodide.runPython(`import json\nmods=json.loads(mods_json)\nprofile=json.loads(profile_json)\nr=optimizer.find_top_builds(mods, number_of_builds=n_builds, limit_per_slot=limit_slot, kyber=profile, character=${JSON.stringify(character.name||character.baseId)})\njson.dumps(r)`).toJs();renderResults(JSON.parse(raw));}catch(e){$('optimizerError').textContent=String(e);$('results').innerHTML='';}
+  $('optimizerError').textContent='';
+  $('results').innerHTML='<div class="calculating">Préparation de l’optimisation…<br><small>Le calcul va maintenant s’exécuter dans un Worker séparé pour garder l’interface réactive.</small></div>';
+  if(!optimizerReady||!mods.length){$('optimizerError').textContent='Python ou mods non disponibles.';return;}
+  const character=selectedCharacter();
+  if(!character){$('optimizerError').textContent='Sélectionnez un personnage.';return;}
+  const profile=await ensureSelectedKyberProfile();
+  if(!profile){$('optimizerError').textContent=`Référence Kyber indisponible pour « ${character.name||character.baseId} ».`;$('results').innerHTML='';return;}
+
+  const nBuilds=Math.min(50,Math.max(1,Number($('buildCount').value)||10));
+  const limitSlot=Math.min(150,Math.max(5,Number($('limitPerSlot').value)||80));
+  $('runOptimizer').disabled=true;
+  $('runOptimizer').textContent='CALCUL EN COURS…';
+  log(`Optimisation lancée pour ${character.name||character.baseId} · ${nBuilds} builds · ${limitSlot} candidats/slot.`);
+  const started=performance.now();
+  try {
+    const data=await runOptimizationInWorker(character,profile,nBuilds,limitSlot);
+    renderResults(data);
+    log(`Optimisation terminée en ${((performance.now()-started)/1000).toFixed(1)} s · ${data.length} build(s).`);
+  } catch(e) {
+    $('optimizerError').textContent=String(e?.message||e);
+    $('results').innerHTML='<div class="empty">Le calcul Python a rencontré une erreur. Consultez le journal ci-dessus.</div>';
+    log('Erreur optimisation : '+String(e?.message||e));
+  } finally {
+    $('runOptimizer').disabled=false;
+    $('runOptimizer').textContent='LANCER L’OPTIMISATION';
+  }
 });
 function renderResults(data){if(!data.length){$('results').textContent='Aucun build.';return;}$('results').innerHTML=data.map((r,i)=>`<article class="result"><div class="rank">#${i+1}</div><div><div class="result-head"><strong>Score ${Number(r.score).toFixed(2)}</strong></div><div class="stats">${Object.entries(r.stats||{}).map(([k,v])=>`${esc(k)}: ${typeof v==='number'?num(v,1):esc(v)}`).join(' · ')}</div><div class="build-grid">${(r.build||[]).map(m=>`<div class="mod-card"><strong>${esc(m.slot||'?')}</strong><span>${esc(m.set_name||m.set||'?')}</span><span>${esc(m.primary_stat||'?')} ${num(m.primary_value,1)}</span><small>${esc([1,2,3,4].map(i=>m[`secondary_${i}_stat`]?`${m[`secondary_${i}_stat`]} ${num(m[`secondary_${i}_value`],1)}`:'').filter(Boolean).join(' · '))}</small></div>`).join('')}</div></div></article>`).join('');}
 
