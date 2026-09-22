@@ -25,3 +25,7 @@ Le Worker est volontairement limité aux pages publiques de `swgoh.gg` et n'acce
 
 ## Limitation importante
 SWGOH.GG peut modifier ses pages, son anti-bot ou ses règles d'accès. Le Worker ne garantit donc pas que la récupération automatique restera disponible en permanence. Aucun identifiant de compte EA n'est demandé par cette version.
+
+
+## V7 - correction du roster
+Le parseur utilise directement `data.units[]` de l'API joueur afin d'éviter les faux positifs issus des objets imbriqués.

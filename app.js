@@ -184,16 +184,66 @@ function extractApiMods(json){
   walkObjects(json,o=>{ if(looksLikeMod(o)) out.push(normalizeMod({...o,game_id:o.id||o.uid||o.modId||`api-${i}`},i++)); });
   const seen=new Set(); return out.filter(m=>m && !seen.has(m.game_id) && seen.add(m.game_id));
 }
-function extractApiCharacters(json){
-  const out=[]; let i=0;
-  walkObjects(json,o=>{
-    if(!looksLikeUnit(o)) return;
-    const name=o.name||o.character||o.characterName||o.unitName||o.baseId||o.base_id;
-    if(!name) return;
-    out.push({name,baseId:o.baseId||o.base_id,level:Number(o.level||0),gear:Number(o.gearLevel||o.gear_level||o.gear||0),stars:Number(o.starLevel||o.stars||0),raw:o});
-    i++;
+function unitToCharacter(u, index=0) {
+  const o = u?.data && typeof u.data === 'object' ? u.data : u;
+  if (!o || typeof o !== 'object') return null;
+
+  const baseId = o.base_id ?? o.baseId ?? o.definitionId;
+  const name = o.name ?? o.character ?? o.characterName ?? o.unitName;
+
+  // Un vrai élément de roster SWGOH.GG possède ces champs.
+  // On évite ainsi de prendre pour des personnages les objets
+  // imbriqués (équipement, capacités, catalogue, etc.).
+  const hasRosterFields =
+    baseId &&
+    Number.isFinite(Number(o.level)) &&
+    Number.isFinite(Number(o.rarity)) &&
+    (
+      Object.prototype.hasOwnProperty.call(o, 'gear_level') ||
+      Object.prototype.hasOwnProperty.call(o, 'gearLevel') ||
+      Object.prototype.hasOwnProperty.call(o, 'gear') ||
+      Object.prototype.hasOwnProperty.call(o, 'power') ||
+      Object.prototype.hasOwnProperty.call(o, 'combat_type')
+    );
+
+  if (!hasRosterFields) return null;
+
+  return {
+    name: name || baseId,
+    baseId,
+    level: Number(o.level || 0),
+    gear: Number(o.gear_level ?? o.gearLevel ?? o.gear ?? 0),
+    stars: Number(o.rarity ?? o.starLevel ?? o.stars ?? 0),
+    power: Number(o.power || 0),
+    combatType: Number(o.combat_type ?? o.combatType ?? 1),
+    raw: u
+  };
+}
+
+function extractApiCharacters(json) {
+  // L'endpoint /api/player/<ally>/?format=json expose directement
+  // les unités du joueur dans json.units. On utilise cette liste
+  // plutôt qu'un parcours récursif de tout le JSON.
+  const direct = Array.isArray(json?.units) ? json.units : [];
+  let out = direct.map(unitToCharacter).filter(Boolean);
+
+  // Compatibilité avec d'autres formats éventuels.
+  if (!out.length) {
+    const candidates = [];
+    walkObjects(json, o => {
+      const unit = unitToCharacter(o);
+      if (unit) candidates.push(unit);
+    });
+    out = candidates;
+  }
+
+  const seen = new Set();
+  return out.filter(x => {
+    const key = `${x.baseId || ''}|${x.name || ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
-  const seen=new Set(); return out.filter(x=>!seen.has(`${x.baseId||''}|${x.name}`)&&seen.add(`${x.baseId||''}|${x.name}`));
 }
 async function fetchJSON(url){
   const r=await fetch(url,{headers:{'Accept':'application/json,text/plain,*/*'}});
@@ -233,6 +283,9 @@ async function loadRemotePlayer(){
     const rosterMatch=bodyText.match(/Roster\s+([0-9,]+)\s+units/i); const modsMatch=bodyText.match(/([0-9,]+)\s+Mods/i);
     log(`Profil SWGOH.GG trouvé : ${title}.`); if(rosterMatch)log(`Roster annoncé : ${rosterMatch[1]} unités.`); if(modsMatch)log(`Mods annoncés : ${modsMatch[1]}.`);
     log('Lecture du roster…');
+    if (Array.isArray(apiChars) && apiChars.length) {
+      log(`Unités directes API retenues : ${apiChars.length}.`);
+    }
     // L'API SWGOH.GG peut renvoyer le catalogue complet des unités,
     // avec des unités non possédées à niveau/étoiles/gear = 0.
     // Le profil public annonce le nombre d'unités réellement présentes
