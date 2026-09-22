@@ -552,6 +552,7 @@ function renderV18SpeedRecap(containerId='v18SpeedRecap'){
   }));
 }
 function showPage(page){
+  document.body.dataset.page=page;
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page));
   if(page==='mods-analysis') renderModsAnalysis();

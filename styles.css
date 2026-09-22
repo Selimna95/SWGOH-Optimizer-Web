@@ -163,3 +163,26 @@ main{padding:22px 24px 42px;max-width:1800px}.hero{position:relative;overflow:hi
 .v18-dashboard-speed,.log{border-radius:11px}.v18-dashboard-speed .v18-note{color:#6d94a8}.log pre{color:#79a8bc;background:rgba(1,9,16,.5);border-radius:8px;padding:12px;border:1px solid rgba(42,124,160,.18)}
 @media(max-width:1250px){.dashboard-kpis{grid-template-columns:repeat(2,1fr)}.dashboard-account-panel .summary-grid{grid-template-columns:repeat(3,1fr)}.top-status-group .top-pill:nth-child(3){display:none}}
 @media(max-width:800px){.topbar{height:auto;min-height:68px;padding:9px 12px;gap:8px}.top-brand .brand,.top-brand .accent{font-size:17px}.brand-mark{width:39px;height:39px}.top-status-group{overflow:auto}.top-pill{white-space:nowrap}.sidebar{position:static;height:auto}.dashboard-kpis{grid-template-columns:1fr}.dashboard-account-panel .summary-grid{grid-template-columns:1fr 1fr}.top-tools{display:none}}
+
+/* V28 — fonds sci-fi génériques par écran + analyse personnage plus lisible */
+body{position:relative;background-color:#020711;background-repeat:no-repeat;background-position:center top;background-size:cover;background-attachment:fixed}
+body:after{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background-position:center top;background-size:cover;background-repeat:no-repeat;opacity:.46;filter:saturate(.9) contrast(1.04)}
+body[data-page="dashboard"]:after{background-image:url('assets/backgrounds/dashboard.svg')}
+body[data-page="data"]:after{background-image:url('assets/backgrounds/data.svg')}
+body[data-page="mods-analysis"]:after{background-image:url('assets/backgrounds/mods.svg')}
+body[data-page="optimizer"]:after{background-image:url('assets/backgrounds/optimizer.svg')}
+body[data-page="help"]:after{background-image:url('assets/backgrounds/data.svg')}
+.content{position:relative}
+.page{position:relative}
+.page:before{content:"";position:absolute;inset:-20px -24px -42px;z-index:-1;pointer-events:none;background:radial-gradient(circle at 50% 0,rgba(8,67,105,.16),transparent 55%)}
+/* Première colonne de l'audit : personnage toujours immédiatement identifiable */
+#selectionTable th:first-child,#selectionTable td:first-child{min-width:235px;position:sticky;left:0;z-index:2}
+#selectionTable th:first-child{z-index:4;background:#071c2d}
+#selectionTable td:first-child{background:linear-gradient(90deg,rgba(5,22,36,.98),rgba(5,20,33,.94));box-shadow:8px 0 14px rgba(0,0,0,.12)}
+#selectionTable td:first-child strong{display:block;color:#effbff;font-size:12px;letter-spacing:.01em}
+#selectionTable td:first-child small{display:block;margin-top:4px;color:#65b7d6;font-size:9px;line-height:1.35}
+#selectionTable tbody tr:hover td:first-child{background:linear-gradient(90deg,rgba(8,43,66,.98),rgba(6,28,45,.96))}
+.analysis-header{position:relative;overflow:hidden}
+.analysis-header:after{content:"";position:absolute;right:-120px;top:-80px;width:460px;height:220px;background:radial-gradient(circle,rgba(25,191,255,.18),transparent 68%);pointer-events:none}
+.analysis-tabs{position:relative;z-index:2}
+@media(max-width:900px){#selectionTable th:first-child,#selectionTable td:first-child{position:static;min-width:190px}}
