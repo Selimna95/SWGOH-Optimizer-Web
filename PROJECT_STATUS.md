@@ -1,34 +1,28 @@
-# État du projet — V8
+# SWGOH Optimizer Web — V9
 
-Date de préparation : 22 septembre 2026.
+## État actuel
 
-## Vérification fonctionnelle réalisée
+- GitHub Pages : frontend statique
+- Pyodide : moteur Python dans le navigateur
+- Cloudflare Worker : relais vers SWGOH.GG
+- Ally Code testé : 853-277-661
+- Profil public : Selimna
+- Mods récupérés : 1992
+- Unités possédées API : 406 au total, incluant personnages et vaisseaux
+- Les unités sont désormais séparées par `combat_type` :
+  - `1` = personnages
+  - `2` = vaisseaux
+- Le compteur PERSONNAGES n'inclut plus les vaisseaux.
+- Un compteur VAISSEAUX séparé est affiché.
+- L'optimiseur reçoit uniquement les personnages.
 
-Avec l’Ally Code `853-277-661` :
+## Important
 
-```text
-API : 406 personnages candidats, 1992 mods candidats.
-Profil SWGOH.GG trouvé : Selimna · Profile.
-Roster annoncé : 406 unités.
-Lecture du roster…
-Unités directes API retenues : 406.
-406 personnages récupérés (406 candidats API, filtrés sur les unités possédées).
-TERMINÉ : 406 personnages, 1992 mods exploitables.
-```
+Le nombre « 406 unités » annoncé par le profil SWGOH.GG ne doit pas être présenté comme « 406 personnages ». Le projet conserve les vaisseaux séparément afin de pouvoir exploiter leurs données plus tard.
 
-## Ce qui est inclus
+## Infrastructure
 
-- parseur API roster corrigé
-- relais Cloudflare
-- récupération des mods
-- moteur Python Kyber
-- interface HUD
-- import JSON de secours
-- Pyodide 314.0.7
+Worker Cloudflare utilisé :
+`https://swgoh-optimizer-relay.lorg75017.workers.dev`
 
-## Ce qui reste à développer
-
-- présentation détaillée des 406 personnages
-- présentation détaillée des 1992 mods
-- reprise progressive des écrans/filtres avancés de la version Windows
-- portage des fonctionnalités GAC et autres modules Windows lorsque leur équivalent navigateur sera défini
+Ne pas modifier le Worker tant que le chargement API fonctionne.

@@ -34,6 +34,22 @@ function extractCharacters(data) {
   const chars = data?.characters || data?.roster || data?.units || [];
   return Array.isArray(chars) ? chars.map(x => typeof x === 'string' ? {name:x} : x).filter(Boolean) : [];
 }
+function rosterUnitType(u) {
+  const t = Number(u?.combatType ?? u?.combat_type ?? 1);
+  return t === 2 ? 'ship' : 'character';
+}
+function splitRosterUnits(units) {
+  const characters = [], ships = [];
+  for (const u of Array.isArray(units) ? units : []) {
+    (rosterUnitType(u) === 'ship' ? ships : characters).push(u);
+  }
+  return {characters, ships};
+}
+function updateRosterCounts(characters, ships) {
+  $('charsCount').textContent = Array.isArray(characters) ? characters.length : 0;
+  if ($('shipsCount')) $('shipsCount').textContent = Array.isArray(ships) ? ships.length : 0;
+}
+
 function fillCharacters(names) {
   const select=$('character'); select.innerHTML='';
   const available=[];
@@ -297,20 +313,17 @@ async function loadRemotePlayer(){
     );
 
     let chars=ownedApiChars;
-    if(!chars.length) chars=parseCharacters(parseHTML(await fetchText(`${base}/characters/`)));
-
-    // Si le nombre annoncé par le profil est disponible et que l'API
-    // renvoie encore trop d'entrées, on garde les unités ayant réellement
-    // des données de progression avant tout.
-    const announcedCount = rosterMatch ? Number(String(rosterMatch[1]).replace(/,/g,'')) : 0;
-    if(announcedCount && chars.length > announcedCount){
-      const progressed = chars.filter(c =>
-        Number(c.level || 0) > 0 || Number(c.gear || 0) > 0 || Number(c.stars || 0) > 0
-      );
-      if(progressed.length >= announcedCount) chars = progressed.slice(0, announcedCount);
+    let ships=[];
+    if(!chars.length) {
+      chars=parseCharacters(parseHTML(await fetchText(`${base}/characters/`)));
+    } else {
+      const split=splitRosterUnits(chars);
+      chars=split.characters;
+      ships=split.ships;
+      log(`Unités possédées : ${chars.length} personnages + ${ships.length} vaisseaux.`);
     }
 
-    log(`${chars.length} personnages récupérés (${apiChars.length} candidats API, filtrés sur les unités possédées).`);
+    log(`${chars.length} personnages récupérés (${apiChars.length} unités candidates API, filtrées sur les unités possédées).`);
     let allMods=apiMods;
     if(!allMods.length){
       log('Lecture des mods (pages publiques)…');
@@ -320,9 +333,9 @@ async function loadRemotePlayer(){
       }
     }
     const seen=new Set(); mods=allMods.filter(m=>{const id=m.game_id;if(seen.has(id))return false;seen.add(id);return true;});
-    currentData={allyCode,name:title,characters:chars,mods}; $('modsCount').textContent=mods.length;$('charsCount').textContent=chars.length;fillCharacters(chars);
-    $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nMods: ${mods.length}`;
-    log(`TERMINÉ : ${chars.length} personnages, ${mods.length} mods exploitables.`); if(!mods.length)log('Aucun mod lisible. Utilise l’import JSON en attendant.');
+    currentData={allyCode,name:title,characters:chars,ships,mods}; updateRosterCounts(chars,ships); fillCharacters(chars);
+    $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nMods: ${mods.length}`;
+    log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${mods.length} mods exploitables.`); if(!mods.length)log('Aucun mod lisible. Utilise l’import JSON en attendant.');
     document.querySelector('[data-page="optimizer"]').click();
   }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, SWGOH.GG peut bloquer la requête côté relais. Dans ce cas, utilise l’import JSON.');}
   finally{$('loadPlayer').disabled=false;$('loadPlayer').textContent='CHARGER MON PROFIL';}
@@ -334,9 +347,9 @@ async function boot(){
   try{setRuntime('CHARGEMENT PYTHON…');pyodide=await loadPyodide();const optimizer=await fetch('python/optimizer.py').then(r=>r.text());const kyber=await fetch('python/kyber_profiles.json').then(r=>r.text());pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);pyodide.FS.writeFile('/home/pyodide/kyber_profiles.json',kyber);pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer, json`);profiles=JSON.parse(kyber);optimizerReady=true;$('pythonState').textContent='OK';setRuntime('PYTHON WEBASSEMBLY PRÊT',true);log('Moteur Python chargé dans le navigateur.');}
   catch(e){setRuntime('ERREUR PYTHON');$('pythonState').textContent='ERREUR';log('Erreur Python: '+e);}
 }
-$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const chars=extractCharacters(currentData);$('modsCount').textContent=mods.length;$('charsCount').textContent=chars.length;fillCharacters(chars);$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${chars.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);document.querySelector('[data-page="optimizer"]').click();}catch(e){log('JSON invalide: '+e.message);}});
+$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);const chars=split.characters;const ships=split.ships;updateRosterCounts(chars,ships);fillCharacters(chars);$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${chars.length}\nVaisseaux détectés: ${ships.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);document.querySelector('[data-page="optimizer"]').click();}catch(e){log('JSON invalide: '+e.message);}});
 $('runOptimizer').addEventListener('click',()=>{$('optimizerError').textContent='';$('results').innerHTML='Calcul…';if(!optimizerReady||!mods.length){$('optimizerError').textContent='Python ou mods non disponibles.';return;}const character=$('character').value;const key=Object.keys(profiles).find(k=>slug(profiles[k].character)===slug(character));const profile=key?profiles[key]:null;if(!profile){$('optimizerError').textContent=`Profil Kyber non trouvé pour « ${character} ».`;$('results').innerHTML='';return;}try{pyodide.globals.set('mods_json',JSON.stringify(mods));pyodide.globals.set('profile_json',JSON.stringify(profile));pyodide.globals.set('n_builds',Math.min(50,Math.max(1,Number($('buildCount').value)||10)));pyodide.globals.set('limit_slot',Math.min(150,Math.max(5,Number($('limitPerSlot').value)||80)));const raw=pyodide.runPython(`import json\nmods=json.loads(mods_json)\nprofile=json.loads(profile_json)\nr=optimizer.find_top_builds(mods, number_of_builds=n_builds, limit_per_slot=limit_slot, kyber=profile, character=${JSON.stringify(character)})\njson.dumps(r)`).toJs();renderResults(JSON.parse(raw));}catch(e){$('optimizerError').textContent=String(e);$('results').innerHTML='';}});
 function renderResults(data){if(!data.length){$('results').textContent='Aucun build.';return;}$('results').innerHTML=data.map((r,i)=>`<article class="result"><div class="rank">#${i+1}</div><div><strong>Score ${Number(r.score).toFixed(2)}</strong><div class="stats">${Object.entries(r.stats||{}).map(([k,v])=>`${k}: ${typeof v==='number'?Number(v).toFixed(1):v}`).join(' · ')}</div><div class="mods">${(r.build||[]).map(m=>`${m.slot||'?'} / ${m.set_name||m.set||'?'} / ${m.primary_stat||'?'} ${m.primary_value??''}`).join('<br>')}</div></div></article>`).join('');}
-$('clearData').addEventListener('click',()=>{currentData=null;mods=[];$('modsCount').textContent='0';$('charsCount').textContent='0';fillCharacters([]);$('results').textContent='Importez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';$('log').textContent='Données effacées.';});
+$('clearData').addEventListener('click',()=>{currentData=null;mods=[];$('modsCount').textContent='0';$('charsCount').textContent='0';if($('shipsCount'))$('shipsCount').textContent='0';fillCharacters([]);$('results').textContent='Importez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';$('log').textContent='Données effacées.';});
 document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));btn.classList.add('active');$(btn.dataset.page).classList.add('active');}));
 boot();
