@@ -228,7 +228,7 @@ function extractApiMods(json){
   const seen=new Set();
   return out.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
 }
-function unitToCharacter(u,index=0){const o=u?.data&&typeof u.data==='object'?u.data:u;if(!o||typeof o!=='object')return null;const baseId=o.base_id??o.baseId??o.definitionId;const name=o.name??o.character??o.characterName??o.unitName;const hasRosterFields=baseId&&Number.isFinite(Number(o.level))&&Number.isFinite(Number(o.rarity))&&(Object.prototype.hasOwnProperty.call(o,'gear_level')||Object.prototype.hasOwnProperty.call(o,'gearLevel')||Object.prototype.hasOwnProperty.call(o,'gear')||Object.prototype.hasOwnProperty.call(o,'power')||Object.prototype.hasOwnProperty.call(o,'combat_type'));if(!hasRosterFields)return null;return{name:name||baseId,baseId,level:Number(o.level||0),gear:Number(o.gear_level??o.gearLevel??o.gear??0),stars:Number(o.rarity??o.starLevel??o.stars??0),power:Number(o.power||0),combatType:Number(o.combat_type??o.combatType??1),raw:u};}
+function unitToCharacter(u,index=0){const o=u?.data&&typeof u.data==='object'?u.data:u;if(!o||typeof o!=='object')return null;const baseId=o.base_id??o.baseId??o.definitionId;const name=o.name??o.character??o.characterName??o.unitName;const hasRosterFields=baseId&&Number.isFinite(Number(o.level))&&Number.isFinite(Number(o.rarity))&&(Object.prototype.hasOwnProperty.call(o,'gear_level')||Object.prototype.hasOwnProperty.call(o,'gearLevel')||Object.prototype.hasOwnProperty.call(o,'gear')||Object.prototype.hasOwnProperty.call(o,'power')||Object.prototype.hasOwnProperty.call(o,'combat_type'));if(!hasRosterFields)return null;const relicTierRaw=o.relic_tier??o.relicTier??o.relic_level??o.relicLevel??o.relic?.tier??o.relic?.relicTier??0;return{name:name||baseId,baseId,level:Number(o.level||0),gear:Number(o.gear_level??o.gearLevel??o.gear??0),stars:Number(o.rarity??o.starLevel??o.stars??0),power:Number(o.power||0),combatType:Number(o.combat_type??o.combatType??1),relic_tier:Number(relicTierRaw)||0,raw:u};}
 function extractApiCharacters(json){const direct=Array.isArray(json?.units)?json.units:[];let out=direct.map(unitToCharacter).filter(Boolean);if(!out.length){const candidates=[];walkObjects(json,o=>{const unit=unitToCharacter(o);if(unit)candidates.push(unit);});out=candidates;}const seen=new Set();return out.filter(x=>{const key=`${x.baseId||''}|${x.name||''}`;if(seen.has(key))return false;seen.add(key);return true;});}
 async function fetchJSON(url){const r=await fetch(url,{headers:{'Accept':'application/json,text/plain,*/*'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);return JSON.parse(await r.text());}
 
@@ -358,7 +358,7 @@ function renderDataTable(){
       return JSON.stringify(c).toLowerCase().includes(q);
     }).sort((a,b)=>String(a.name||a.baseId).localeCompare(String(b.name||b.baseId),'fr'));
     $('dataTableMeta').textContent=`${rows.length} personnage(s) affiché(s) sur ${rosterCharacters.length}`;
-    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Personnage</th><th>Niveau</th><th>Gear</th><th>Relic</th><th>Étoiles</th><th>Puissance</th><th>Analyse mods</th></tr></thead><tbody>${rows.map(c=>{const relic=Number(c.relic_tier??c.relicTier??0)||0;return `<tr><td><strong>${esc(c.name||c.character||c.baseId)}</strong></td><td>${num(c.level)}</td><td>${num(c.gear||c.gear_level)}</td><td>${relic?'R'+num(relic):'—'}</td><td>${num(c.stars||c.rarity)}★</td><td>${num(c.power||c.power_rating||c.powerRating)}</td><td><button type="button" class="detail-mods-btn data-action-btn" data-data-analysis="${esc(characterKey(c))}">VOIR L’ANALYSE</button></td></tr>`}).join('')}</tbody></table>`:'<div class="empty">Aucun personnage ne correspond aux filtres.</div>';
+    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Personnage</th><th>Niveau</th><th>Gear</th><th>Relic</th><th>Étoiles</th><th>Puissance</th><th>Analyse mods</th></tr></thead><tbody>${rows.map(c=>{const relic=relicLevelFromTier(c.relic_tier??c.relicTier??0);return `<tr><td><strong>${esc(c.name||c.character||c.baseId)}</strong></td><td>${num(c.level)}</td><td>${num(c.gear||c.gear_level)}</td><td>${relic?'R'+num(relic):'—'}</td><td>${num(c.stars||c.rarity)}★</td><td>${num(c.power||c.power_rating||c.powerRating)}</td><td><button type="button" class="detail-mods-btn data-action-btn" data-data-analysis="${esc(characterKey(c))}">VOIR L’ANALYSE</button></td></tr>`}).join('')}</tbody></table>`:'<div class="empty">Aucun personnage ne correspond aux filtres.</div>';
     $('dataTable').querySelectorAll('[data-data-analysis]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();openCharacterModsAnalysis(btn.dataset.dataAnalysis);}));
   } else if(currentDataset==='ships'){
     rows=rosterShips.filter(c=>JSON.stringify(c).toLowerCase().includes(q)).sort((a,b)=>String(a.name||a.baseId).localeCompare(String(b.name||b.baseId),'fr'));
@@ -599,6 +599,7 @@ function characterAlignmentFromFactions(c){
   const hasD=fs.some(f=>['Sith','Sith Empire','Empire','Imperial Trooper','First Order','Separatist','Nightsister','Inquisitorius','Geonosian'].includes(f));
   if(hasL&&!hasD)return 'LIGHT'; if(hasD&&!hasL)return 'DARK'; return 'MIXED';
 }
+function relicLevelFromTier(value){const n=Number(value||0);if(!Number.isFinite(n)||n<=0)return 0;return n>=2?n-1:n;}
 function auditRows(){
   const faction=analysisFaction||'Toutes les factions';
   let rows=charactersInFaction(faction).filter(c=>rosterUnitType(c)!=='ship').map(c=>{
@@ -606,9 +607,9 @@ function auditRows(){
     const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0);
     const primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
     const speedCats=new Set(); let speedCount=0;
-    for(const m of cm){const x=modSpeedMetrics(m); if(x.primary)speedCats.add('primary_speed'); else speedCats.add(speedCategory(x.secondary)); if((x.secondary||0)>0)speedCount++;}
+    for(const m of cm){const x=modSpeedMetrics(m); if(x.primary)speedCats.add('primary_speed'); else speedCats.add(speedCategory(x.secondary)); if(x.primary || (x.secondary||0)>0)speedCount++;}
     const p=optimizerProfileForCharacter(c)||{};
-    const relic=Number(c.relic_tier??c.relicTier??p.relic_tier??0)||0;
+    const relicTier=Number(c.relic_tier??c.relicTier??p.relic_tier??0)||0; const relic=relicLevelFromTier(relicTier);
     const priority=(cm.length===0?100000:cm.length<6?50000:0)+Math.max(0,70-st.totalSpeed)*100+relic*2;
     return {character:c,mods:cm,modCount:cm.length,secSpeed,primarySpeed,totalSpeed:st.totalSpeed,status:st.status,class:st.class,best:cm.reduce((mx,m)=>Math.max(mx,modSpeedMetrics(m).secondary||0),0),factions:factionMap[characterKey(c)]||[],relic,speedCount,speedCats,priority,side:characterAlignmentFromFactions(c)};
   });
@@ -678,7 +679,7 @@ function renderCharacterReport(){
   const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0);
   const primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
   const totalSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0)+modPrimarySpeed(m),0)+Number(st.profile.base_stats?.Speed||0);
-  const speedCount=cm.filter(m=>(modSpeedMetrics(m).secondary||0)>0).length;
+  const speedCount=cm.filter(m=>{const x=modSpeedMetrics(m);return x.primary||(x.secondary||0)>0;}).length;
   const factions=factionMap[characterKey(c)]||[];
   const order=['Square','Arrow','Diamond','Triangle','Circle','Cross'];
   const bySlot=new Map(cm.map(m=>[m.slot,m]));
@@ -687,7 +688,7 @@ function renderCharacterReport(){
     <div class="report-toolbar"><button class="analysis-back" id="backToCharacterSelection">← PERSONNAGE / FACTION</button><button class="detail-mods-btn" id="reportInventoryBtn">VOIR LES MODS DANS L’INVENTAIRE</button></div>
     <div class="report-header">
       <div><span class="tag">RAPPORT PERSONNAGE</span><h1>${esc(c.name||c.baseId)}</h1><p>${esc(factions.join(' · ')||'Faction non renseignée')}</p></div>
-      <div class="report-identity"><div><span>NIVEAU</span><b>${num(c.level||p.level)}</b></div><div><span>GEAR</span><b>${num(c.gear||c.gear_level||p.gear_level)}</b></div><div><span>RELIC</span><b>${Number(c.relic_tier??c.relicTier??p.relic_tier??0)?'R'+num(c.relic_tier??c.relicTier??p.relic_tier):'—'}</b></div><div><span>ÉTOILES</span><b>${num(c.stars||c.rarity||p.rarity)}★</b></div><div><span>PUISSANCE</span><b>${num(c.power||c.power_rating||c.powerRating)}</b></div></div>
+      <div class="report-identity"><div><span>NIVEAU</span><b>${num(c.level||p.level)}</b></div><div><span>GEAR</span><b>${num(c.gear||c.gear_level||p.gear_level)}</b></div><div><span>RELIC</span><b>${relicLevelFromTier(c.relic_tier??c.relicTier??p.relic_tier??0)?'R'+num(relicLevelFromTier(c.relic_tier??c.relicTier??p.relic_tier)):'—'}</b></div><div><span>ÉTOILES</span><b>${num(c.stars||c.rarity||p.rarity)}★</b></div><div><span>PUISSANCE</span><b>${num(c.power||c.power_rating||c.powerRating)}</b></div></div>
     </div>
     <div class="report-kpis"><div><span>MODS</span><strong>${cm.length}/6</strong></div><div><span>SPEED TOTALE DES MODS</span><strong>${num(totalSpeed)}</strong></div><div><span>SPEED SECONDAIRE</span><strong>+${num(secSpeed)}</strong></div><div><span>PRIMAIRE SPEED</span><strong>${primarySpeed?'+'+num(primarySpeed):'NON'}</strong></div><div><span>MODS AVEC SPEED</span><strong>${speedCount}/6</strong></div><div><span>STATUT V176</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
     <div class="report-section"><div class="report-section-title">STATISTIQUES DU PERSONNAGE</div><div class="report-stats-wrap"><table class="v18-table report-stats"><thead><tr><th>Statistique</th><th>Base</th><th>Actuelle</th><th>Apport mods</th></tr></thead><tbody>${st.rows.map(r=>`<tr><td>${esc(r.label)}</td><td>${formatReportStat(r.base,r.label)}</td><td>${formatReportStat(r.current,r.label)}</td><td>${formatReportStat(r.diff,r.label)}</td></tr>`).join('')}</tbody></table></div></div>
@@ -709,7 +710,7 @@ function renderCharacterDetail(){
   if(!c){box.innerHTML='<div class="empty">Sélectionnez un personnage.</div>';return;}
   const cm=getCharacterMods(c), s=v176ModStatus(cm);
   const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0), primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
-  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">PERSONNAGE</span><h2>${esc(c.name||c.baseId)}</h2><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${num(c.stars)}★ · Puissance ${num(c.power)} · Factions : ${esc((factionMap[characterKey(c)]||[]).join(' · ')||'—')}</p></div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods équipés</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
+  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">PERSONNAGE</span><h2>${esc(c.name||c.baseId)}</h2><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${relicLevelFromTier(c.relic_tier??c.relicTier??0)?'R'+num(relicLevelFromTier(c.relic_tier??c.relicTier)):'Sans Relic'} · ${num(c.stars)}★ · Puissance ${num(c.power)} · Factions : ${esc((factionMap[characterKey(c)]||[]).join(' · ')||'—')}</p></div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods équipés</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
   <div class="character-detail-actions"><strong>DÉTAIL DES 6 MODS ÉQUIPÉS</strong><button type="button" class="detail-mods-btn" id="openCharacterInventory">OUVRIR DANS L’INVENTAIRE</button></div>
   <div class="mod-detail-grid">${[...cm,...Array(Math.max(0,6-cm.length)).fill(null)].slice(0,6).map((m,i)=>m?renderModCard(m):`<div class="mod-card empty-slot"><strong>${['Square','Arrow','Diamond','Triangle','Circle','Cross'][i]}</strong><span>MOD MANQUANT</span></div>`).join('')}</div>`;
   $('openCharacterInventory')?.addEventListener('click',()=>openCharacterInventory(c));

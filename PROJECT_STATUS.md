@@ -1,6 +1,6 @@
-# SWGOH Optimizer Web — V21
+# SWGOH Optimizer Web — V23
 
-## V21 — Analyse Mods V176 portée dans le projet Web
+## V23 — Analyse Mods V176 portée dans le projet Web
 
 Cette version conserve la base V17 (SWGOH.GG → Cloudflare Worker → données du roster → Pyodide/Python → optimisation dans un Web Worker) et ajoute une migration Web de la partie **analyse des mods** du projet Windows V176.
 
@@ -55,6 +55,6 @@ Les règles portées proviennent notamment de :
 - Calcul Python dans `optimizer-worker.mjs`.
 - `optimizer_profiles.json` pour les statistiques du roster.
 
-## Limite volontaire V21
+## Limite volontaire V23
 
 Le mapping de factions Web utilise d'abord les catégories éventuellement présentes dans les données du roster, puis un mapping local de compatibilité V176. Il sera renforcé par le Game Data officiel dans une prochaine étape si nécessaire.
