@@ -21,13 +21,15 @@ except Exception:
 SLOTS = ("Square", "Arrow", "Diamond", "Triangle", "Circle", "Cross")
 
 SLOT_ALIASES = {
+    # SWGOH.GG / Comlink slot ids: 2=Square, 3=Arrow, 4=Diamond,
+    # 5=Triangle, 6=Circle, 7=Cross. 1 is kept as a legacy Square alias.
     "1": "Square",
-    "2": "Arrow",
-    "3": "Diamond",
-    "4": "Triangle",
-    "5": "Circle",
-    "6": "Cross",
-    "7": "Square",
+    "2": "Square",
+    "3": "Arrow",
+    "4": "Diamond",
+    "5": "Triangle",
+    "6": "Circle",
+    "7": "Cross",
     "square": "Square",
     "arrow": "Arrow",
     "diamond": "Diamond",
