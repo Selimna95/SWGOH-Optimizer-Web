@@ -233,9 +233,31 @@ async function loadRemotePlayer(){
     const rosterMatch=bodyText.match(/Roster\s+([0-9,]+)\s+units/i); const modsMatch=bodyText.match(/([0-9,]+)\s+Mods/i);
     log(`Profil SWGOH.GG trouvé : ${title}.`); if(rosterMatch)log(`Roster annoncé : ${rosterMatch[1]} unités.`); if(modsMatch)log(`Mods annoncés : ${modsMatch[1]}.`);
     log('Lecture du roster…');
-    let chars=apiChars;
+    // L'API SWGOH.GG peut renvoyer le catalogue complet des unités,
+    // avec des unités non possédées à niveau/étoiles/gear = 0.
+    // Le profil public annonce le nombre d'unités réellement présentes
+    // dans le roster : on filtre donc les entrées sans progression.
+    const ownedApiChars = apiChars.filter(c =>
+      Number(c.level || 0) > 0 ||
+      Number(c.gear || 0) > 0 ||
+      Number(c.stars || 0) > 0
+    );
+
+    let chars=ownedApiChars;
     if(!chars.length) chars=parseCharacters(parseHTML(await fetchText(`${base}/characters/`)));
-    log(`${chars.length} personnages récupérés.`);
+
+    // Si le nombre annoncé par le profil est disponible et que l'API
+    // renvoie encore trop d'entrées, on garde les unités ayant réellement
+    // des données de progression avant tout.
+    const announcedCount = rosterMatch ? Number(String(rosterMatch[1]).replace(/,/g,'')) : 0;
+    if(announcedCount && chars.length > announcedCount){
+      const progressed = chars.filter(c =>
+        Number(c.level || 0) > 0 || Number(c.gear || 0) > 0 || Number(c.stars || 0) > 0
+      );
+      if(progressed.length >= announcedCount) chars = progressed.slice(0, announcedCount);
+    }
+
+    log(`${chars.length} personnages récupérés (${apiChars.length} candidats API, filtrés sur les unités possédées).`);
     let allMods=apiMods;
     if(!allMods.length){
       log('Lecture des mods (pages publiques)…');
