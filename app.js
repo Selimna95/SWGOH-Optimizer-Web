@@ -17,18 +17,64 @@ function slug(s) { return String(s||'').toLowerCase().normalize('NFD').replace(/
 function esc(value) { return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function num(value, digits=0) { const n=Number(value); return Number.isFinite(n) ? n.toLocaleString('fr-FR',{maximumFractionDigits:digits}) : '0'; }
 
+function statNameFromAny(value) {
+  if (value == null) return '';
+  if (typeof value === 'string' || typeof value === 'number') return String(value).trim();
+  if (typeof value !== 'object') return '';
+  return String(value.name ?? value.stat ?? value.unitStat ?? value.unitStatId ?? value.type ?? '').trim();
+}
+function statValueFromAny(value) {
+  if (value == null) return 0;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const text=value.trim();
+    const m=text.match(/[-+]?\d+(?:[.,]\d+)?/);
+    return m ? Number(m[0].replace(',','.')) : 0;
+  }
+  if (typeof value === 'object') {
+    if (value.display_value != null) return statValueFromAny(value.display_value);
+    if (value.displayValue != null) return statValueFromAny(value.displayValue);
+    if (value.value != null && typeof value.value !== 'object') return statValueFromAny(value.value);
+    if (value.amount != null) return statValueFromAny(value.amount);
+    if (value.unscaledDecimalValue != null) return Number(value.unscaledDecimalValue) / 100000000;
+    if (value.unscaled_decimal_value != null) return Number(value.unscaled_decimal_value) / 100000000;
+  }
+  return 0;
+}
+function statObjectFromAny(value) {
+  if (value == null) return {stat:'', value:0};
+  if (typeof value === 'object') {
+    const nested = value.stat && typeof value.stat === 'object' ? value.stat : value;
+    const display = nested.display_value ?? nested.displayValue ?? value.display_value ?? value.displayValue;
+    const stat = statNameFromAny(nested.name ?? nested.stat ?? nested.unitStat ?? nested.unitStatId ?? value.name ?? value.stat ?? value.unitStat ?? value.unitStatId);
+    const val = display != null ? statValueFromAny(display) : statValueFromAny(nested.value ?? nested.amount ?? nested.unscaledDecimalValue ?? nested.unscaled_decimal_value ?? value.value ?? value.amount);
+    return {stat, value:val, display_value:display ?? ''};
+  }
+  return {stat:String(value).trim(), value:0, display_value:''};
+}
 function normalizeMod(m, index=0) {
   if (!m || typeof m !== 'object') return null;
   const out = {...m};
-  out.game_id = out.game_id ?? out.id ?? out.modId ?? `web-${index}`;
-  out.slot = out.slot ?? out.slot_id ?? out.slotId ?? out.mod_slot ?? out.modSlot;
-  out.set_name = out.set_name ?? out.set ?? out.setName ?? out.setId ?? out.modSetId;
-  out.primary_stat = out.primary_stat ?? out.primaryStat ?? out.primary?.name ?? out.primary?.stat;
-  out.primary_value = out.primary_value ?? out.primaryValue ?? out.primary?.value ?? 0;
-  const secs = out.secondary_stats ?? out.secondaryStats ?? out.secondary ?? [];
-  if (Array.isArray(secs)) secs.slice(0,4).forEach((s,i)=>{
-    if (typeof s === 'object') { out[`secondary_${i+1}_stat`] = s.stat ?? s.name; out[`secondary_${i+1}_value`] = s.value ?? s.amount ?? 0; }
+  out.game_id = out.game_id ?? out.id ?? out.modId ?? out.uid ?? `web-${index}`;
+  out.slot = out.slot ?? out.slot_id ?? out.slotId ?? out.mod_slot ?? out.modSlot ?? out.shape;
+  out.set_name = out.set_name ?? out.set ?? out.setName ?? out.setId ?? out.modSetId ?? out.mod_set_id;
+  if (out.set_name && typeof out.set_name === 'object') out.set_name = out.set_name.name ?? out.set_name.id ?? out.set_name.setId ?? out.set_name.modSetId;
+
+  const primaryRaw = out.primary_stat ?? out.primaryStat ?? out.primary ?? out.primaryStatValue;
+  const primary = statObjectFromAny(primaryRaw);
+  out.primary_stat = primary.stat || (typeof out.primary_stat === 'string' ? out.primary_stat : '');
+  out.primary_value = primary.display_value ? primary.value : statValueFromAny(out.primary_value ?? out.primaryValue ?? primaryRaw?.value ?? primaryRaw?.amount ?? 0);
+
+  const secs = out.secondary_stats ?? out.secondaryStats ?? out.secondaryStat ?? out.secondary ?? [];
+  if (Array.isArray(secs)) secs.slice(0,4).forEach((raw,i)=>{
+    const s=statObjectFromAny(raw);
+    out[`secondary_${i+1}_stat`] = s.stat;
+    out[`secondary_${i+1}_value`] = s.display_value ? s.value : statValueFromAny(raw?.value ?? raw?.amount ?? raw?.unscaledDecimalValue ?? raw?.unscaled_decimal_value ?? s.value);
   });
+
+  out.level = Number(out.level ?? 0);
+  out.rarity = Number(out.rarity ?? out.pips ?? 0);
+  out.character = out.character ?? out.characterName ?? out.equippedTo ?? out.equipped_to ?? out.usingIn ?? '';
   return out;
 }
 function extractMods(data) {
@@ -106,9 +152,25 @@ function parseModsPage(doc,page){
   return result.filter(Boolean);
 }
 function parseCharacters(doc){const result=[],nodes=[...doc.querySelectorAll('.collection-char-list .collection-char, .collection-char, [class*="collection-char"]')],seen=new Set();for(const node of nodes){const name=firstText(node,['.collection-char-name-link','[class*="collection-char-name"]','a[href*="/character/"]']);if(!name||seen.has(name))continue;seen.add(name);const level=parseNumberValue(firstText(node,['.char-portrait-full-level','[class*="char-portrait-full-level"]']));let gear=0;const portrait=node.querySelector('.player-char-portrait,[class*="player-char-portrait"]');for(let i=1;i<=13;i++)if(portrait?.classList.contains(`char-portrait-full-gear-t${i}`))gear=i;const stars=[...node.querySelectorAll('.star, [class*="star"]')].filter(x=>!String(x.className).includes('inactive')).length;result.push({name,level,gear,stars});}return result;}
-function looksLikeMod(o){if(!o||typeof o!=='object')return false;const keys=Object.keys(o).map(k=>k.toLowerCase());return(keys.includes('slot')||keys.includes('slot_id')||keys.includes('modslot'))&&(keys.includes('level')||keys.includes('pips')||keys.includes('rarity'))&&(keys.includes('set')||keys.includes('set_id')||keys.includes('setname')||keys.includes('primary')||keys.includes('primary_stat'));}
-function walkObjects(value,fn,seen=new Set()){if(!value||typeof value!=='object'||seen.has(value))return;seen.add(value);fn(value);if(Array.isArray(value))for(const x of value)walkObjects(x,fn,seen);else for(const v of Object.values(value))walkObjects(v,fn,seen);}
-function extractApiMods(json){const out=[];let i=0;walkObjects(json,o=>{if(looksLikeMod(o))out.push(normalizeMod({...o,game_id:o.id||o.uid||o.modId||`api-${i}`},i++));});const seen=new Set();return out.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));}
+function looksLikeMod(o){
+  if(!o||typeof o!=='object')return false;
+  const keys=Object.keys(o).map(k=>k.toLowerCase());
+  return (keys.includes('slot')||keys.includes('slot_id')||keys.includes('modslot')||keys.includes('shape')) &&
+         (keys.includes('level')||keys.includes('pips')||keys.includes('rarity')) &&
+         (keys.includes('set')||keys.includes('set_id')||keys.includes('setname')||keys.includes('setid')||keys.includes('primary')||keys.includes('primary_stat')||keys.includes('primarystat'));
+}
+function extractApiMods(json){
+  const out=[]; let i=0;
+  const visit=(o)=>{ if(!o||typeof o!=='object')return; if(looksLikeMod(o)) out.push(normalizeMod({...o,game_id:o.id||o.uid||o.modId||`api-${i}`},i++)); };
+  // Prefer known mod arrays/containers when present, then fall back to a recursive walk.
+  const known=[];
+  for(const key of ['mods','Mods','data']) if(Array.isArray(json?.[key])) known.push(...json[key]);
+  if(Array.isArray(json?.mods)) known.push(...json.mods);
+  if(known.length) known.forEach(visit);
+  if(!out.length) walkObjects(json,visit);
+  const seen=new Set();
+  return out.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
+}
 function unitToCharacter(u,index=0){const o=u?.data&&typeof u.data==='object'?u.data:u;if(!o||typeof o!=='object')return null;const baseId=o.base_id??o.baseId??o.definitionId;const name=o.name??o.character??o.characterName??o.unitName;const hasRosterFields=baseId&&Number.isFinite(Number(o.level))&&Number.isFinite(Number(o.rarity))&&(Object.prototype.hasOwnProperty.call(o,'gear_level')||Object.prototype.hasOwnProperty.call(o,'gearLevel')||Object.prototype.hasOwnProperty.call(o,'gear')||Object.prototype.hasOwnProperty.call(o,'power')||Object.prototype.hasOwnProperty.call(o,'combat_type'));if(!hasRosterFields)return null;return{name:name||baseId,baseId,level:Number(o.level||0),gear:Number(o.gear_level??o.gearLevel??o.gear??0),stars:Number(o.rarity??o.starLevel??o.stars??0),power:Number(o.power||0),combatType:Number(o.combat_type??o.combatType??1),raw:u};}
 function extractApiCharacters(json){const direct=Array.isArray(json?.units)?json.units:[];let out=direct.map(unitToCharacter).filter(Boolean);if(!out.length){const candidates=[];walkObjects(json,o=>{const unit=unitToCharacter(o);if(unit)candidates.push(unit);});out=candidates;}const seen=new Set();return out.filter(x=>{const key=`${x.baseId||''}|${x.name||''}`;if(seen.has(key))return false;seen.add(key);return true;});}
 async function fetchJSON(url){const r=await fetch(url,{headers:{'Accept':'application/json,text/plain,*/*'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);return JSON.parse(await r.text());}
@@ -126,8 +188,22 @@ async function loadRemotePlayer(){
     let chars=[],ships=[];
     if(ownedApi.length){const split=splitRosterUnits(ownedApi);chars=split.characters;ships=split.ships;log(`Unités possédées : ${chars.length} personnages + ${ships.length} vaisseaux.`);}else{chars=parseCharacters(parseHTML(await fetchText(`${base}/characters/`)));log(`Fallback HTML : ${chars.length} personnages détectés.`);}
     rosterCharacters=chars;rosterShips=ships;log(`${chars.length} personnages récupérés (${apiChars.length} unités candidates API, filtrées sur les unités possédées).`);
-    let allMods=apiMods;if(!allMods.length){log('Lecture des mods (pages publiques)…');for(let page=1;page<=50;page++){const pageMods=parseModsPage(parseHTML(await fetchText(`${base}/mods/?page=${page}`)),page);if(!pageMods.length)break;allMods.push(...pageMods);log(`Page mods ${page}: ${pageMods.length} mods.`);if(pageMods.length<30)break;}}
-    const seen=new Set();mods=allMods.filter(m=>{const id=m.game_id;if(seen.has(id))return false;seen.add(id);return true;});
+    log('Lecture des mods publics pour décoder les statistiques affichées…');
+    const htmlMods=[];
+    for(let page=1;page<=100;page++){
+      const pageMods=parseModsPage(parseHTML(await fetchText(`${base}/mods/?page=${page}`)),page);
+      if(!pageMods.length)break;
+      htmlMods.push(...pageMods);
+      log(`Page mods ${page}: ${pageMods.length} mods.`);
+      if(pageMods.length<30)break;
+    }
+    // Les pages publiques donnent les valeurs réellement affichées (ex. 8 Speed, 5.88%).
+    // L'API reste un filet de sécurité pour les éventuels mods non présents dans les pages.
+    const merged=[...htmlMods];
+    const seenIds=new Set(merged.map(m=>m.game_id));
+    for(const m of apiMods){ if(!seenIds.has(m.game_id)){ merged.push(m); seenIds.add(m.game_id); } }
+    const seen=new Set();mods=merged.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
+    log(`Mods décodés : ${htmlMods.length} via pages publiques + ${Math.max(0,mods.length-htmlMods.length)} compléments API = ${mods.length}.`);
     currentData={allyCode,name:title,characters:chars,ships,mods};updateRosterCounts(chars,ships);fillCharacters(chars);updateAccountSummary(title,fmt);renderDataTable();
     $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nUnités totales: ${chars.length+ships.length}\nMods: ${mods.length}\nProfils Kyber disponibles dans cette version: ${Object.keys(profiles).length}`;
     log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${mods.length} mods exploitables.`);if(!mods.length)log('Aucun mod lisible. Utilise l’import JSON en attendant.');document.querySelector('[data-page="data"]').click();
