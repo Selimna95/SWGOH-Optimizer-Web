@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
-  <meta name="description" content="SWGOH Optimizer Web V18 — roster, mods et optimisation dans le navigateur">
+  <meta name="description" content="SWGOH Optimizer Web V19 — roster, mods et optimisation dans le navigateur">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
-  <title>SWGOH Optimizer Web V18</title>
+  <title>SWGOH Optimizer Web V19</title>
 </head>
 <body>
 <div class="scanlines"></div>
 <header class="topbar">
-  <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V18</span></div>
+  <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V19</span></div>
   <div id="runtime" class="status">INITIALISATION PYTHON…</div>
 </header>
 <main class="layout">
@@ -30,7 +30,7 @@
         <div>
           <div class="eyebrow">LOCAL WEB APPLICATION</div>
           <h1>SWGOH Optimizer</h1>
-          <p>V17 récupère maintenant clairement le roster en personnages et vaisseaux. Les données publiques SWGOH.GG sont récupérées via le relais Cloudflare et les calculs Python restent exécutés localement dans votre navigateur.</p>
+          <p>V19 reprend la logique d’analyse des mods du projet Windows V176 en personnages et vaisseaux. Les données publiques SWGOH.GG sont récupérées via le relais Cloudflare et les calculs Python restent exécutés localement dans votre navigateur.</p>
         </div>
         <div class="online-loader">
           <label>ALLY CODE<input id="allyCode" inputmode="numeric" maxlength="11" placeholder="123-456-789"></label>
@@ -72,7 +72,7 @@
       <div class="panel analysis-header">
         <div>
           <div class="panel-title">ANALYSE DES MODS — V176</div>
-          <p>Reprise du récapitulatif vitesse, de l’audit personnage/faction et de l’inventaire complet des mods.</p>
+          <p>Portage V176 : récapitulatif Speed, audit des personnages/factions, détail des 6 mods et inventaire complet.</p>
         </div>
         <div class="analysis-tabs">
           <button class="analysis-tab active" data-analysis-tab="recap">RÉCAPITULATIF</button>
@@ -91,17 +91,29 @@
               <option value="faction">FACTION → PERSONNAGE</option>
             </select>
           </label>
+          <label>CÔTÉ
+            <select id="analysisSide"><option value="ALL">TOUS</option><option value="LIGHT">CÔTÉ LUMINEUX</option><option value="DARK">CÔTÉ OBSCUR</option><option value="MIXED">NEUTRE / MIXTE</option></select>
+          </label>
           <label>FACTION
             <select id="analysisFaction"><option>Toutes les factions</option></select>
           </label>
           <label>PERSONNAGE
             <select id="analysisCharacter"></select>
           </label>
+          <label>STATUT
+            <select id="analysisStatus"><option value="TOUS">TOUS</option><option>SANS MODS</option><option>INCOMPLETS</option><option>TRÈS FAIBLES</option><option>FAIBLES</option><option>MOYENS</option><option>BONS</option></select>
+          </label>
+          <label>VITESSE
+            <select id="analysisAuditSpeed"><option value="TOUS">TOUS</option><option value="1_10">1 – 10</option><option value="11_15">11 – 15</option><option value="16_21">16 – 21</option><option value="22plus">&gt; 21</option><option value="primary_speed">PRIMAIRE SPEED</option><option value="no_speed">SANS SPEED</option></select>
+          </label>
+          <label>TRI
+            <select id="analysisAuditSort"><option value="priority">Priorité</option><option value="speed">Speed sec. ↑</option><option value="mods">Mods ↑</option><option value="relic">Relic ↓</option></select>
+          </label>
         </div>
         <div id="selectionMeta" class="table-meta"></div>
         <div class="analysis-two-col">
           <div class="table-panel">
-            <table class="v18-table"><thead><tr><th>Personnage</th><th>Mods</th><th>Speed sec.</th><th>Speed primaire</th><th>Speed totale</th><th>Meilleur</th><th>Statut</th></tr></thead><tbody id="selectionTable"></tbody></table>
+            <table class="v18-table"><thead><tr><th>Personnage</th><th>Relic</th><th>Mods</th><th>Speed totale</th><th>Speed sec.</th><th>Nb Speed</th><th>Primaire Speed</th><th>Statut</th></tr></thead><tbody id="selectionTable"></tbody></table>
           </div>
           <div id="characterModDetail" class="character-detail"></div>
         </div>

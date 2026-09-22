@@ -16,6 +16,10 @@ let analysisSelectedCharacter = '';
 let analysisFaction = '';
 let analysisMode = 'character';
 let analysisInventoryRows = [];
+let analysisSide = 'ALL';
+let analysisStatus = 'TOUS';
+let analysisAuditSpeed = 'TOUS';
+let analysisAuditSort = 'priority';
 
 const $ = (id) => document.getElementById(id);
 function log(msg) { $('log').textContent += `\n${msg}`; $('log').scrollTop = $('log').scrollHeight; }
@@ -562,30 +566,54 @@ function renderAnalysisRecap(){
   </div>`;
   renderV18SpeedRecap();
 }
+function characterAlignmentFromFactions(c){
+  const fs=factionMap[characterKey(c)]||[];
+  const light=new Set(['Jedi','Rebel','Rebel Fighter','Resistance','Galactic Republic','501st','Clone Trooper','Bad Batch','Phoenix','Rogue One','Old Republic','Ewok','Scoundrel','Mandalorian']).size;
+  const dark=new Set(['Sith','Sith Empire','Empire','Imperial Trooper','First Order','Separatist','Nightsister','Inquisitorius','Geonosian','Bounty Hunter','Hutt Cartel']).size;
+  const hasL=fs.some(f=>['Jedi','Rebel','Rebel Fighter','Resistance','Galactic Republic','501st','Clone Trooper','Bad Batch','Phoenix','Rogue One','Old Republic','Ewok','Scoundrel'].includes(f));
+  const hasD=fs.some(f=>['Sith','Sith Empire','Empire','Imperial Trooper','First Order','Separatist','Nightsister','Inquisitorius','Geonosian'].includes(f));
+  if(hasL&&!hasD)return 'LIGHT'; if(hasD&&!hasL)return 'DARK'; return 'MIXED';
+}
+function auditRows(){
+  const faction=analysisFaction||'Toutes les factions';
+  let rows=charactersInFaction(faction).filter(c=>rosterUnitType(c)!=='ship').map(c=>{
+    const cm=getCharacterMods(c), st=v176ModStatus(cm);
+    const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0);
+    const primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
+    const speedCats=new Set(); let speedCount=0;
+    for(const m of cm){const x=modSpeedMetrics(m); if(x.primary)speedCats.add('primary_speed'); else speedCats.add(speedCategory(x.secondary)); if((x.secondary||0)>0)speedCount++;}
+    const p=optimizerProfileForCharacter(c)||{};
+    const relic=Number(c.relic_tier??c.relicTier??p.relic_tier??0)||0;
+    const priority=(cm.length===0?100000:cm.length<6?50000:0)+Math.max(0,70-st.totalSpeed)*100+relic*2;
+    return {character:c,mods:cm,modCount:cm.length,secSpeed,primarySpeed,totalSpeed:st.totalSpeed,status:st.status,class:st.class,best:cm.reduce((mx,m)=>Math.max(mx,modSpeedMetrics(m).secondary||0),0),factions:factionMap[characterKey(c)]||[],relic,speedCount,speedCats,priority,side:characterAlignmentFromFactions(c)};
+  });
+  if(analysisSide!=='ALL') rows=rows.filter(r=>r.side===analysisSide);
+  if(analysisStatus!=='TOUS') rows=rows.filter(r=>r.status===analysisStatus);
+  if(analysisAuditSpeed!=='TOUS') rows=rows.filter(r=>r.speedCats.has(analysisAuditSpeed));
+  if(analysisAuditSort==='speed') rows.sort((a,b)=>a.secSpeed-b.secSpeed||a.relic-b.relic);
+  else if(analysisAuditSort==='mods') rows.sort((a,b)=>a.modCount-b.modCount||a.secSpeed-b.secSpeed||b.relic-a.relic);
+  else if(analysisAuditSort==='relic') rows.sort((a,b)=>b.relic-a.relic||b.secSpeed-a.secSpeed);
+  else rows.sort((a,b)=>b.priority-a.priority||a.secSpeed-b.secSpeed||b.relic-a.relic||String(a.character.name||'').localeCompare(String(b.character.name||''),'fr'));
+  return rows;
+}
 function renderSelectionPanel(){
-  const factionSelect=$('analysisFaction'), charSelect=$('analysisCharacter');
-  if(!factionSelect||!charSelect)return;
+  const factionSelect=$('analysisFaction'), charSelect=$('analysisCharacter'); if(!factionSelect||!charSelect)return;
   if(analysisMode==='character') analysisFaction='Toutes les factions';
   const factions=['Toutes les factions',...allFactions()];
   factionSelect.innerHTML=factions.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
-  factionSelect.disabled=analysisMode==='character';
-  factionSelect.value=analysisFaction||'Toutes les factions';
-  const chars=charactersInFaction(analysisFaction||'Toutes les factions').sort((a,b)=>String(a.name||a.baseId).localeCompare(String(b.name||b.baseId),'fr'));
+  factionSelect.disabled=analysisMode==='character'; factionSelect.value=analysisFaction||'Toutes les factions';
+  const chars=charactersInFaction(analysisFaction||'Toutes les factions').filter(c=>rosterUnitType(c)!=='ship').sort((a,b)=>String(a.name||a.baseId).localeCompare(String(b.name||b.baseId),'fr'));
   charSelect.innerHTML=chars.map(c=>`<option value="${esc(characterKey(c))}">${esc(c.name||c.baseId)}</option>`).join('');
-  if(!chars.length){charSelect.innerHTML='<option value="">Aucun personnage</option>';analysisSelectedCharacter='';}
-  else {
-    if(!analysisSelectedCharacter || !chars.some(c=>characterKey(c)===analysisSelectedCharacter)) analysisSelectedCharacter=characterKey(chars[0]);
-    charSelect.value=analysisSelectedCharacter;
-  }
-  const rows=analysisCharacterRows();
-  $('selectionMeta').textContent=`${rows.length} personnage(s) dans ${analysisFaction||'Toutes les factions'}`;
+  if(analysisSelectedCharacter && chars.some(c=>characterKey(c)===analysisSelectedCharacter)) charSelect.value=analysisSelectedCharacter;
+  else if(chars.length) {analysisSelectedCharacter=characterKey(chars[0]);charSelect.value=analysisSelectedCharacter;}
+  const rows=auditRows();
+  const all=charactersInFaction(analysisFaction||'Toutes les factions').filter(c=>rosterUnitType(c)!=='ship');
+  $('selectionMeta').textContent=`${rows.length} personnage(s) affiché(s) sur ${all.length} · ${analysisFaction||'Toutes les factions'}`;
   $('selectionTable').innerHTML=rows.map(r=>`<tr class="${r.class}" data-character-key="${esc(characterKey(r.character))}">
     <td><strong>${esc(r.character.name||r.character.baseId)}</strong><small>${esc(r.factions.join(' · '))}</small></td>
-    <td>${r.modCount}/6</td><td>${num(r.speed)}</td><td>${num(r.primarySpeed)}</td><td>${num(r.totalSpeed)}</td><td>${num(r.best)}</td><td><span class="audit-badge ${r.class}">${esc(r.status)}</span></td>
-  </tr>`).join('')||'<tr><td colspan="7">Aucun personnage.</td></tr>';
-  $('selectionTable').querySelectorAll('[data-character-key]').forEach(row=>row.addEventListener('click',()=>{
-    analysisSelectedCharacter=row.dataset.characterKey; charSelect.value=analysisSelectedCharacter; renderCharacterDetail();
-  }));
+    <td>${r.relic?'R'+num(r.relic):'—'}</td><td>${r.modCount}/6</td><td>${num(r.totalSpeed)}</td><td>${num(r.secSpeed)}</td><td>${r.speedCount}</td><td>${r.primarySpeed?num(r.primarySpeed):'NON'}</td><td><span class="audit-badge ${r.class}">${esc(r.status)}</span></td>
+  </tr>`).join('')||'<tr><td colspan="8">Aucun personnage ne correspond aux filtres.</td></tr>';
+  $('selectionTable').querySelectorAll('[data-character-key]').forEach(row=>row.addEventListener('click',()=>{analysisSelectedCharacter=row.dataset.characterKey;charSelect.value=analysisSelectedCharacter;renderCharacterDetail();}));
   renderCharacterDetail();
 }
 function renderCharacterDetail(){
@@ -714,10 +742,14 @@ $('runOptimizer').addEventListener('click',async()=>{
 });
 function renderResults(data){if(!data.length){$('results').textContent='Aucun build.';return;}$('results').innerHTML=data.map((r,i)=>`<article class="result"><div class="rank">#${i+1}</div><div><div class="result-head"><strong>Score ${Number(r.score).toFixed(2)}</strong></div><div class="stats">${Object.entries(r.stats||{}).map(([k,v])=>`${esc(k)}: ${typeof v==='number'?num(v,1):esc(v)}`).join(' · ')}</div><div class="build-grid">${(r.build||[]).map(m=>`<div class="mod-card"><strong>${esc(m.slot||'?')}</strong><span>${esc(m.set_name||m.set||'?')}</span><span>${esc(m.primary_stat||'?')} ${num(m.primary_value,1)}${String(m.primary_stat||'').endsWith(' %')?'%':''}</span><small>${esc([1,2,3,4].map(i=>m[`secondary_${i}_stat`]?displayModStat(m[`secondary_${i}_stat`],m[`secondary_${i}_value`]):'').filter(Boolean).join(' · '))}</small></div>`).join('')}</div></div></article>`).join('');}
 
-$('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';$('accountSummary').innerHTML='<span>Aucune donnée chargée.</span>';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
+$('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';analysisSide='ALL';analysisStatus='TOUS';analysisAuditSpeed='TOUS';analysisAuditSort='priority';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';$('accountSummary').innerHTML='<span>Aucune donnée chargée.</span>';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
 
 document.querySelectorAll('.analysis-tab').forEach(btn=>btn.addEventListener('click',()=>setAnalysisTab(btn.dataset.analysisTab)));
 $('analysisFaction')?.addEventListener('change',()=>{analysisFaction=$('analysisFaction').value;analysisSelectedCharacter='';renderSelectionPanel();});
+$('analysisSide')?.addEventListener('change',()=>{analysisSide=$('analysisSide').value;renderSelectionPanel();});
+$('analysisStatus')?.addEventListener('change',()=>{analysisStatus=$('analysisStatus').value;renderSelectionPanel();});
+$('analysisAuditSpeed')?.addEventListener('change',()=>{analysisAuditSpeed=$('analysisAuditSpeed').value;renderSelectionPanel();});
+$('analysisAuditSort')?.addEventListener('change',()=>{analysisAuditSort=$('analysisAuditSort').value;renderSelectionPanel();});
 $('analysisCharacter')?.addEventListener('change',()=>{analysisSelectedCharacter=$('analysisCharacter').value;renderCharacterDetail();});
 $('analysisMode')?.addEventListener('change',()=>{analysisMode=$('analysisMode').value;renderSelectionPanel();});
 ['analysisSearch','analysisSetFilter','analysisSlotFilter','analysisSpeedFilter','analysisOwnerFilter','analysisPrimaryFilter','analysisLevelFilter','analysisSort'].forEach(id=>$(id)?.addEventListener('input',renderInventory));
