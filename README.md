@@ -1,4 +1,4 @@
-# SWGOH Optimizer Web V10
+# SWGOH Optimizer Web V12
 
 Version navigateur du projet SWGOH Optimizer V176.
 

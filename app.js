@@ -4,6 +4,7 @@ let currentData = null;
 let mods = [];
 let profiles = {};
 let currentDataset = 'characters';
+let modFiltersReady = false;
 let rosterCharacters = [];
 let rosterShips = [];
 
@@ -135,6 +136,65 @@ async function loadRemotePlayer(){
 }
 function updateAccountSummary(title,fmt){$('accountSummary').innerHTML=`<div><span>JOUEUR</span><strong>${esc(title)}</strong></div><div><span>ALLY CODE</span><strong>${esc(fmt)}</strong></div><div><span>PERSONNAGES</span><strong>${rosterCharacters.length}</strong></div><div><span>VAISSEAUX</span><strong>${rosterShips.length}</strong></div><div><span>MODS</span><strong>${mods.length}</strong></div>`;}
 
+function modSetLabel(value){
+  const raw=String(value??'').trim();
+  if(!raw)return '';
+  const key=raw.toLowerCase().replace(/[_-]+/g,' ');
+  const map={'1':'Health','2':'Offense','3':'Defense','4':'Speed','5':'Crit Chance','6':'Crit Damage','7':'Potency','8':'Tenacity','health':'Health','offense':'Offense','defense':'Defense','speed':'Speed','crit chance':'Crit Chance','crit damage':'Crit Damage','potency':'Potency','tenacity':'Tenacity'};
+  return map[raw]||map[key]||raw;
+}
+function modSlotLabel(value){
+  const raw=String(value??'').trim();
+  const key=raw.toLowerCase().replace(/[_-]+/g,' ');
+  const map={'1':'Square','2':'Arrow','3':'Diamond','4':'Triangle','5':'Circle','6':'Cross','square':'Square','arrow':'Arrow','diamond':'Diamond','triangle':'Triangle','circle':'Circle','cross':'Cross','transmitter':'Square','receiver':'Arrow','processor':'Diamond','holo array':'Triangle','data bus':'Circle','multiplexer':'Cross'};
+  return map[raw]||map[key]||raw;
+}
+function normalizeModForDisplay(m){
+  if(!m)return m;
+  const out={...m};
+  out.set_name=modSetLabel(out.set_name??out.set??out.setId??out.set_id);
+  out.slot=modSlotLabel(out.slot??out.slot_id??out.slotId??out.modSlot);
+  out.character=out.character??out.characterName??out.equippedTo??out.equipped_to??'';
+  out.level=Number(out.level??0);
+  out.rarity=Number(out.rarity??out.pips??0);
+  return out;
+}
+function prepareModFilters(){
+  const setSel=$('modSetFilter'),slotSel=$('modSlotFilter');
+  if(!setSel||!slotSel)return;
+  const sets=[...new Set(mods.map(m=>normalizeModForDisplay(m).set_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+  const slots=[...new Set(mods.map(m=>normalizeModForDisplay(m).slot).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+  setSel.innerHTML='<option value="">Tous les sets</option>'+sets.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  slotSel.innerHTML='<option value="">Tous les slots</option>'+slots.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  modFiltersReady=true;
+}
+function renderModSummary(rows){
+  const box=$('modSummary'); if(!box)return;
+  if(currentDataset!=='mods'){box.hidden=true;return;}
+  const equipped=rows.filter(m=>String(m.character||'').trim()).length;
+  const free=rows.length-equipped;
+  const six=rows.filter(m=>Number(m.level)>=15).length;
+  box.hidden=false;
+  box.innerHTML=`<div><span>MODS FILTRÉS</span><strong>${num(rows.length)}</strong></div><div><span>ÉQUIPÉS</span><strong>${num(equipped)}</strong></div><div><span>LIBRES</span><strong>${num(free)}</strong></div><div><span>NIVEAU 15</span><strong>${num(six)}</strong></div>`;
+}
+function getFilteredMods(){
+  const q=String($('dataSearch')?.value||'').trim().toLowerCase();
+  const set=String($('modSetFilter')?.value||'');
+  const slot=String($('modSlotFilter')?.value||'');
+  const owner=String($('modOwnerFilter')?.value||'');
+  const minLevel=Number($('modLevelFilter')?.value||0);
+  return mods.map(normalizeModForDisplay).filter(m=>{
+    const text=JSON.stringify(m).toLowerCase();
+    if(q&&!text.includes(q))return false;
+    if(set&&m.set_name!==set)return false;
+    if(slot&&m.slot!==slot)return false;
+    const equipped=String(m.character||'').trim().length>0;
+    if(owner==='equipped'&&!equipped)return false;
+    if(owner==='free'&&equipped)return false;
+    if(Number(m.level||0)<minLevel)return false;
+    return true;
+  });
+}
 function modSecondaries(m){const arr=[];for(let i=1;i<=4;i++){const s=m[`secondary_${i}_stat`],v=m[`secondary_${i}_value`];if(s)arr.push(`${s} ${num(v,1)}`);}return arr.join(' · ');}
 function renderDataTable(){
   const q=String($('dataSearch').value||'').trim().toLowerCase();let rows=[];
@@ -147,14 +207,18 @@ function renderDataTable(){
     $('dataTableMeta').textContent=`${rows.length} vaisseau(x) affiché(s) sur ${rosterShips.length}`;
     $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Vaisseau</th><th>Base ID</th><th>Niveau</th><th>Gear</th><th>Étoiles</th><th>Puissance</th></tr></thead><tbody>${rows.map(c=>`<tr><td><strong>${esc(c.name||c.character||c.baseId)}</strong></td><td>${esc(c.baseId||c.base_id||'')}</td><td>${num(c.level)}</td><td>${num(c.gear)}</td><td>${num(c.stars)}★</td><td>${num(c.power)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucun vaisseau ne correspond à la recherche.</div>';
   } else {
-    rows=mods.filter(m=>JSON.stringify(m).toLowerCase().includes(q));
+    const filterBox=$('modFilters'); if(filterBox)filterBox.hidden=false;
+    if(!modFiltersReady)prepareModFilters();
+    rows=getFilteredMods();
+    rows.sort((a,b)=>{const sa=String(a.set_name||''),sb=String(b.set_name||'');return sa.localeCompare(sb,'fr')||Number(b.level||0)-Number(a.level||0)||String(a.slot||'').localeCompare(String(b.slot||''),'fr');});
     $('dataTableMeta').textContent=`${rows.length} mod(s) affiché(s) sur ${mods.length}`;
-    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaires</th><th>Niveau</th><th>Rareté</th><th>Équipé</th></tr></thead><tbody>${rows.map(m=>`<tr><td>${esc(m.slot||'')}</td><td>${esc(m.set_name||m.set||'')}</td><td><strong>${esc(m.primary_stat||'')}</strong> ${num(m.primary_value,1)}</td><td>${esc(modSecondaries(m))}</td><td>${num(m.level)}</td><td>${num(m.rarity)}★</td><td>${esc(m.character||'Libre')}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucun mod ne correspond à la recherche.</div>';
+    renderModSummary(rows);
+    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaires</th><th>Niv.</th><th>Rareté</th><th>Équipé</th></tr></thead><tbody>${rows.map(m=>`<tr><td><strong>${esc(m.slot||'—')}</strong></td><td>${esc(m.set_name||'—')}</td><td><strong>${esc(m.primary_stat||'—')}</strong> ${num(m.primary_value,1)}</td><td>${esc(modSecondaries(m)||'—')}</td><td>${num(m.level)}</td><td>${num(m.rarity)}★</td><td>${esc(m.character||'Libre')}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucun mod ne correspond aux filtres.</div>';
   }
 }
 
-$('loadPlayer').addEventListener('click',loadRemotePlayer);$('allyCode').addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay').addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||'';$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',updateCharacterInfo);$('dataSearch').addEventListener('input',renderDataTable);
-document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.data-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');currentDataset=btn.dataset.dataset;renderDataTable();}));
+$('loadPlayer').addEventListener('click',loadRemotePlayer);$('allyCode').addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay').addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||'';$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',updateCharacterInfo);$('dataSearch').addEventListener('input',renderDataTable);['modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
+document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.data-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');currentDataset=btn.dataset.dataset;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=currentDataset!=='mods';if(ms)ms.hidden=currentDataset!=='mods';renderDataTable();}));
 
 async function boot(){try{setRuntime('CHARGEMENT PYTHON…');pyodide=await loadPyodide();const optimizer=await fetch('python/optimizer.py').then(r=>r.text());const kyber=await fetch('python/kyber_profiles.json').then(r=>r.text());pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);pyodide.FS.writeFile('/home/pyodide/kyber_profiles.json',kyber);pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer, json`);profiles=JSON.parse(kyber);optimizerReady=true;$('pythonState').textContent='OK';setRuntime('PYTHON WEBASSEMBLY PRÊT',true);log('Moteur Python chargé dans le navigateur.');}catch(e){setRuntime('ERREUR PYTHON');$('pythonState').textContent='ERREUR';log('Erreur Python: '+e);}}
 
@@ -168,6 +232,6 @@ $('runOptimizer').addEventListener('click',()=>{
 });
 function renderResults(data){if(!data.length){$('results').textContent='Aucun build.';return;}$('results').innerHTML=data.map((r,i)=>`<article class="result"><div class="rank">#${i+1}</div><div><div class="result-head"><strong>Score ${Number(r.score).toFixed(2)}</strong></div><div class="stats">${Object.entries(r.stats||{}).map(([k,v])=>`${esc(k)}: ${typeof v==='number'?num(v,1):esc(v)}`).join(' · ')}</div><div class="build-grid">${(r.build||[]).map(m=>`<div class="mod-card"><strong>${esc(m.slot||'?')}</strong><span>${esc(m.set_name||m.set||'?')}</span><span>${esc(m.primary_stat||'?')} ${num(m.primary_value,1)}</span><small>${esc([1,2,3,4].map(i=>m[`secondary_${i}_stat`]?`${m[`secondary_${i}_stat`]} ${num(m[`secondary_${i}_value`],1)}`:'').filter(Boolean).join(' · '))}</small></div>`).join('')}</div></div></article>`).join('');}
 
-$('clearData').addEventListener('click',()=>{currentData=null;mods=[];rosterCharacters=[];rosterShips=[];updateRosterCounts([],[]);fillCharacters([]);$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';$('accountSummary').innerHTML='<span>Aucune donnée chargée.</span>';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
+$('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];updateRosterCounts([],[]);fillCharacters([]);$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';$('accountSummary').innerHTML='<span>Aucune donnée chargée.</span>';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
 document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));btn.classList.add('active');$(btn.dataset.page).classList.add('active');if(btn.dataset.page==='data')renderDataTable();}));
 boot();

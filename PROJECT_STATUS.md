@@ -38,3 +38,10 @@ Worker Cloudflare utilisé :
 `https://swgoh-optimizer-relay.lorg75017.workers.dev`
 
 Ne pas modifier le Worker tant que le chargement API fonctionne.
+
+
+## V12 — Mods
+- Explorateur mods renforcé.
+- Filtres set, slot, équipés/libres et niveau minimum.
+- Résumé des mods filtrés, équipés, libres et niveau 15.
+- Affichage des 4 secondaires, primaire, slot, set, niveau et rareté.
