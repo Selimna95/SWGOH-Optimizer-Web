@@ -1,4 +1,4 @@
-# SWGOH Optimizer Web — V15
+# SWGOH Optimizer Web — V17
 
 ## État
 
@@ -52,6 +52,6 @@ Ne pas modifier le Worker tant que le chargement API fonctionne.
 - Le Worker accepte désormais les pages 1 à 100.
 
 
-## V15
+## V17
 
 Ajout de la récupération à la demande des profils Kyber depuis les pages publiques SWGOH.GG via le Worker Cloudflare. Le profil sélectionné est parsé localement puis transmis au moteur Python/Pyodide. Le Worker ajoute les routes `best-mods` et `characters-index`.

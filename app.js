@@ -6,6 +6,7 @@ let optimizerTimer = null;
 let currentData = null;
 let mods = [];
 let profiles = {};
+let optimizerProfiles = {};
 let currentDataset = 'characters';
 let modFiltersReady = false;
 let rosterCharacters = [];
@@ -49,7 +50,8 @@ function statObjectFromAny(value) {
   if (typeof value === 'object') {
     const nested = value.stat && typeof value.stat === 'object' ? value.stat : value;
     const display = nested.display_value ?? nested.displayValue ?? value.display_value ?? value.displayValue;
-    const stat = statNameFromAny(nested.name ?? nested.stat ?? nested.unitStat ?? nested.unitStatId ?? value.name ?? value.stat ?? value.unitStat ?? value.unitStatId);
+    let stat = statNameFromAny(nested.name ?? nested.stat ?? nested.unitStat ?? nested.unitStatId ?? value.name ?? value.stat ?? value.unitStat ?? value.unitStatId);
+    if (display != null && /%/.test(String(display)) && stat && !/%$/.test(stat)) stat += ' %';
     const val = display != null ? statValueFromAny(display) : statValueFromAny(nested.value ?? nested.amount ?? nested.unscaledDecimalValue ?? nested.unscaled_decimal_value ?? value.value ?? value.amount);
     return {stat, value:val, display_value:display ?? ''};
   }
@@ -101,6 +103,27 @@ function updateRosterCounts(characters, ships) {
   setText('charsCount',c); setText('shipsCount',s); setText('unitsCount',c+s); setText('modsCount',m);
   setText('tabCharsCount',c); setText('tabShipsCount',s); setText('tabModsCount',m);
 }
+function optimizerProfileForCharacter(character) {
+  if (!character || !optimizerProfiles || typeof optimizerProfiles !== 'object') return null;
+  const base=String(character?.baseId||character?.base_id||'').toUpperCase();
+  const name=slug(character?.name||character?.character||'');
+  if (base && optimizerProfiles[base]) return optimizerProfiles[base];
+  for (const p of Object.values(optimizerProfiles)) {
+    if (base && String(p?.base_id||'').toUpperCase()===base) return p;
+    if (name && slug(p?.name||p?.character)===name) return p;
+  }
+  return null;
+}
+function baseStatsForCharacter(character) {
+  const direct=character?.base_stats || character?.baseStats;
+  if (direct && typeof direct === 'object') return direct;
+  const p=optimizerProfileForCharacter(character);
+  if (p?.base_stats && typeof p.base_stats === 'object') return p.base_stats;
+  const stats=character?.stats;
+  if (stats && typeof stats === 'object') return stats;
+  return {};
+}
+
 function profileForCharacter(character) {
   const base=String(character?.baseId||character?.base_id||'').toLowerCase();
   const name=slug(character?.name||character?.character||'');
@@ -287,7 +310,8 @@ function getFilteredMods(){
     return true;
   });
 }
-function modSecondaries(m){const arr=[];for(let i=1;i<=4;i++){const s=m[`secondary_${i}_stat`],v=m[`secondary_${i}_value`];if(s)arr.push(`${s} ${num(v,1)}`);}return arr.join(' · ');}
+function displayModStat(name,value){const n=String(name||'');return `${n} ${num(value,1)}${n.endsWith(' %')?'%':''}`;}
+function modSecondaries(m){const arr=[];for(let i=1;i<=4;i++){const s=m[`secondary_${i}_stat`],v=m[`secondary_${i}_value`];if(s)arr.push(displayModStat(s,v));}return arr.join(' · ');}
 function renderDataTable(){
   const q=String($('dataSearch').value||'').trim().toLowerCase();let rows=[];
   if(currentDataset==='characters'){
@@ -305,7 +329,7 @@ function renderDataTable(){
     rows.sort((a,b)=>{const sa=String(a.set_name||''),sb=String(b.set_name||'');return sa.localeCompare(sb,'fr')||Number(b.level||0)-Number(a.level||0)||String(a.slot||'').localeCompare(String(b.slot||''),'fr');});
     $('dataTableMeta').textContent=`${rows.length} mod(s) affiché(s) sur ${mods.length}`;
     renderModSummary(rows);
-    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaires</th><th>Niv.</th><th>Rareté</th><th>Équipé</th></tr></thead><tbody>${rows.map(m=>`<tr><td><strong>${esc(m.slot||'—')}</strong></td><td>${esc(m.set_name||'—')}</td><td><strong>${esc(m.primary_stat||'—')}</strong> ${num(m.primary_value,1)}</td><td>${esc(modSecondaries(m)||'—')}</td><td>${num(m.level)}</td><td>${num(m.rarity)}★</td><td>${esc(m.character||'Libre')}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucun mod ne correspond aux filtres.</div>';
+    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaires</th><th>Niv.</th><th>Rareté</th><th>Équipé</th></tr></thead><tbody>${rows.map(m=>`<tr><td><strong>${esc(m.slot||'—')}</strong></td><td>${esc(m.set_name||'—')}</td><td><strong>${esc(m.primary_stat||'—')}</strong> ${num(m.primary_value,1)}${String(m.primary_stat||'').endsWith(' %')?'%':''}</td><td>${esc(modSecondaries(m)||'—')}</td><td>${num(m.level)}</td><td>${num(m.rarity)}★</td><td>${esc(m.character||'Libre')}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucun mod ne correspond aux filtres.</div>';
   }
 }
 
@@ -342,11 +366,11 @@ function runOptimizationInWorker(character, profile, nBuilds, limitSlot) {
       }
     };
     worker.addEventListener('message', onMessage);
-    worker.postMessage({ id, mods, profile, n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '' });
+    worker.postMessage({ id, mods, profile, base_stats: baseStatsForCharacter(character), n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '' });
   });
 }
 
-async function boot(){try{setRuntime('CHARGEMENT PYTHON…');pyodide=await loadPyodide();const optimizer=await fetch('python/optimizer.py').then(r=>r.text());const kyber=await fetch('python/kyber_profiles.json').then(r=>r.text());pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);pyodide.FS.writeFile('/home/pyodide/kyber_profiles.json',kyber);pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer, json`);profiles=JSON.parse(kyber);optimizerReady=true;$('pythonState').textContent='OK';setRuntime('PYTHON WEBASSEMBLY PRÊT',true);log('Moteur Python chargé dans le navigateur.');}catch(e){setRuntime('ERREUR PYTHON');$('pythonState').textContent='ERREUR';log('Erreur Python: '+e);}}
+async function boot(){try{setRuntime('CHARGEMENT PYTHON…');pyodide=await loadPyodide();const optimizer=await fetch('python/optimizer.py').then(r=>r.text());const kyber=await fetch('python/kyber_profiles.json').then(r=>r.text());const optimizerProfilesText=await fetch('python/optimizer_profiles.json').then(r=>r.text());optimizerProfiles=JSON.parse(optimizerProfilesText);pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);pyodide.FS.writeFile('/home/pyodide/kyber_profiles.json',kyber);pyodide.FS.writeFile('/home/pyodide/optimizer_profiles.json',optimizerProfilesText);pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer, json`);profiles=JSON.parse(kyber);optimizerReady=true;$('pythonState').textContent='OK';setRuntime('PYTHON WEBASSEMBLY PRÊT',true);log('Moteur Python chargé dans le navigateur.');}catch(e){setRuntime('ERREUR PYTHON');$('pythonState').textContent='ERREUR';log('Erreur Python: '+e);}}
 
 $('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderDataTable();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
 
@@ -363,7 +387,7 @@ $('runOptimizer').addEventListener('click',async()=>{
   const limitSlot=Math.min(150,Math.max(5,Number($('limitPerSlot').value)||80));
   $('runOptimizer').disabled=true;
   $('runOptimizer').textContent='CALCUL EN COURS…';
-  log(`Optimisation lancée pour ${character.name||character.baseId} · ${nBuilds} builds · ${limitSlot} candidats/slot.`);
+  const baseStats=baseStatsForCharacter(character); log(`Optimisation lancée pour ${character.name||character.baseId} · ${nBuilds} builds · ${limitSlot} candidats/slot · stats de base ${Object.keys(baseStats).length ? 'chargées' : 'indisponibles'}.`);
   const started=performance.now();
   try {
     const data=await runOptimizationInWorker(character,profile,nBuilds,limitSlot);
@@ -378,7 +402,7 @@ $('runOptimizer').addEventListener('click',async()=>{
     $('runOptimizer').textContent='LANCER L’OPTIMISATION';
   }
 });
-function renderResults(data){if(!data.length){$('results').textContent='Aucun build.';return;}$('results').innerHTML=data.map((r,i)=>`<article class="result"><div class="rank">#${i+1}</div><div><div class="result-head"><strong>Score ${Number(r.score).toFixed(2)}</strong></div><div class="stats">${Object.entries(r.stats||{}).map(([k,v])=>`${esc(k)}: ${typeof v==='number'?num(v,1):esc(v)}`).join(' · ')}</div><div class="build-grid">${(r.build||[]).map(m=>`<div class="mod-card"><strong>${esc(m.slot||'?')}</strong><span>${esc(m.set_name||m.set||'?')}</span><span>${esc(m.primary_stat||'?')} ${num(m.primary_value,1)}</span><small>${esc([1,2,3,4].map(i=>m[`secondary_${i}_stat`]?`${m[`secondary_${i}_stat`]} ${num(m[`secondary_${i}_value`],1)}`:'').filter(Boolean).join(' · '))}</small></div>`).join('')}</div></div></article>`).join('');}
+function renderResults(data){if(!data.length){$('results').textContent='Aucun build.';return;}$('results').innerHTML=data.map((r,i)=>`<article class="result"><div class="rank">#${i+1}</div><div><div class="result-head"><strong>Score ${Number(r.score).toFixed(2)}</strong></div><div class="stats">${Object.entries(r.stats||{}).map(([k,v])=>`${esc(k)}: ${typeof v==='number'?num(v,1):esc(v)}`).join(' · ')}</div><div class="build-grid">${(r.build||[]).map(m=>`<div class="mod-card"><strong>${esc(m.slot||'?')}</strong><span>${esc(m.set_name||m.set||'?')}</span><span>${esc(m.primary_stat||'?')} ${num(m.primary_value,1)}${String(m.primary_stat||'').endsWith(' %')?'%':''}</span><small>${esc([1,2,3,4].map(i=>m[`secondary_${i}_stat`]?displayModStat(m[`secondary_${i}_stat`],m[`secondary_${i}_value`]):'').filter(Boolean).join(' · '))}</small></div>`).join('')}</div></div></article>`).join('');}
 
 $('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];updateRosterCounts([],[]);fillCharacters([]);$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';$('accountSummary').innerHTML='<span>Aucune donnée chargée.</span>';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
 document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));btn.classList.add('active');$(btn.dataset.page).classList.add('active');if(btn.dataset.page==='data')renderDataTable();}));
