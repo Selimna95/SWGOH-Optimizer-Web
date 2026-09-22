@@ -1,25 +1,28 @@
-# SWGOH Optimizer Web V12
+# SWGOH Optimizer Web V18
 
-Version navigateur du projet SWGOH Optimizer V176.
+Version navigateur de SWGOH Optimizer V176.
 
 ## Architecture
 
-- GitHub Pages pour l'interface
-- Pyodide pour exécuter Python côté navigateur
-- Cloudflare Worker pour relayer les requêtes publiques SWGOH.GG et contourner le CORS
-- JSON comme solution de secours
+- GitHub Pages : interface.
+- Cloudflare Worker : relais SWGOH.GG.
+- Pyodide : moteur Python.
+- Web Worker : optimisation sans blocage de l'interface.
 
-## Données actuelles de test
+## V18 — Analyse Mods
 
-Ally Code : `853-277-661`
+La version Web reprend maintenant la partie importante de l'analyse V176 :
 
-- 336 personnages
-- 70 vaisseaux
-- 406 unités au total
-- 1992 mods
+- ventilation des mods par tranches de Speed ;
+- détail des mods par personnage ;
+- sélection par faction puis personnage ;
+- audit 0/6, incomplet et niveaux de Speed ;
+- inventaire complet des mods ;
+- filtres set / slot / Speed / primaire / propriétaire / niveau ;
+- détail individuel d'un mod.
 
-## Déploiement
+Les tranches de Speed et les seuils de statut suivent les règles présentes dans V176.
 
-Le contenu de ce ZIP est prévu pour être copié à la racine de la branche `main` du dépôt GitHub Pages.
+## Installation
 
-Le Worker Cloudflare est déjà opérationnel et ne doit pas être modifié pour cette étape.
+Déployer les fichiers du ZIP sur la branche `main` de GitHub Pages. V18 conserve le Worker d'optimisation de V17 et le relais Cloudflare V15/V17.

@@ -11,6 +11,11 @@ let currentDataset = 'characters';
 let modFiltersReady = false;
 let rosterCharacters = [];
 let rosterShips = [];
+let factionMap = {};
+let analysisSelectedCharacter = '';
+let analysisFaction = '';
+let analysisMode = 'character';
+let analysisInventoryRows = [];
 
 const $ = (id) => document.getElementById(id);
 function log(msg) { $('log').textContent += `\n${msg}`; $('log').scrollTop = $('log').scrollHeight; }
@@ -22,10 +27,19 @@ function esc(value) { return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':
 function num(value, digits=0) { const n=Number(value); return Number.isFinite(n) ? n.toLocaleString('fr-FR',{maximumFractionDigits:digits}) : '0'; }
 
 function statNameFromAny(value) {
+  const rawNames = {1:'Health',5:'Speed',17:'Potency',18:'Tenacity',28:'Protection',41:'Offense',42:'Defense',45:'Critical Chance',48:'Offense',49:'Defense',53:'Critical Chance',55:'Health',56:'Protection',57:'Speed'};
   if (value == null) return '';
-  if (typeof value === 'string' || typeof value === 'number') return String(value).trim();
+  if (typeof value === 'number') return rawNames[value] || String(value);
+  if (typeof value === 'string' || typeof value === 'number') {
+    const text=String(value).trim();
+    if (/^\d+$/.test(text) && rawNames[Number(text)]) return rawNames[Number(text)];
+    return text;
+  }
   if (typeof value !== 'object') return '';
-  return String(value.name ?? value.stat ?? value.unitStat ?? value.unitStatId ?? value.type ?? '').trim();
+  let raw=value.name ?? value.stat ?? value.unitStat ?? value.unitStatId ?? value.statId ?? value.type ?? '';
+  if (raw && typeof raw === 'object') raw=raw.name ?? raw.unitStat ?? raw.unitStatId ?? raw.statId ?? '';
+  if (/^\d+$/.test(String(raw)) && rawNames[Number(raw)]) return rawNames[Number(raw)];
+  return String(raw).trim();
 }
 function statValueFromAny(value) {
   if (value == null) return 0;
@@ -243,7 +257,7 @@ async function loadRemotePlayer(){
     for(const m of apiMods){ if(!seenIds.has(m.game_id)){ merged.push(m); seenIds.add(m.game_id); } }
     const seen=new Set();mods=merged.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
     log(`Mods décodés : ${htmlMods.length} via pages publiques + ${Math.max(0,mods.length-htmlMods.length)} compléments API = ${mods.length}.`);
-    currentData={allyCode,name:title,characters:chars,ships,mods};updateRosterCounts(chars,ships);fillCharacters(chars);updateAccountSummary(title,fmt);renderDataTable();
+    currentData={allyCode,name:title,characters:chars,ships,mods};updateRosterCounts(chars,ships);buildFactionMap();fillCharacters(chars);updateAccountSummary(title,fmt);renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();
     $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nUnités totales: ${chars.length+ships.length}\nMods: ${mods.length}\nProfils Kyber disponibles dans cette version: ${Object.keys(profiles).length}`;
     log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${mods.length} mods exploitables.`);if(!mods.length)log('Aucun mod lisible. Utilise l’import JSON en attendant.');document.querySelector('[data-page="data"]').click();
   }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, utilise l’import JSON.');}
@@ -370,9 +384,305 @@ function runOptimizationInWorker(character, profile, nBuilds, limitSlot) {
   });
 }
 
+
+/* ========================= V18 — ANALYSE MODS / INVENTAIRE / FACTIONS ========================= */
+
+const V176_FACTION_RULES = {
+  "Jedi":["JEDI","YODA","KITFISTO","PLOKOON","AAYLASECURA","BARRISSOFFEE","MACEWINDU","QUIGON","KELLERAN","JARJARBINKS","KENOBI"],
+  "Sith":["SITH","DARTH","PALPATINE","SIDIOUS","VADER","MAUL","TALON","TRAYA","NIHILUS","SION","SAKURA","KYLOREN"],
+  "Empire":["VADER","PALPATINE","EMPEROR","TARKIN","THRAWN","PIETT","VEERS","STARCK","GIDEON","SHORETROOPER","DEATHTROOPER","STORMTROOPER","ROYALGUARD","DARKTROOPER","EMPIRE"],
+  "Imperial Trooper":["VEERS","PIETT","STARCK","GIDEON","RANGETROOPER","DEATHTROOPER","SNOWTROOPER","SHORETROOPER","MAGMATROOPER","DARKTROOPER","MORTAR","SCOUTTROOPER"],
+  "Clone Trooper":["CLONE","REX","CODY","FIVES","ECHO","WOLFFE","ARC","SHAAKTI","BATCHER"],
+  "501st":["501ST","REX","FIVES","ARC","ECHO","GENERALSKYWALKER"],
+  "Bad Batch":["BADBATCH","BATCHERS","OMEGA","TECH","WRECKER","CROSSHAIR"],
+  "Galactic Republic":["PADME","JEDIMASTERKENOBI","GENERALKENOBI","ANAKIN","AHSOKA","CLONE","REX","CODY","MACEWINDU","PLOKOON","KITFISTO","REPUBLIC"],
+  "Separatist":["SEPARATIST","DOOKU","GRIEVOUS","ASAJJ","NUTEGUNRAY","WAT","GEONOSIAN","B2SUPERBATTLE","B1BATTLE","DROIDEKA","MAGNAGUARD","SEPARATIST"],
+  "Geonosian":["GEONOSIAN","BROODALPHA","SUNFAC","POGGLE","GEONOSIANSPY","GEO"],
+  "Rebel":["REBEL","LUKE","LEIA","HAN","CHEWBACCA","ACKBAR","LANDO","WEDGE","BIGGS","HERA","EZRA","KANAN","SABINE","CHOPPER","ZEB","SAWGERRERA","JYNERSO","CASSIANANDOR","K2SO","RADDUS","MONMOTHMA"],
+  "Rebel Fighter":["MONMOTHMA","SAWGERRERA","CASSIANANDOR","JYNERSO","CARADUNE","KYLEKATARN","BISTAN","PAO","HOTHREBELSOLDIER","BIGGSDARKLIGHTER"],
+  "Rogue One":["JYNERSO","CASSIANANDOR","K2SO","RADDUS","BISTAN","CHIRRUTIMWE","BAZEMALBUS","PAO"],
+  "Resistance":["RESISTANCE","REY","FINN","POE","BB8","ROSE","HOLDO","AMILYNHOLDO","ZORII"],
+  "First Order":["FIRSTORDER","KYLO","HUX","PHASMA","SITHTROOPER","FOEXECUTIONER","FOSITHTROOPER","FOE","FOSTORM"],
+  "Mandalorian":["MANDALOR","MANDO","BOKATAN","ARMORER","SABINE","GARSAAXON","PREVIZSLA","MAULS7","JANGO"],
+  "Bounty Hunter":["BOBA","BOSSK","DENGAR","IG88","CADBANE","AURRA","FENNEC","JANGO","EMBO","ZAM","GREEDO","GREEF","MANDO","BOUNTY"],
+  "Scoundrel":["SCOUT","SMUGGLER","HONDO","QIRA","ENFYS","ZALBAR","MISSION","SMUGGLERHAN","L3","VANDOR","SOLO","CHEWBACCA"],
+  "Hutt Cartel":["HUTT","JABBA","BOUNTY","BOBA","CADBANE","GREEDO","KRRSANTAN","EMBO"],
+  "Droid":["DROID","R2D2","C3PO","BB8","K2SO","T3M4","HK47","IG88","DROIDEKA","B1BATTLE","B2SUPERBATTLE","L3"],
+  "Ewok":["EWOK","WICKET","PAPLOO","LOGRAY","ELDER","CHIEFCHIRPA","SCOUT"],
+  "Nightsister":["NIGHTSISTER","ASAJJ","TALZIN","DAKA","ZOMBIE","NIGHTSISTERACOLYTE","NIGHTSISTERSPIRIT"],
+  "Tusken":["TUSKEN","URRURRURR","CHIEFNEBIT","TUSKENRAIDER","TUSKENSHAMAN"],
+  "Phoenix":["PHOENIX","HERA","EZRA","KANAN","SABINE","ZEB","CHOPPER","GARAZEB"],
+  "Old Republic":["REVAN","BASTILA","JOLEE","JUHANI","CANDEROUS","T3M4","MISSIONVAO"],
+  "Sith Empire":["DARKREVAN","DARTHREVAN","BASTILASHANDARK","SITHTROOPER","SITHMARAUDER","HK47","MALAK"],
+  "Inquisitorius":["INQUISITOR","FIFTHBROTHER","SEVENTHSISTER","EIGHTHBROTHER","NINTHSISTER","THIRDBROTHER","MARROK"]
+};
+
+function compactKey(v){ return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+function characterKey(c){ return compactKey(c?.baseId??c?.base_id??c?.name??c?.character??''); }
+function modOwnerKey(m){ return compactKey(m?.character??m?.baseId??m?.base_id??m?.characterId??m?.character_id??''); }
+function getCharacterMods(c){
+  if(!c) return [];
+  const targets=new Set([characterKey(c),compactKey(c.name),compactKey(c.baseId),compactKey(c.base_id)].filter(Boolean));
+  return mods.map(normalizeModForDisplay).filter(m=>{
+    const owner=modOwnerKey(m);
+    return owner && [...targets].some(t=>owner===t);
+  }).slice(0,6).sort((a,b)=>({Square:0,Arrow:1,Diamond:2,Triangle:3,Circle:4,Cross:5}[a.slot]??99)-({Square:0,Arrow:1,Diamond:2,Triangle:3,Circle:4,Cross:5}[b.slot]??99));
+}
+function modSpeedMetrics(m){
+  const primary=compactKey(m.primary_stat)==='SPEED';
+  let secondary=null;
+  for(let i=1;i<=4;i++){
+    if(compactKey(m[`secondary_${i}_stat`])==='SPEED'){ secondary=Number(m[`secondary_${i}_value`]); break; }
+  }
+  return {secondary:Number.isFinite(secondary)?secondary:null,primary};
+}
+function modPrimarySpeed(m){ return modSpeedMetrics(m).primary ? Number(m.primary_value||0) : 0; }
+function modTotalSpeed(m){ const x=modSpeedMetrics(m); return (x.secondary||0)+modPrimarySpeed(m); }
+function speedCategory(v){
+  const n=Number(v||0);
+  if(n<=0)return 'no_speed';
+  if(n<=10)return '1_10';
+  if(n<=15)return '11_15';
+  if(n<=21)return '16_21';
+  return '22plus';
+}
+function speedCategoryLabel(k){ return ({'1_10':'1 – 10','11_15':'11 – 15','16_21':'16 – 21','22plus':'> 21','no_speed':'Sans Speed','primary_speed':'Primaire Speed'})[k]||k; }
+function v176ModStatus(modsForCharacter){
+  const list=Array.isArray(modsForCharacter)?modsForCharacter:[];
+  const count=Math.min(6,list.length);
+  const totalSpeed=list.reduce((s,m)=>s+modTotalSpeed(m),0);
+  if(count===0)return {status:'SANS MODS',class:'critical',totalSpeed};
+  if(count<6)return {status:'INCOMPLETS',class:'incomplete',totalSpeed};
+  if(totalSpeed<30)return {status:'TRÈS FAIBLES',class:'verylow',totalSpeed};
+  if(totalSpeed<50)return {status:'FAIBLES',class:'low',totalSpeed};
+  if(totalSpeed<70)return {status:'MOYENS',class:'medium',totalSpeed};
+  return {status:'BONS',class:'good',totalSpeed};
+}
+function factionsForCharacter(c){
+  const out=[];
+  const raw=c?.raw||c?.data||{};
+  const candidates=[];
+  const add=(v)=>{if(v==null)return;if(Array.isArray(v))v.forEach(add);else if(typeof v==='object'){['name','displayName','nameKey','id','categoryId','faction'].forEach(k=>add(v[k]));}else candidates.push(String(v));};
+  ['factions','faction','categories','category','categoryIdList','categoryIds'].forEach(k=>add(raw?.[k]));
+  const rawText=compactKey(candidates.join(' '));
+  const key=compactKey(`${c?.baseId||''} ${c?.name||''} ${c?.character||''} ${candidates.join(' ')}`);
+  for(const [faction,needles] of Object.entries(V176_FACTION_RULES)){
+    const fk=compactKey(faction);
+    if(candidates.some(v=>compactKey(v)===fk || compactKey(v).includes(fk) || fk.includes(compactKey(v))) ||
+       needles.some(n=>key.includes(compactKey(n))) || (rawText && rawText.includes(fk))) out.push(faction);
+  }
+  return [...new Set(out)];
+}
+function buildFactionMap(){
+  factionMap={};
+  for(const c of rosterCharacters){
+    if(rosterUnitType(c)==='ship')continue;
+    factionMap[characterKey(c)] = factionsForCharacter(c);
+  }
+  return factionMap;
+}
+function charactersInFaction(faction){
+  if(!faction || faction==='Toutes les factions') return [...rosterCharacters];
+  return rosterCharacters.filter(c=>(factionMap[characterKey(c)]||[]).includes(faction));
+}
+function allFactions(){
+  const set=new Set();
+  for(const c of rosterCharacters) for(const f of (factionMap[characterKey(c)]||[])) set.add(f);
+  return [...set].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+function speedBreakdown(list=mods){
+  const out={'1_10':0,'11_15':0,'16_21':0,'22plus':0,'no_speed':0,'primary_speed':0,total:0};
+  for(const raw of list){
+    const m=normalizeModForDisplay(raw); out.total++;
+    const x=modSpeedMetrics(m);
+    if(x.primary) out.primary_speed++;
+    else out[speedCategory(x.secondary)]++;
+  }
+  return out;
+}
+function inventoryRows(){
+  return mods.map((raw,i)=>{
+    const m=normalizeModForDisplay(raw);
+    const x=modSpeedMetrics(m);
+    return {...m,_index:i,_speed:x.secondary||0,_primarySpeed:x.primary,_totalSpeed:modTotalSpeed(m),_speedCategory:x.primary?'primary_speed':speedCategory(x.secondary)};
+  });
+}
+function renderV18SpeedRecap(containerId='v18SpeedRecap'){
+  const box=$(containerId); if(!box)return;
+  const b=speedBreakdown(mods);
+  const cards=[
+    ['1_10','1 – 10','secondary'],['11_15','11 – 15','secondary'],['16_21','16 – 21','secondary'],['22plus','> 21','secondary'],
+    ['primary_speed','Primaire Speed','primary'],['no_speed','Sans Speed','secondary']
+  ];
+  box.innerHTML=cards.map(([k,label])=>`<button class="speed-recap-card speed-${k}" data-speed-category="${k}"><span>${label}</span><strong>${num(b[k])}</strong><small>${b.total?((b[k]/b.total)*100).toFixed(1):'0.0'} %</small></button>`).join('');
+  box.querySelectorAll('[data-speed-category]').forEach(el=>el.addEventListener('click',()=>{
+    const k=el.dataset.speedCategory;
+    showPage('mods-analysis');
+    setTimeout(()=>{setAnalysisTab('inventory'); $('analysisSpeedFilter').value=k; renderInventory();},0);
+  }));
+}
+function showPage(page){
+  document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
+  document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page));
+  if(page==='mods-analysis') renderModsAnalysis();
+}
+function setAnalysisTab(tab){
+  document.querySelectorAll('.analysis-tab').forEach(x=>x.classList.toggle('active',x.dataset.analysisTab===tab));
+  document.querySelectorAll('.analysis-panel').forEach(x=>x.hidden=x.dataset.analysisPanel!==tab);
+  if(tab==='recap') renderAnalysisRecap();
+  if(tab==='selection') renderSelectionPanel();
+  if(tab==='inventory') renderInventory();
+}
+function analysisCharacterRows(){
+  const faction=analysisFaction||'Toutes les factions';
+  return charactersInFaction(faction).map(c=>{
+    const cm=getCharacterMods(c); const s=v176ModStatus(cm);
+    const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0);
+    const primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
+    return {character:c,mods:cm,modCount:cm.length,speed:secSpeed,primarySpeed,totalSpeed:s.totalSpeed,status:s.status,class:s.class,best:cm.reduce((mx,m)=>Math.max(mx,modSpeedMetrics(m).secondary||0),0),factions:factionMap[characterKey(c)]||[]};
+  }).sort((a,b)=>b.totalSpeed-a.totalSpeed||String(a.character.name).localeCompare(String(b.character.name),'fr'));
+}
+function renderAnalysisRecap(){
+  const b=speedBreakdown(mods);
+  const el=$('analysisRecap'); if(!el)return;
+  const sets={}; for(const raw of mods){const m=normalizeModForDisplay(raw);sets[m.set_name]=(sets[m.set_name]||0)+1;}
+  const setRows=Object.entries(sets).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  el.innerHTML=`<div class="v18-summary-grid">
+    <div class="v18-kpi"><span>MODS</span><strong>${num(b.total)}</strong><small>${mods.filter(m=>String(normalizeModForDisplay(m).character||'').trim()).length} équipés</small></div>
+    <div class="v18-kpi"><span>1 – 10 SPEED</span><strong>${num(b['1_10'])}</strong><small>${b.total?((b['1_10']/b.total)*100).toFixed(1):0}%</small></div>
+    <div class="v18-kpi"><span>11 – 15 SPEED</span><strong>${num(b['11_15'])}</strong><small>${b.total?((b['11_15']/b.total)*100).toFixed(1):0}%</small></div>
+    <div class="v18-kpi"><span>16 – 21 SPEED</span><strong>${num(b['16_21'])}</strong><small>${b.total?((b['16_21']/b.total)*100).toFixed(1):0}%</small></div>
+    <div class="v18-kpi"><span>&gt; 21 SPEED</span><strong>${num(b['22plus'])}</strong><small>${b.total?((b['22plus']/b.total)*100).toFixed(1):0}%</small></div>
+    <div class="v18-kpi"><span>PRIMAIRE SPEED</span><strong>${num(b.primary_speed)}</strong><small>flèches Speed</small></div>
+    <div class="v18-kpi"><span>SANS SPEED</span><strong>${num(b.no_speed)}</strong><small>aucune secondaire Speed</small></div>
+  </div>
+  <div class="v18-two-col">
+    <div><h3>VENTILATION PAR VITESSE</h3><div id="v18SpeedRecap" class="speed-recap-grid"></div></div>
+    <div><h3>SETS — STOCK ACTUEL</h3><div class="set-bars">${setRows.map(([s,n])=>`<div class="set-row"><span>${esc(s)}</span><b>${num(n)}</b><i><em style="width:${Math.max(3,(n/b.total)*100)}%"></em></i></div>`).join('')}</div></div>
+  </div>`;
+  renderV18SpeedRecap();
+}
+function renderSelectionPanel(){
+  const factionSelect=$('analysisFaction'), charSelect=$('analysisCharacter');
+  if(!factionSelect||!charSelect)return;
+  if(analysisMode==='character') analysisFaction='Toutes les factions';
+  const factions=['Toutes les factions',...allFactions()];
+  factionSelect.innerHTML=factions.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
+  factionSelect.disabled=analysisMode==='character';
+  factionSelect.value=analysisFaction||'Toutes les factions';
+  const chars=charactersInFaction(analysisFaction||'Toutes les factions').sort((a,b)=>String(a.name||a.baseId).localeCompare(String(b.name||b.baseId),'fr'));
+  charSelect.innerHTML=chars.map(c=>`<option value="${esc(characterKey(c))}">${esc(c.name||c.baseId)}</option>`).join('');
+  if(!chars.length){charSelect.innerHTML='<option value="">Aucun personnage</option>';analysisSelectedCharacter='';}
+  else {
+    if(!analysisSelectedCharacter || !chars.some(c=>characterKey(c)===analysisSelectedCharacter)) analysisSelectedCharacter=characterKey(chars[0]);
+    charSelect.value=analysisSelectedCharacter;
+  }
+  const rows=analysisCharacterRows();
+  $('selectionMeta').textContent=`${rows.length} personnage(s) dans ${analysisFaction||'Toutes les factions'}`;
+  $('selectionTable').innerHTML=rows.map(r=>`<tr class="${r.class}" data-character-key="${esc(characterKey(r.character))}">
+    <td><strong>${esc(r.character.name||r.character.baseId)}</strong><small>${esc(r.factions.join(' · '))}</small></td>
+    <td>${r.modCount}/6</td><td>${num(r.speed)}</td><td>${num(r.primarySpeed)}</td><td>${num(r.totalSpeed)}</td><td>${num(r.best)}</td><td><span class="audit-badge ${r.class}">${esc(r.status)}</span></td>
+  </tr>`).join('')||'<tr><td colspan="7">Aucun personnage.</td></tr>';
+  $('selectionTable').querySelectorAll('[data-character-key]').forEach(row=>row.addEventListener('click',()=>{
+    analysisSelectedCharacter=row.dataset.characterKey; charSelect.value=analysisSelectedCharacter; renderCharacterDetail();
+  }));
+  renderCharacterDetail();
+}
+function renderCharacterDetail(){
+  const c=rosterCharacters.find(x=>characterKey(x)===analysisSelectedCharacter);
+  const box=$('characterModDetail'); if(!box)return;
+  if(!c){box.innerHTML='<div class="empty">Sélectionnez un personnage.</div>';return;}
+  const cm=getCharacterMods(c), s=v176ModStatus(cm);
+  const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0), primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
+  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">${esc(c.baseId||'')}</span><h2>${esc(c.name||c.baseId)}</h2><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${num(c.stars)}★ · Puissance ${num(c.power)} · Factions : ${esc((factionMap[characterKey(c)]||[]).join(' · ')||'—')}</p></div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
+  <div class="mod-detail-grid">${[...cm,...Array(Math.max(0,6-cm.length)).fill(null)].slice(0,6).map((m,i)=>m?renderModCard(m):`<div class="mod-card empty-slot"><strong>${['Square','Arrow','Diamond','Triangle','Circle','Cross'][i]}</strong><span>MOD MANQUANT</span></div>`).join('')}</div>`;
+}
+function renderModCard(m){
+  const x=modSpeedMetrics(m), speed=x.secondary??0, owner=m.character||'Libre';
+  const sec=modSecondaries(m)||'—';
+  const speedClass=x.primary?'speed_primary':speedCategory(speed);
+  return `<button class="mod-detail-card ${speedClass}" data-mod-index="${m._index??''}">
+    <div class="mod-card-top"><strong>${esc(m.slot||'—')}</strong><span>${esc(m.set_name||'—')}</span></div>
+    <div class="mod-primary"><b>${esc(m.primary_stat||'—')}</b> ${num(m.primary_value,1)}</div>
+    <div class="mod-speed-line">${x.primary?'Primaire Speed':(speed>0?`Speed secondaire +${num(speed)}`:'Sans Speed')}</div>
+    <div class="mod-secondaries">${esc(sec)}</div>
+    <small>Niv. ${num(m.level)} · ${num(m.rarity)}★ · ${esc(owner)}</small>
+  </button>`;
+}
+function renderInventory(){
+  const wrap=$('inventoryTable'), meta=$('inventoryMeta'); if(!wrap)return;
+  const q=String($('analysisSearch')?.value||'').trim().toLowerCase();
+  const set=$('analysisSetFilter')?.value||'', slot=$('analysisSlotFilter')?.value||'', speed=$('analysisSpeedFilter')?.value||'', owner=$('analysisOwnerFilter')?.value||'', primary=$('analysisPrimaryFilter')?.value||'';
+  const minLevel=Number($('analysisLevelFilter')?.value||0);
+  let rows=inventoryRows().filter(m=>{
+    if(q && !JSON.stringify(m).toLowerCase().includes(q))return false;
+    if(set && m.set_name!==set)return false;
+    if(slot && m.slot!==slot)return false;
+    if(speed && m._speedCategory!==speed)return false;
+    const equipped=String(m.character||'').trim()!=='';
+    if(owner==='equipped'&&!equipped)return false;
+    if(owner==='free'&&equipped)return false;
+    if(primary && compactKey(m.primary_stat)!==compactKey(primary))return false;
+    if(m.level<minLevel)return false;
+    return true;
+  });
+  const sort=$('analysisSort')?.value||'speed_desc';
+  rows.sort((a,b)=>{
+    if(sort==='speed_desc') return b._totalSpeed-a._totalSpeed;
+    if(sort==='speed_asc') return a._totalSpeed-b._totalSpeed;
+    if(sort==='level_desc') return b.level-a.level||b._totalSpeed-a._totalSpeed;
+    if(sort==='set') return String(a.set_name).localeCompare(String(b.set_name),'fr')||b._totalSpeed-a._totalSpeed;
+    if(sort==='slot') return String(a.slot).localeCompare(String(b.slot),'fr')||b._totalSpeed-a._totalSpeed;
+    return String(a.character||'').localeCompare(String(b.character||''),'fr');
+  });
+  meta.textContent=`${rows.length} mod(s) affiché(s) sur ${mods.length}`;
+  wrap.innerHTML=rows.map(m=>{
+    const x=modSpeedMetrics(m);
+    return `<tr class="${m._speedCategory}" data-mod-index="${m._index}">
+      <td><strong>${esc(m.slot||'—')}</strong></td><td>${esc(m.set_name||'—')}</td>
+      <td><strong>${esc(m.primary_stat||'—')}</strong> ${num(m.primary_value,1)}</td>
+      <td>${esc(modSecondaries(m)||'—')}</td><td class="speed-cell">${x.primary?'★':(x.secondary?`+${num(x.secondary)}`:'—')}</td>
+      <td>${num(m.level)}</td><td>${num(m.rarity)}★</td><td>${esc(m.character||'Libre')}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="8">Aucun mod ne correspond aux filtres.</td></tr>';
+  wrap.querySelectorAll('[data-mod-index]').forEach(row=>row.addEventListener('click',()=>showModInventoryDetail(Number(row.dataset.modIndex))));
+}
+function showModInventoryDetail(index){
+  const raw=mods[index]; if(!raw)return;
+  const m=normalizeModForDisplay(raw), x=modSpeedMetrics(m);
+  const modal=$('modDetailModal'); if(!modal)return;
+  $('modDetailTitle').textContent=`${m.slot||'Mod'} · ${m.set_name||'—'}`;
+  $('modDetailBody').innerHTML=`<div class="modal-mod-grid">
+    <div><span>ID</span><b>${esc(m.game_id||m.id||'—')}</b></div>
+    <div><span>PROPRIÉTAIRE</span><b>${esc(m.character||'Libre')}</b></div>
+    <div><span>SET</span><b>${esc(m.set_name||'—')}</b></div>
+    <div><span>SLOT</span><b>${esc(m.slot||'—')}</b></div>
+    <div><span>PRIMAIRE</span><b>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</b></div>
+    <div><span>SPEED</span><b>${x.primary?'Primaire Speed':(x.secondary?`+${num(x.secondary)} secondaire`:'Aucune')}</b></div>
+    <div><span>NIVEAU</span><b>${num(m.level)}</b></div>
+    <div><span>RARETÉ</span><b>${num(m.rarity)}★</b></div>
+  </div><h3>SECONDAIRES</h3><ul>${[1,2,3,4].map(i=>m[`secondary_${i}_stat`]?`<li>${esc(m[`secondary_${i}_stat`])} : <strong>${num(m[`secondary_${i}_value`],1)}</strong></li>`:'').join('')||'<li>Aucune donnée secondaire.</li>'}</ul>`;
+  modal.hidden=false;
+}
+function closeModDetail(){if($('modDetailModal'))$('modDetailModal').hidden=true;}
+function prepareV18Filters(){
+  const sets=[...new Set(mods.map(m=>normalizeModForDisplay(m).set_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+  const primaries=[...new Set(mods.map(m=>normalizeModForDisplay(m).primary_stat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+  const setSel=$('analysisSetFilter'), primSel=$('analysisPrimaryFilter');
+  if(setSel)setSel.innerHTML='<option value="">Tous les sets</option>'+sets.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  if(primSel)primSel.innerHTML='<option value="">Toutes les primaires</option>'+primaries.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+}
+function renderModsAnalysis(){
+  buildFactionMap(); prepareV18Filters();
+  if(!analysisSelectedCharacter && rosterCharacters.length) analysisSelectedCharacter=characterKey(rosterCharacters[0]);
+  renderV18SpeedRecap();
+  const tab=document.querySelector('.analysis-tab.active')?.dataset.analysisTab||'recap';
+  setAnalysisTab(tab);
+}
+
 async function boot(){try{setRuntime('CHARGEMENT PYTHON…');pyodide=await loadPyodide();const optimizer=await fetch('python/optimizer.py').then(r=>r.text());const kyber=await fetch('python/kyber_profiles.json').then(r=>r.text());const optimizerProfilesText=await fetch('python/optimizer_profiles.json').then(r=>r.text());optimizerProfiles=JSON.parse(optimizerProfilesText);pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);pyodide.FS.writeFile('/home/pyodide/kyber_profiles.json',kyber);pyodide.FS.writeFile('/home/pyodide/optimizer_profiles.json',optimizerProfilesText);pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer, json`);profiles=JSON.parse(kyber);optimizerReady=true;$('pythonState').textContent='OK';setRuntime('PYTHON WEBASSEMBLY PRÊT',true);log('Moteur Python chargé dans le navigateur.');}catch(e){setRuntime('ERREUR PYTHON');$('pythonState').textContent='ERREUR';log('Erreur Python: '+e);}}
 
-$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderDataTable();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
+$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
 
 $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
@@ -404,6 +714,16 @@ $('runOptimizer').addEventListener('click',async()=>{
 });
 function renderResults(data){if(!data.length){$('results').textContent='Aucun build.';return;}$('results').innerHTML=data.map((r,i)=>`<article class="result"><div class="rank">#${i+1}</div><div><div class="result-head"><strong>Score ${Number(r.score).toFixed(2)}</strong></div><div class="stats">${Object.entries(r.stats||{}).map(([k,v])=>`${esc(k)}: ${typeof v==='number'?num(v,1):esc(v)}`).join(' · ')}</div><div class="build-grid">${(r.build||[]).map(m=>`<div class="mod-card"><strong>${esc(m.slot||'?')}</strong><span>${esc(m.set_name||m.set||'?')}</span><span>${esc(m.primary_stat||'?')} ${num(m.primary_value,1)}${String(m.primary_stat||'').endsWith(' %')?'%':''}</span><small>${esc([1,2,3,4].map(i=>m[`secondary_${i}_stat`]?displayModStat(m[`secondary_${i}_stat`],m[`secondary_${i}_value`]):'').filter(Boolean).join(' · '))}</small></div>`).join('')}</div></div></article>`).join('');}
 
-$('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];updateRosterCounts([],[]);fillCharacters([]);$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';$('accountSummary').innerHTML='<span>Aucune donnée chargée.</span>';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
-document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));btn.classList.add('active');$(btn.dataset.page).classList.add('active');if(btn.dataset.page==='data')renderDataTable();}));
+$('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';$('accountSummary').innerHTML='<span>Aucune donnée chargée.</span>';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
+
+document.querySelectorAll('.analysis-tab').forEach(btn=>btn.addEventListener('click',()=>setAnalysisTab(btn.dataset.analysisTab)));
+$('analysisFaction')?.addEventListener('change',()=>{analysisFaction=$('analysisFaction').value;analysisSelectedCharacter='';renderSelectionPanel();});
+$('analysisCharacter')?.addEventListener('change',()=>{analysisSelectedCharacter=$('analysisCharacter').value;renderCharacterDetail();});
+$('analysisMode')?.addEventListener('change',()=>{analysisMode=$('analysisMode').value;renderSelectionPanel();});
+['analysisSearch','analysisSetFilter','analysisSlotFilter','analysisSpeedFilter','analysisOwnerFilter','analysisPrimaryFilter','analysisLevelFilter','analysisSort'].forEach(id=>$(id)?.addEventListener('input',renderInventory));
+$('closeModDetail')?.addEventListener('click',closeModDetail);
+$('modDetailModal')?.addEventListener('click',e=>{if(e.target.id==='modDetailModal')closeModDetail();});
+
+document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{showPage(btn.dataset.page);if(btn.dataset.page==='data')renderDataTable();}));
+
 boot();

@@ -4,21 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
-  <meta name="description" content="SWGOH Optimizer Web V17 — roster, mods et optimisation dans le navigateur">
+  <meta name="description" content="SWGOH Optimizer Web V18 — roster, mods et optimisation dans le navigateur">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
-  <title>SWGOH Optimizer Web V17</title>
+  <title>SWGOH Optimizer Web V18</title>
 </head>
 <body>
 <div class="scanlines"></div>
 <header class="topbar">
-  <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V17</span></div>
+  <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V18</span></div>
   <div id="runtime" class="status">INITIALISATION PYTHON…</div>
 </header>
 <main class="layout">
   <aside class="sidebar">
     <button class="nav active" data-page="dashboard">DASHBOARD</button>
     <button class="nav" data-page="optimizer">OPTIMIZER</button>
+    <button class="nav" data-page="mods-analysis">ANALYSE MODS</button>
     <button class="nav" data-page="data">DONNÉES</button>
     <button class="nav" data-page="help">AIDE</button>
     <div class="side-note">100% navigateur<br>aucun PC serveur</div>
@@ -48,6 +49,7 @@
         <div class="panel-title">ÉTAT DU COMPTE</div>
         <div id="accountSummary" class="summary-grid"><span>Aucune donnée chargée.</span></div>
       </div>
+      <div class="panel v18-dashboard-speed"><div class="panel-title">VENTILATION DES MODS PAR VITESSE SECONDAIRE — V176</div><div id="v18DashboardSpeed" class="speed-recap-grid"></div><div class="v18-note">Cliquez sur une tranche pour ouvrir le détail complet de l’inventaire des mods.</div></div>
       <div class="panel log"><div class="panel-title">JOURNAL</div><pre id="log">Entrez votre Ally Code pour charger le profil. Pour le chargement automatique, le Worker Cloudflare doit être configuré.</pre></div>
     </section>
 
@@ -64,6 +66,73 @@
         <div id="optimizerError" class="error"></div>
       </div>
       <div class="panel"><div class="panel-title">RÉSULTATS</div><div id="results" class="results empty">Chargez d'abord vos données.</div></div>
+    </section>
+
+    <section id="mods-analysis" class="page">
+      <div class="panel analysis-header">
+        <div>
+          <div class="panel-title">ANALYSE DES MODS — V176</div>
+          <p>Reprise du récapitulatif vitesse, de l’audit personnage/faction et de l’inventaire complet des mods.</p>
+        </div>
+        <div class="analysis-tabs">
+          <button class="analysis-tab active" data-analysis-tab="recap">RÉCAPITULATIF</button>
+          <button class="analysis-tab" data-analysis-tab="selection">PERSONNAGE / FACTION</button>
+          <button class="analysis-tab" data-analysis-tab="inventory">INVENTAIRE DES MODS</button>
+        </div>
+      </div>
+
+      <div class="analysis-panel panel" data-analysis-panel="recap" id="analysisRecap"></div>
+
+      <div class="analysis-panel panel" data-analysis-panel="selection" hidden>
+        <div class="analysis-selectors">
+          <label>MODE
+            <select id="analysisMode">
+              <option value="character">PERSONNAGE</option>
+              <option value="faction">FACTION → PERSONNAGE</option>
+            </select>
+          </label>
+          <label>FACTION
+            <select id="analysisFaction"><option>Toutes les factions</option></select>
+          </label>
+          <label>PERSONNAGE
+            <select id="analysisCharacter"></select>
+          </label>
+        </div>
+        <div id="selectionMeta" class="table-meta"></div>
+        <div class="analysis-two-col">
+          <div class="table-panel">
+            <table class="v18-table"><thead><tr><th>Personnage</th><th>Mods</th><th>Speed sec.</th><th>Speed primaire</th><th>Speed totale</th><th>Meilleur</th><th>Statut</th></tr></thead><tbody id="selectionTable"></tbody></table>
+          </div>
+          <div id="characterModDetail" class="character-detail"></div>
+        </div>
+      </div>
+
+      <div class="analysis-panel panel" data-analysis-panel="inventory" hidden>
+        <div class="inventory-toolbar">
+          <input id="analysisSearch" class="data-search" type="search" placeholder="Rechercher ID, personnage, set, primaire, secondaire…">
+          <select id="analysisSetFilter"><option value="">Tous les sets</option></select>
+          <select id="analysisSlotFilter">
+            <option value="">Tous les slots</option><option value="Square">Square</option><option value="Arrow">Arrow</option><option value="Diamond">Diamond</option><option value="Triangle">Triangle</option><option value="Circle">Circle</option><option value="Cross">Cross</option>
+          </select>
+          <select id="analysisSpeedFilter">
+            <option value="">Toutes les vitesses</option><option value="1_10">1 – 10</option><option value="11_15">11 – 15</option><option value="16_21">16 – 21</option><option value="22plus">&gt; 21</option><option value="primary_speed">Primaire Speed</option><option value="no_speed">Sans Speed</option>
+          </select>
+          <select id="analysisOwnerFilter"><option value="">Tous</option><option value="equipped">Équipés</option><option value="free">Libres</option></select>
+          <select id="analysisPrimaryFilter"><option value="">Toutes les primaires</option></select>
+          <label class="compact-label">Niv. ≥ <input id="analysisLevelFilter" type="number" min="0" max="15" value="0"></label>
+          <select id="analysisSort"><option value="speed_desc">Speed ↓</option><option value="speed_asc">Speed ↑</option><option value="level_desc">Niveau ↓</option><option value="set">Set</option><option value="slot">Slot</option><option value="owner">Propriétaire</option></select>
+        </div>
+        <div id="inventoryMeta" class="table-meta"></div>
+        <div class="inventory-wrap"><table class="v18-table"><thead><tr><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaires</th><th>Speed</th><th>Niv.</th><th>Rareté</th><th>Propriétaire</th></tr></thead><tbody id="inventoryTable"></tbody></table></div>
+      </div>
+
+      <div id="modDetailModal" class="modal" hidden>
+        <div class="modal-box">
+          <button class="modal-close" id="closeModDetail">×</button>
+          <div class="panel-title" id="modDetailTitle">Détail du mod</div>
+          <div id="modDetailBody"></div>
+        </div>
+      </div>
     </section>
 
     <section id="data" class="page">
@@ -97,7 +166,7 @@
         <div id="relayState" class="relay-state">RELAIS PRÉCONFIGURÉ</div>
       </div>
       <div class="panel help">
-        <div class="panel-title">ARCHITECTURE V17</div>
+        <div class="panel-title">ARCHITECTURE V18</div>
         <ul>
           <li>GitHub Pages : interface statique.</li>
           <li>Cloudflare Worker : relais vers SWGOH.GG.</li>
