@@ -194,7 +194,18 @@ function updateCharacterInfo() {
 }
 
 const DEFAULT_WORKER_URL = 'https://swgoh-optimizer-relay.lorg75017.workers.dev';
-function workerUrl() { return String(localStorage.getItem('swgohRelayUrl') || $('relayUrl')?.value || DEFAULT_WORKER_URL).trim().replace(/\/$/,''); }
+function workerUrl() {
+  const stored = String(localStorage.getItem('swgohRelayUrl') || '').trim().replace(/\/$/,'');
+  const field = String($('relayUrl')?.value || '').trim().replace(/\/$/,'');
+  const candidate = stored || field || DEFAULT_WORKER_URL;
+  try {
+    const u = new URL(candidate);
+    if (!/^https?:$/.test(u.protocol)) throw new Error('protocol');
+    return u.origin + u.pathname.replace(/\/$/,'');
+  } catch(e) {
+    return DEFAULT_WORKER_URL;
+  }
+}
 function saveWorkerUrl() { const v=String($('relayUrl').value||'').trim().replace(/\/$/,''); if(v)localStorage.setItem('swgohRelayUrl',v);else localStorage.removeItem('swgohRelayUrl'); $('relayState').textContent=v?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ'; log(v?`Relais Cloudflare enregistré : ${v}`:'Relais Cloudflare effacé.'); }
 async function fetchText(url) {
   const candidates=[], relay=workerUrl();
@@ -242,8 +253,16 @@ async function loadRemotePlayer(){
   const allyCode=cleanAllyCode($('allyCode').value);if(allyCode.length!==9){log('Ally Code invalide : 9 chiffres attendus.');return;}
   $('loadPlayer').disabled=true;$('loadPlayer').textContent='CHARGEMENT…';$('log').textContent='';const fmt=formatAlly(allyCode);log(`Recherche du joueur ${fmt}…`);
   try{
-    if(workerUrl())log('Relais Cloudflare actif : récupération via relais sécurisé.');else log('Aucun relais configuré : tentative directe depuis le navigateur.');
-    const base=`https://swgoh.gg/p/${allyCode}`,relay=workerUrl();let apiChars=[],apiMods=[];
+    const relay=workerUrl();
+    log(`Relais Cloudflare actif : ${relay}`);
+    try {
+      const probe = await fetch(`${relay}/?ally=${allyCode}&path=api-profile`, {headers:{'Accept':'application/json'}});
+      if (!probe.ok) throw new Error(`HTTP ${probe.status}`);
+      log('Test du relais : OK.');
+    } catch (probeErr) {
+      throw new Error(`Relais Cloudflare inaccessible (${probeErr.message}). Vérifie que le Worker est toujours déployé.`);
+    }else log('Aucun relais configuré : tentative directe depuis le navigateur.');
+    const base=`https://swgoh.gg/p/${allyCode}`;let apiChars=[],apiMods=[];
     if(relay){log('Tentative API JSON SWGOH.GG via le Worker…');try{const api=await fetchJSON(`${relay}/?ally=${allyCode}&path=api-profile`);apiChars=extractApiCharacters(api);apiMods=extractApiMods(api);log(`API : ${apiChars.length} unités candidates, ${apiMods.length} mods candidats.`);}catch(e){log(`API profil indisponible : ${e.message}`);}if(!apiMods.length){try{const apiModsJson=await fetchJSON(`${relay}/?ally=${allyCode}&path=api-mods`);apiMods=extractApiMods(apiModsJson);log(`API mods : ${apiMods.length} mods candidats.`);}catch(e){log(`API mods indisponible : ${e.message}`);}}}
     const profileText=await fetchText(`${base}/`),profileDoc=parseHTML(profileText),title=profileDoc.querySelector('h1')?.textContent?.trim()||'Joueur',bodyText=profileDoc.body.textContent||'';accountGalacticPower=extractGalacticPowerFromProfile(bodyText);renderGalacticPower();const rosterMatch=bodyText.match(/Roster\s+([0-9,]+)\s+units/i);const modsMatch=bodyText.match(/([0-9,]+)\s+Mods/i);log(`Profil SWGOH.GG trouvé : ${title}.`);if(rosterMatch)log(`Roster annoncé : ${rosterMatch[1]} unités.`);if(modsMatch)log(`Mods annoncés : ${modsMatch[1]}.`);log('Lecture du roster…');
     if(apiChars.length)log(`Unités directes API retenues : ${apiChars.length}.`);
