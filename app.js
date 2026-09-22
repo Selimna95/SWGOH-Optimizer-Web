@@ -45,11 +45,11 @@ function splitRosterUnits(units) {
   for(const u of Array.isArray(units)?units:[]) (rosterUnitType(u)==='ship'?ships:characters).push(u);
   return {characters,ships};
 }
+function setText(id, value) { const el=$(id); if(el) el.textContent=String(value); }
 function updateRosterCounts(characters, ships) {
-  const c=Array.isArray(characters)?characters.length:0, s=Array.isArray(ships)?ships.length:0;
-  $('charsCount').textContent=c; $('shipsCount').textContent=s; $('unitsCount').textContent=c+s;
-  $('modsCount').textContent=mods.length;
-  $('tabCharsCount').textContent=c; $('tabShipsCount').textContent=s; $('tabModsCount').textContent=mods.length;
+  const c=Array.isArray(characters)?characters.length:0, s=Array.isArray(ships)?ships.length:0, m=Array.isArray(mods)?mods.length:0;
+  setText('charsCount',c); setText('shipsCount',s); setText('unitsCount',c+s); setText('modsCount',m);
+  setText('tabCharsCount',c); setText('tabShipsCount',s); setText('tabModsCount',m);
 }
 function profileForCharacter(character) {
   const base=String(character?.baseId||character?.base_id||'').toLowerCase();
