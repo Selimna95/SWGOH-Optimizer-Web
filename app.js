@@ -612,8 +612,10 @@ function renderSelectionPanel(){
   $('selectionTable').innerHTML=rows.map(r=>`<tr class="${r.class}" data-character-key="${esc(characterKey(r.character))}">
     <td><strong>${esc(r.character.name||r.character.baseId)}</strong><small>${esc(r.factions.join(' · '))}</small></td>
     <td>${r.relic?'R'+num(r.relic):'—'}</td><td>${r.modCount}/6</td><td>${num(r.totalSpeed)}</td><td>${num(r.secSpeed)}</td><td>${r.speedCount}</td><td>${r.primarySpeed?num(r.primarySpeed):'NON'}</td><td><span class="audit-badge ${r.class}">${esc(r.status)}</span></td>
-  </tr>`).join('')||'<tr><td colspan="8">Aucun personnage ne correspond aux filtres.</td></tr>';
-  $('selectionTable').querySelectorAll('[data-character-key]').forEach(row=>row.addEventListener('click',()=>{analysisSelectedCharacter=row.dataset.characterKey;charSelect.value=analysisSelectedCharacter;renderCharacterDetail();}));
+    <td><button type="button" class="detail-mods-btn" data-open-character="${esc(characterKey(r.character))}">VOIR LES 6 MODS</button></td>
+  </tr>`).join('')||'<tr><td colspan="9">Aucun personnage ne correspond aux filtres.</td></tr>';
+  $('selectionTable').querySelectorAll('tr[data-character-key]').forEach(row=>row.addEventListener('click',e=>{if(e.target.closest('.detail-mods-btn'))return;analysisSelectedCharacter=row.dataset.characterKey;charSelect.value=analysisSelectedCharacter;renderCharacterDetail();}));
+  $('selectionTable').querySelectorAll('[data-open-character]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();analysisSelectedCharacter=btn.dataset.openCharacter;charSelect.value=analysisSelectedCharacter;renderCharacterDetail();}));
   renderCharacterDetail();
 }
 function renderCharacterDetail(){
@@ -622,8 +624,10 @@ function renderCharacterDetail(){
   if(!c){box.innerHTML='<div class="empty">Sélectionnez un personnage.</div>';return;}
   const cm=getCharacterMods(c), s=v176ModStatus(cm);
   const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0), primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
-  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">${esc(c.baseId||'')}</span><h2>${esc(c.name||c.baseId)}</h2><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${num(c.stars)}★ · Puissance ${num(c.power)} · Factions : ${esc((factionMap[characterKey(c)]||[]).join(' · ')||'—')}</p></div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
+  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">PERSONNAGE</span><h2>${esc(c.name||c.baseId)}</h2><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${num(c.stars)}★ · Puissance ${num(c.power)} · Factions : ${esc((factionMap[characterKey(c)]||[]).join(' · ')||'—')}</p></div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods équipés</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
+  <div class="character-detail-actions"><strong>DÉTAIL DES 6 MODS ÉQUIPÉS</strong><button type="button" class="detail-mods-btn" id="openCharacterInventory">OUVRIR DANS L’INVENTAIRE</button></div>
   <div class="mod-detail-grid">${[...cm,...Array(Math.max(0,6-cm.length)).fill(null)].slice(0,6).map((m,i)=>m?renderModCard(m):`<div class="mod-card empty-slot"><strong>${['Square','Arrow','Diamond','Triangle','Circle','Cross'][i]}</strong><span>MOD MANQUANT</span></div>`).join('')}</div>`;
+  $('openCharacterInventory')?.addEventListener('click',()=>openCharacterInventory(c));
 }
 function renderModCard(m){
   const x=modSpeedMetrics(m), speed=x.secondary??0, owner=m.character||'Libre';
@@ -636,6 +640,16 @@ function renderModCard(m){
     <div class="mod-secondaries">${esc(sec)}</div>
     <small>Niv. ${num(m.level)} · ${num(m.rarity)}★ · ${esc(owner)}</small>
   </button>`;
+}
+function openCharacterInventory(character){
+  if(!character)return;
+  const name=String(character.name||character.baseId||'').trim();
+  const search=$('analysisSearch');
+  if(search)search.value=name;
+  const owner=$('analysisOwnerFilter');
+  if(owner)owner.value='equipped';
+  setAnalysisTab('inventory');
+  renderInventory();
 }
 function renderInventory(){
   const wrap=$('inventoryTable'), meta=$('inventoryMeta'); if(!wrap)return;
@@ -681,7 +695,6 @@ function showModInventoryDetail(index){
   const modal=$('modDetailModal'); if(!modal)return;
   $('modDetailTitle').textContent=`${m.slot||'Mod'} · ${m.set_name||'—'}`;
   $('modDetailBody').innerHTML=`<div class="modal-mod-grid">
-    <div><span>ID</span><b>${esc(m.game_id||m.id||'—')}</b></div>
     <div><span>PROPRIÉTAIRE</span><b>${esc(m.character||'Libre')}</b></div>
     <div><span>SET</span><b>${esc(m.set_name||'—')}</b></div>
     <div><span>SLOT</span><b>${esc(m.slot||'—')}</b></div>
