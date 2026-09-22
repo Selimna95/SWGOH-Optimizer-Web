@@ -1,3 +1,5 @@
+V26 — Dashboard conservé après chargement + rafraîchissement visuel
+
 # SWGOH Optimizer Web V25
 
 Version navigateur de SWGOH Optimizer V176.

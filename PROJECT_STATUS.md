@@ -1,3 +1,5 @@
+V26 — Dashboard conservé après chargement + rafraîchissement visuel
+
 # SWGOH Optimizer Web — V25
 
 ## V25 — Analyse Mods V176 portée dans le projet Web
