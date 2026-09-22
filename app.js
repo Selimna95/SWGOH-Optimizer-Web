@@ -48,6 +48,85 @@ function fillCharacters(names) {
   if(!names.length) { const o=document.createElement('option'); o.textContent='Aucun personnage détecté'; select.appendChild(o); }
 }
 
+
+function cleanAllyCode(value) {
+  return String(value || '').replace(/\D/g, '').slice(0, 9);
+}
+
+function normalizeRemotePlayer(payload) {
+  // Keep the original response intact. Different public endpoints/exporters
+  // use different nesting, so the extractor below accepts several layouts.
+  if (!payload || typeof payload !== 'object') throw new Error('Réponse joueur vide.');
+  return payload.data && typeof payload.data === 'object' ? payload.data : payload;
+}
+
+function extractRemoteMods(data) {
+  const candidates = [
+    data?.mods, data?.modInventory, data?.inventory?.mods,
+    data?.data?.mods, data?.profile?.mods
+  ];
+  for (const c of candidates) if (Array.isArray(c)) return c.map(normalizeMod).filter(Boolean);
+  // Some APIs put mods on roster units.
+  const roster = data?.rosterUnit || data?.roster || data?.units || data?.data?.rosterUnit || [];
+  const found=[];
+  if (Array.isArray(roster)) roster.forEach(u=>{
+    const unit=u?.data && typeof u.data==='object' ? u.data : u;
+    const unitMods=unit?.mods || unit?.mod || [];
+    if(Array.isArray(unitMods)) unitMods.forEach(m=>{
+      const n=normalizeMod(m);
+      if(n){ if(!n.character) n.character=unit?.definitionId || unit?.baseId || unit?.character; found.push(n); }
+    });
+  });
+  return found;
+}
+
+async function loadRemotePlayer() {
+  const allyCode = cleanAllyCode($('allyCode').value);
+  if (allyCode.length !== 9) {
+    log('Ally Code invalide : 9 chiffres attendus.');
+    $('dataInfo').textContent='Ally Code invalide.';
+    return;
+  }
+  $('loadPlayer').disabled=true;
+  $('loadPlayer').textContent='CHARGEMENT…';
+  log(`Recherche du joueur ${allyCode.slice(0,3)}-${allyCode.slice(3,6)}-${allyCode.slice(6)}…`);
+  try {
+    const urls = [
+      `https://swgoh.gg/api/player/${allyCode}`,
+      `https://swgoh.gg/api/player/${allyCode}/`
+    ];
+    let response=null, lastError=null;
+    for (const url of urls) {
+      try {
+        const r=await fetch(url, {headers:{'Accept':'application/json'}});
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        response=await r.json(); break;
+      } catch(e) { lastError=e; }
+    }
+    if (!response) throw lastError || new Error('Aucune réponse.');
+    currentData=normalizeRemotePlayer(response);
+    mods=extractRemoteMods(currentData);
+    const chars=extractCharacters(currentData);
+    $('modsCount').textContent=mods.length;
+    $('charsCount').textContent=chars.length;
+    fillCharacters(chars);
+    $('dataInfo').textContent=`Source: SWGOH.GG\nAlly Code: ${allyCode}\nMods détectés: ${mods.length}\nPersonnages détectés: ${chars.length}`;
+    log(`Profil récupéré. ${chars.length} personnages détectés.`);
+    log(`${mods.length} mods détectés.`);
+    if(!mods.length) log('Le profil a été récupéré mais les mods ne sont pas dans cette réponse. Nous adapterons ensuite le récupérateur de mods.');
+    document.querySelector('[data-page="optimizer"]').click();
+  } catch(e) {
+    log(`Échec du chargement automatique : ${e.message || e}`);
+    log('Si le navigateur bloque la requête (CORS), ce n’est pas une erreur de ton Ally Code. Nous utiliserons un relais Cloudflare gratuit.');
+  } finally {
+    $('loadPlayer').disabled=false;
+    $('loadPlayer').textContent='CHARGER MON PROFIL';
+  }
+}
+
+$('loadPlayer').addEventListener('click', loadRemotePlayer);
+$('allyCode').addEventListener('keydown', e=>{ if(e.key==='Enter') loadRemotePlayer(); });
+
 async function boot() {
   try {
     setRuntime('CHARGEMENT PYTHON…');

@@ -1,0 +1,324 @@
+{
+  "darth-bane": {
+    "character": "Darth Bane",
+    "source": "SWGOH.GG Kyber / Top 1000 GAC",
+    "sets": [
+      {
+        "name": "Health",
+        "count": 6,
+        "weight": 0.9017
+      },
+      {
+        "name": "Offense",
+        "count": 4,
+        "weight": 0.0404
+      },
+      {
+        "name": "Critical Damage",
+        "count": 4,
+        "weight": 0.0161
+      },
+      {
+        "name": "Double Health",
+        "count": 4,
+        "weight": 0.0115
+      },
+      {
+        "name": "Speed",
+        "count": 4,
+        "weight": 0.0115
+      }
+    ],
+    "slots": {
+      "Arrow": {
+        "primaries": {
+          "Health": 0.8769,
+          "Speed": 0.1038,
+          "Protection": 0.0076,
+          "Offense": 0.0064
+        }
+      },
+      "Triangle": {
+        "primaries": {
+          "Health": 0.8589,
+          "Critical Damage": 0.123,
+          "Offense": 0.0102,
+          "Protection": 0.0051
+        }
+      },
+      "Circle": {
+        "primaries": {
+          "Health": 0.9884,
+          "Protection": 0.0115
+        }
+      },
+      "Cross": {
+        "primaries": {
+          "Health": 0.9769,
+          "Offense": 0.0153,
+          "Protection": 0.0051,
+          "Defense": 0.0025
+        }
+      }
+    },
+    "averages": {
+      "Speed": 268,
+      "Health": 145875,
+      "Protection": 70831
+    },
+    "secondary_focus": {
+      "Speed": 21.3,
+      "Offense %": 4.23,
+      "Health": 970.4,
+      "Offense": 90.3
+    }
+  },
+  "glrey": {
+    "character": "Rey",
+    "base_id": "GLREY",
+    "source": "SWGOH.GG Kyber / Top 1000 GAC (vérifié 04/09/2026)",
+    "url": "https://swgoh.gg/units/rey/best-mods/",
+    "sets": [
+      {
+        "name": "Offense",
+        "count": 4,
+        "weight": 0.8989
+      },
+      {
+        "name": "Health",
+        "count": 2,
+        "weight": 0.8989
+      }
+    ],
+    "slots": {
+      "Arrow": {
+        "primaries": {
+          "Health": 0.4993,
+          "Offense": 0.3703,
+          "Speed": 0.1226,
+          "Critical Avoidance": 0.0076
+        }
+      },
+      "Triangle": {
+        "primaries": {
+          "Health": 0.5798,
+          "Offense": 0.401,
+          "Critical Damage": 0.0153,
+          "Protection": 0.0012
+        }
+      },
+      "Circle": {
+        "primaries": {
+          "Health": 0.9885,
+          "Protection": 0.0114
+        }
+      },
+      "Cross": {
+        "primaries": {
+          "Health": 0.6028,
+          "Offense": 0.3959,
+          "Protection": 0.0012
+        }
+      }
+    },
+    "averages": {
+      "Health": 218168,
+      "Protection": 31358,
+      "Speed": 522
+    },
+    "secondary_focus": {
+      "Speed": 20.3,
+      "Offense %": 5.2,
+      "Offense": 103.9,
+      "Health %": 5.13
+    }
+  },
+  "glleia": {
+    "character": "Leia Organa",
+    "base_id": "GLLEIA",
+    "source": "SWGOH.GG Kyber / Top 1000 GAC (vérifié 04/09/2026)",
+    "url": "https://swgoh.gg/units/leia-organa/best-mods/",
+    "sets": [
+      {
+        "name": "Speed",
+        "count": 4,
+        "weight": 0.933
+      },
+      {
+        "name": "Health",
+        "count": 2,
+        "weight": 0.894
+      }
+    ],
+    "slots": {
+      "Arrow": {
+        "primaries": {
+          "Speed": 0.5819,
+          "Health": 0.4,
+          "Critical Avoidance": 0.009,
+          "Accuracy": 0.0077
+        }
+      },
+      "Triangle": {
+        "primaries": {
+          "Health": 0.9612,
+          "Critical Damage": 0.0116,
+          "Protection": 0.0103,
+          "Offense": 0.009
+        }
+      },
+      "Circle": {
+        "primaries": {
+          "Health": 0.978,
+          "Protection": 0.0219
+        }
+      },
+      "Cross": {
+        "primaries": {
+          "Health": 0.9574,
+          "Protection": 0.0232,
+          "Offense": 0.0103,
+          "Potency": 0.0038
+        }
+      }
+    },
+    "averages": {
+      "Health": 178512,
+      "Protection": 113081,
+      "Speed": 553
+    },
+    "secondary_focus": {
+      "Speed": 23.9,
+      "Health": 952.8,
+      "Protection %": 5.37,
+      "Health %": 5.08
+    }
+  },
+  "glahsokatano": {
+    "character": "Ahsoka Tano",
+    "base_id": "GLAHSOKATANO",
+    "source": "SWGOH.GG Kyber / Top 1000 GAC (vérifié 04/09/2026)",
+    "url": "https://swgoh.gg/units/ahsoka-tano/best-mods/",
+    "sets": [
+      {
+        "name": "Speed",
+        "count": 4,
+        "weight": 0.877
+      },
+      {
+        "name": "Defense",
+        "count": 2,
+        "weight": 0.526
+      },
+      {
+        "name": "Health",
+        "count": 2,
+        "weight": 0.351
+      }
+    ],
+    "slots": {
+      "Arrow": {
+        "primaries": {
+          "Speed": 0.7738,
+          "Health": 0.2017,
+          "Critical Avoidance": 0.0133,
+          "Defense": 0.0066
+        }
+      },
+      "Triangle": {
+        "primaries": {
+          "Health": 0.9334,
+          "Defense": 0.0465,
+          "Critical Damage": 0.011,
+          "Protection": 0.0044
+        }
+      },
+      "Circle": {
+        "primaries": {
+          "Health": 0.9866,
+          "Protection": 0.0133
+        }
+      },
+      "Cross": {
+        "primaries": {
+          "Health": 0.9356,
+          "Defense": 0.0376,
+          "Protection": 0.011,
+          "Tenacity": 0.0088
+        }
+      }
+    },
+    "averages": {
+      "Health": 211693,
+      "Protection": 124735,
+      "Speed": 555
+    },
+    "secondary_focus": {
+      "Speed": 23.2,
+      "Defense %": 9.63,
+      "Protection %": 5.43,
+      "Health %": 4.71
+    }
+  },
+  "glhondo": {
+    "character": "Pirate King Hondo Ohnaka",
+    "base_id": "GLHONDO",
+    "source": "SWGOH.GG Kyber / Top 1000 GAC (vérifié 04/09/2026)",
+    "url": "https://swgoh.gg/units/pirate-king-hondo-ohnaka/best-mods/",
+    "sets": [
+      {
+        "name": "Speed",
+        "count": 4,
+        "weight": 0.991
+      },
+      {
+        "name": "Health",
+        "count": 2,
+        "weight": 0.712
+      }
+    ],
+    "slots": {
+      "Arrow": {
+        "primaries": {
+          "Speed": 0.93,
+          "Health": 0.0633,
+          "Critical Avoidance": 0.005,
+          "Offense": 0.0016
+        }
+      },
+      "Triangle": {
+        "primaries": {
+          "Health": 0.8366,
+          "Critical Damage": 0.0633,
+          "Protection": 0.0483,
+          "Offense": 0.0266
+        }
+      },
+      "Circle": {
+        "primaries": {
+          "Health": 0.9266,
+          "Protection": 0.0733
+        }
+      },
+      "Cross": {
+        "primaries": {
+          "Health": 0.865,
+          "Protection": 0.0483,
+          "Offense": 0.0416,
+          "Tenacity": 0.0283
+        }
+      }
+    },
+    "averages": {
+      "Health": 158986,
+      "Protection": 81773,
+      "Speed": 602
+    },
+    "secondary_focus": {
+      "Speed": 24.7,
+      "Protection %": 5.38,
+      "Health %": 4.58,
+      "Health": 863.5
+    }
+  }
+}
