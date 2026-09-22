@@ -1,14 +1,12 @@
-# SWGOH Optimizer Web V31.2
+# SWGOH Optimizer Web — V31.3
 
-Static GitHub Pages application for SWGOH roster and mod analysis.
+Version de correction de la réaffectation des mods.
 
-### V31.2 — Réaffectation intelligente
-1. Open Analyse Mods.
-2. Open a character report or the mod inventory.
-3. Click an equipped mod.
-4. Click `RECHERCHER UNE RÉAFFECTATION`.
-5. Select the secondary to search.
-6. Search is restricted by default to Incomplets / Très faibles / Faibles.
-7. `Moyens` requires an explicit confirmation before it can be included.
+## Règle de recherche
+Lorsqu'un mod est sélectionné, les remplaçants proposés doivent conserver :
+1. le **même slot** ;
+2. le **même set** ;
+3. la **secondaire choisie par l'utilisateur** ;
+4. un propriétaire classé Incomplet / Très faible / Faible, avec les Moyens protégés sauf validation spéciale.
 
-The feature is intentionally rule-based: it does not use a score and never moves a mod automatically.
+Aucun scoring et aucun transfert automatique.

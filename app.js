@@ -873,6 +873,7 @@ function renderReallocationResults(){
   if(!secondaryKey){box.innerHTML='<div class="empty">Choisissez la secondaire recherchée.</div>';return;}
   const selectedOwner=compactKey(selected.character||'');
   const selectedSlot=String(selected.slot||'').trim();
+  const selectedSet=compactKey(selected.set_name||'');
   const rows=[];
   for(const c of rosterCharacters){
     if(selectedOwner && characterKey(c)===selectedOwner)continue;
@@ -882,6 +883,9 @@ function renderReallocationResults(){
       // A mod can only replace another mod in the same slot.
       // Square -> Square, Arrow -> Arrow, Diamond -> Diamond, etc.
       if(selectedSlot && String(m.slot||'').trim()!==selectedSlot)continue;
+      // A replacement must keep the same mod set as the selected mod.
+      // Example: Speed Triangle -> only Speed Triangles, Offense Square -> only Offense Squares.
+      if(selectedSet && compactKey(m.set_name||'')!==selectedSet)continue;
       let match=null;
       for(let i=1;i<=4;i++){
         const stat=m[`secondary_${i}_stat`];
@@ -892,7 +896,7 @@ function renderReallocationResults(){
   }
   const order={'INCOMPLETS':0,'TRÈS FAIBLES':1,'FAIBLES':2,'MOYENS':3};
   rows.sort((a,b)=>(order[a.status]??9)-(order[b.status]??9)||b.value-a.value||String(a.character.name||'').localeCompare(String(b.character.name||''),'fr'));
-  box.innerHTML=rows.length?`<div class="reallocation-count">${rows.length} mod(s) correspondant à <strong>${esc(secondaryDisplayName($('reallocationSecondary')?.value))}</strong> · emplacement <strong>${esc(selectedSlot||'identique')}</strong></div><div class="reallocation-table-wrap"><table class="v18-table reallocation-table"><thead><tr><th>Personnage</th><th>État</th><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaire recherchée</th><th>Autres secondaires</th><th>Niveau</th></tr></thead><tbody>${rows.map(r=>{
+  box.innerHTML=rows.length?`<div class="reallocation-count">${rows.length} mod(s) correspondant à <strong>${esc(secondaryDisplayName($('reallocationSecondary')?.value))}</strong> · emplacement <strong>${esc(selectedSlot||'identique')}</strong> · set <strong>${esc(selected.set_name||'identique')}</strong></div><div class="reallocation-table-wrap"><table class="v18-table reallocation-table"><thead><tr><th>Personnage</th><th>État</th><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaire recherchée</th><th>Autres secondaires</th><th>Niveau</th></tr></thead><tbody>${rows.map(r=>{
     const m=r.mod; const others=[]; for(let i=1;i<=4;i++){const stat=m[`secondary_${i}_stat`];if(stat&&compactKey(secondaryDisplayName(stat))!==secondaryKey)others.push(`${secondaryDisplayName(stat)} ${num(m[`secondary_${i}_value`],1)}`);}
     return `<tr data-reallocation-mod-index="${m._index}"><td><strong>${esc(r.character.name||r.character.baseId)}</strong></td><td><span class="audit-badge ${r.class}">${esc(r.status)}</span></td><td>${esc(m.slot||'—')}</td><td>${esc(m.set_name||'—')}</td><td>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</td><td class="reallocation-match">${esc(r.value)}</td><td>${esc(others.join(' · ')||'—')}</td><td>${num(m.level)}</td></tr>`;
   }).join('')}</tbody></table></div>`:'<div class="empty">Aucun mod correspondant dans les catégories actuellement autorisées.</div>';
