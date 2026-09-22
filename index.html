@@ -7,12 +7,12 @@
   <meta name="description" content="SWGOH Optimizer Web V19 — roster, mods et optimisation dans le navigateur">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
-  <title>SWGOH Optimizer Web V19</title>
+  <title>SWGOH Optimizer Web V21</title>
 </head>
 <body>
 <div class="scanlines"></div>
 <header class="topbar">
-  <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V19</span></div>
+  <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V21</span></div>
   <div id="runtime" class="status">INITIALISATION PYTHON…</div>
 </header>
 <main class="layout">
@@ -30,7 +30,7 @@
         <div>
           <div class="eyebrow">LOCAL WEB APPLICATION</div>
           <h1>SWGOH Optimizer</h1>
-          <p>V20 reprend l’analyse des mods du projet Windows V176 : récapitulatif Speed, sélection personnage/faction, détail des 6 mods équipés et inventaire complet.</p>
+          <p>V21 reprend l’analyse des mods du projet Windows V176 : récapitulatif Speed, sélection personnage/faction, détail des 6 mods équipés et inventaire complet.</p>
         </div>
         <div class="online-loader">
           <label>ALLY CODE<input id="allyCode" inputmode="numeric" maxlength="11" placeholder="123-456-789"></label>
@@ -77,6 +77,7 @@
         <div class="analysis-tabs">
           <button class="analysis-tab active" data-analysis-tab="recap">RÉCAPITULATIF</button>
           <button class="analysis-tab" data-analysis-tab="selection">PERSONNAGE / FACTION</button>
+          <button class="analysis-tab" data-analysis-tab="report">RAPPORT PERSONNAGE</button>
           <button class="analysis-tab" data-analysis-tab="inventory">INVENTAIRE DES MODS</button>
         </div>
       </div>
@@ -117,6 +118,10 @@
           </div>
           <div id="characterModDetail" class="character-detail"></div>
         </div>
+      </div>
+
+      <div class="analysis-panel panel" data-analysis-panel="report" hidden>
+        <div id="characterReport" class="character-report"></div>
       </div>
 
       <div class="analysis-panel panel" data-analysis-panel="inventory" hidden>

@@ -535,6 +535,7 @@ function setAnalysisTab(tab){
   document.querySelectorAll('.analysis-panel').forEach(x=>x.hidden=x.dataset.analysisPanel!==tab);
   if(tab==='recap') renderAnalysisRecap();
   if(tab==='selection') renderSelectionPanel();
+  if(tab==='report') renderCharacterReport();
   if(tab==='inventory') renderInventory();
 }
 function analysisCharacterRows(){
@@ -612,12 +613,72 @@ function renderSelectionPanel(){
   $('selectionTable').innerHTML=rows.map(r=>`<tr class="${r.class}" data-character-key="${esc(characterKey(r.character))}">
     <td><strong>${esc(r.character.name||r.character.baseId)}</strong><small>${esc(r.factions.join(' · '))}</small></td>
     <td>${r.relic?'R'+num(r.relic):'—'}</td><td>${r.modCount}/6</td><td>${num(r.totalSpeed)}</td><td>${num(r.secSpeed)}</td><td>${r.speedCount}</td><td>${r.primarySpeed?num(r.primarySpeed):'NON'}</td><td><span class="audit-badge ${r.class}">${esc(r.status)}</span></td>
-    <td><button type="button" class="detail-mods-btn" data-open-character="${esc(characterKey(r.character))}">VOIR LES 6 MODS</button></td>
+    <td><button type="button" class="detail-mods-btn" data-open-character="${esc(characterKey(r.character))}">OUVRIR LE RAPPORT</button></td>
   </tr>`).join('')||'<tr><td colspan="9">Aucun personnage ne correspond aux filtres.</td></tr>';
-  $('selectionTable').querySelectorAll('tr[data-character-key]').forEach(row=>row.addEventListener('click',e=>{if(e.target.closest('.detail-mods-btn'))return;analysisSelectedCharacter=row.dataset.characterKey;charSelect.value=analysisSelectedCharacter;renderCharacterDetail();}));
-  $('selectionTable').querySelectorAll('[data-open-character]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();analysisSelectedCharacter=btn.dataset.openCharacter;charSelect.value=analysisSelectedCharacter;renderCharacterDetail();}));
+  $('selectionTable').querySelectorAll('tr[data-character-key]').forEach(row=>row.addEventListener('click',e=>{if(e.target.closest('.detail-mods-btn'))return;analysisSelectedCharacter=row.dataset.characterKey;charSelect.value=analysisSelectedCharacter;setAnalysisTab('report');}));
+  $('selectionTable').querySelectorAll('[data-open-character]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();analysisSelectedCharacter=btn.dataset.openCharacter;charSelect.value=analysisSelectedCharacter;setAnalysisTab('report');}));
   renderCharacterDetail();
 }
+function characterReportStats(c){
+  const p=optimizerProfileForCharacter(c)||{};
+  const base=p.base_stats||{};
+  const current=p.current_stats||{};
+  const diff=p.mod_stat_diffs||{};
+  const keys=[
+    ['Health','Health'],['Protection','Protection'],['Speed','Speed'],['Physical Damage','Physical Damage'],['Special Damage','Special Damage'],
+    ['Offense','Offense'],['Defense','Defense'],['Potency','Potency'],['Tenacity','Tenacity'],['Armor','Armor'],['Resistance','Resistance'],
+    ['Physical Critical Chance','Crit Chance'],['Special Critical Chance','Special Crit Chance'],['Critical Damage','Critical Damage'],['Critical Avoidance','Critical Avoidance'],['Mastery','Mastery']
+  ];
+  const seen=new Set(), rows=[];
+  for(const [key,label] of keys){
+    const b=base[key], cur=current[key], d=diff[key];
+    if(b==null && cur==null && d==null) continue;
+    seen.add(key);
+    rows.push({label,base:b,current:cur,diff:d});
+  }
+  for(const [key,cur] of Object.entries(current)) if(!seen.has(key) && (base[key]!=null || diff[key]!=null)) rows.push({label:key,base:base[key],current:cur,diff:diff[key]});
+  return {profile:p,rows};
+}
+function formatReportStat(v,key=''){
+  if(v==null || v==='') return '—';
+  const n=Number(v); if(!Number.isFinite(n)) return esc(v);
+  const pct=['Potency','Tenacity','Critical Damage','Crit Chance','Special Crit Chance','Physical Critical Chance','Critical Avoidance','Mastery'].some(x=>key.toLowerCase().includes(x.toLowerCase()));
+  if(pct && Math.abs(n)<=2) return `${num(n*100,2)} %`;
+  return num(n, n%1 ? 2 : 0);
+}
+function renderCharacterReport(){
+  const box=$('characterReport'); if(!box)return;
+  const c=rosterCharacters.find(x=>characterKey(x)===analysisSelectedCharacter);
+  if(!c){box.innerHTML='<div class="empty">Sélectionnez un personnage depuis PERSONNAGE / FACTION.</div>';return;}
+  const cm=getCharacterMods(c), s=v176ModStatus(cm), p=optimizerProfileForCharacter(c)||{}, st=characterReportStats(c);
+  const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0);
+  const primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
+  const totalSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0)+modPrimarySpeed(m),0)+Number(st.profile.base_stats?.Speed||0);
+  const speedCount=cm.filter(m=>(modSpeedMetrics(m).secondary||0)>0).length;
+  const factions=factionMap[characterKey(c)]||[];
+  const order=['Square','Arrow','Diamond','Triangle','Circle','Cross'];
+  const bySlot=new Map(cm.map(m=>[m.slot,m]));
+  const cards=order.map(slot=>{const m=bySlot.get(slot); return m?renderReportModCard(m):`<div class="report-mod-card missing"><div class="report-mod-slot">${slot}</div><h3>MOD MANQUANT</h3><p>Aucun mod équipé sur cet emplacement.</p></div>`;}).join('');
+  box.innerHTML=`
+    <div class="report-toolbar"><button class="analysis-back" id="backToCharacterSelection">← PERSONNAGE / FACTION</button><button class="detail-mods-btn" id="reportInventoryBtn">VOIR LES MODS DANS L’INVENTAIRE</button></div>
+    <div class="report-header">
+      <div><span class="tag">RAPPORT PERSONNAGE</span><h1>${esc(c.name||c.baseId)}</h1><p>${esc(factions.join(' · ')||'Faction non renseignée')}</p></div>
+      <div class="report-identity"><div><span>NIVEAU</span><b>${num(c.level||p.level)}</b></div><div><span>GEAR</span><b>${num(c.gear||c.gear_level||p.gear_level)}</b></div><div><span>RELIC</span><b>${Number(c.relic_tier??c.relicTier??p.relic_tier??0)?'R'+num(c.relic_tier??c.relicTier??p.relic_tier):'—'}</b></div><div><span>ÉTOILES</span><b>${num(c.stars||c.rarity||p.rarity)}★</b></div><div><span>PUISSANCE</span><b>${num(c.power||c.power_rating||c.powerRating)}</b></div></div>
+    </div>
+    <div class="report-kpis"><div><span>MODS</span><strong>${cm.length}/6</strong></div><div><span>SPEED TOTALE DES MODS</span><strong>${num(totalSpeed)}</strong></div><div><span>SPEED SECONDAIRE</span><strong>+${num(secSpeed)}</strong></div><div><span>PRIMAIRE SPEED</span><strong>${primarySpeed?'+'+num(primarySpeed):'NON'}</strong></div><div><span>MODS AVEC SPEED</span><strong>${speedCount}/6</strong></div><div><span>STATUT V176</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
+    <div class="report-section"><div class="report-section-title">STATISTIQUES DU PERSONNAGE</div><div class="report-stats-wrap"><table class="v18-table report-stats"><thead><tr><th>Statistique</th><th>Base</th><th>Actuelle</th><th>Apport mods</th></tr></thead><tbody>${st.rows.map(r=>`<tr><td>${esc(r.label)}</td><td>${formatReportStat(r.base,r.label)}</td><td>${formatReportStat(r.current,r.label)}</td><td>${formatReportStat(r.diff,r.label)}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="report-section"><div class="report-section-title">LES 6 MODS ÉQUIPÉS</div><div class="report-mod-grid">${cards}</div></div>
+    <div class="report-section report-analysis-grid"><div><div class="report-section-title">ANALYSE SPEED</div><div class="report-list"><div><span>Speed secondaire</span><b>+${num(secSpeed)}</b></div><div><span>Speed primaire</span><b>${primarySpeed?'+'+num(primarySpeed):'Aucune'}</b></div><div><span>Speed totale apportée par les mods</span><b>+${num(secSpeed+primarySpeed)}</b></div><div><span>Meilleure Speed secondaire</span><b>+${num(cm.reduce((x,m)=>Math.max(x,modSpeedMetrics(m).secondary||0),0))}</b></div><div><span>Mods niveau 15</span><b>${cm.filter(m=>Number(m.level)===15).length}/6</b></div></div></div><div><div class="report-section-title">SETS</div><div class="report-list">${[...new Set(cm.map(m=>m.set_name).filter(Boolean))].map(set=>`<div><span>${esc(set)}</span><b>${cm.filter(m=>m.set_name===set).length}</b></div>`).join('')||'<div><span>Aucun set</span><b>—</b></div>'}</div></div></div>
+    <div class="report-section"><div class="report-section-title">SECONDAIRES DES MODS</div><div class="report-secondary-list">${cm.map(m=>`<div class="report-secondary-row"><strong>${esc(m.slot)}</strong><span>${esc(modSecondaries(m)||'—')}</span></div>`).join('')||'<div>Aucun mod équipé.</div>'}</div></div>`;
+  $('backToCharacterSelection')?.addEventListener('click',()=>setAnalysisTab('selection'));
+  $('reportInventoryBtn')?.addEventListener('click',()=>openCharacterInventory(c));
+  box.querySelectorAll('[data-mod-index]').forEach(el=>el.addEventListener('click',()=>showModInventoryDetail(Number(el.dataset.modIndex))));
+}
+function renderReportModCard(m){
+  const x=modSpeedMetrics(m), sec=modSecondaries(m)||'Aucune';
+  return `<button type="button" class="report-mod-card" data-mod-index="${m._index??''}"><div class="report-mod-slot"><span>${esc(m.slot)}</span><em>${esc(m.set_name||'—')}</em></div><h3>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</h3><div class="report-mod-speed">${x.primary?'PRIMAIRE SPEED':(x.secondary?`SPEED SECONDAIRE +${num(x.secondary)}`:'SANS SPEED')}</div><p>${esc(sec)}</p><small>Niveau ${num(m.level)} · ${num(m.rarity)}★ · ${esc(m.character||'Libre')}</small></button>`;
+}
+
 function renderCharacterDetail(){
   const c=rosterCharacters.find(x=>characterKey(x)===analysisSelectedCharacter);
   const box=$('characterModDetail'); if(!box)return;
@@ -763,7 +824,7 @@ $('analysisSide')?.addEventListener('change',()=>{analysisSide=$('analysisSide')
 $('analysisStatus')?.addEventListener('change',()=>{analysisStatus=$('analysisStatus').value;renderSelectionPanel();});
 $('analysisAuditSpeed')?.addEventListener('change',()=>{analysisAuditSpeed=$('analysisAuditSpeed').value;renderSelectionPanel();});
 $('analysisAuditSort')?.addEventListener('change',()=>{analysisAuditSort=$('analysisAuditSort').value;renderSelectionPanel();});
-$('analysisCharacter')?.addEventListener('change',()=>{analysisSelectedCharacter=$('analysisCharacter').value;renderCharacterDetail();});
+$('analysisCharacter')?.addEventListener('change',()=>{analysisSelectedCharacter=$('analysisCharacter').value;setAnalysisTab('report');});
 $('analysisMode')?.addEventListener('change',()=>{analysisMode=$('analysisMode').value;renderSelectionPanel();});
 ['analysisSearch','analysisSetFilter','analysisSlotFilter','analysisSpeedFilter','analysisOwnerFilter','analysisPrimaryFilter','analysisLevelFilter','analysisSort'].forEach(id=>$(id)?.addEventListener('input',renderInventory));
 $('closeModDetail')?.addEventListener('click',closeModDetail);

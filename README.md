@@ -1,4 +1,4 @@
-# SWGOH Optimizer Web V19
+# SWGOH Optimizer Web V21
 
 Version navigateur de SWGOH Optimizer V176.
 
@@ -9,7 +9,7 @@ Version navigateur de SWGOH Optimizer V176.
 - Pyodide : moteur Python.
 - Web Worker : optimisation sans blocage de l'interface.
 
-## V19 — Analyse Mods
+## V21 — Analyse Mods
 
 La version Web reprend maintenant la partie importante de l'analyse V176 :
 
@@ -25,4 +25,4 @@ Les tranches de Speed et les seuils de statut suivent les règles présentes dan
 
 ## Installation
 
-Déployer les fichiers du ZIP sur la branche `main` de GitHub Pages. V19 conserve le Worker d'optimisation de V17 et le relais Cloudflare V15/V17.
+Déployer les fichiers du ZIP sur la branche `main` de GitHub Pages. V21 conserve le Worker d'optimisation de V17 et le relais Cloudflare V15/V17.
