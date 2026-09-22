@@ -1,5 +1,5 @@
 """
-SWGOH Optimizer — version Kyber
+SWGOH Optimizer — version Kyber / Web V17
 Drop-in module exposing optimize_kyber().
 
 Important:
@@ -149,82 +149,116 @@ def mod_set(mod):
     return None
 
 
-def mod_stats(mod):
+PERCENT_STAT_NAMES = {
+    "Potency", "Tenacity", "Critical Chance", "Critical Damage", "Critical Avoidance",
+    "Offense", "Defense", "Health", "Protection", "Speed",
+}
+
+def _stat_is_percent(name):
+    text=str(name or '').strip()
+    return text.endswith('%')
+
+def _canonical_stat_name(name):
+    text=str(name or '').strip()
+    return text[:-1].strip() if text.endswith('%') else text
+
+def _stat_entries(mod):
+    """Return (name, value, is_percent) entries while preserving mod display values."""
     raw = mod.get("stats", {})
     if isinstance(raw, str):
         try:
             raw = json.loads(raw)
         except Exception:
             raw = {}
-
+    entries=[]
     if isinstance(raw, dict) and raw:
-        return {str(k): to_float(v) for k, v in raw.items()}
-
-    stats = {}
-    p = mod.get("primary_stat")
+        for k,v in raw.items():
+            name=str(k).strip()
+            entries.append((name, to_float(v), _stat_is_percent(name)))
+        return entries
+    p=mod.get("primary_stat")
     if p:
-        stats[str(p)] = to_float(mod.get("primary_value"))
-
-    for i in range(1, 5):
-        name = mod.get(f"secondary_{i}_stat")
+        name=str(p).strip()
+        entries.append((name, to_float(mod.get("primary_value")), _stat_is_percent(name)))
+    for i in range(1,5):
+        name=mod.get(f"secondary_{i}_stat")
         if name:
-            stats[str(name)] = stats.get(str(name), 0.0) + to_float(
-                mod.get(f"secondary_{i}_value")
-            )
-    return stats
+            name=str(name).strip()
+            entries.append((name, to_float(mod.get(f"secondary_{i}_value")), _stat_is_percent(name)))
+    return entries
 
+def mod_stats(mod):
+    """Return flat/percentage mod stats in their source units.
+
+    Percentage stats are kept with a trailing '%' so final_stats can apply
+    them to the character base stat instead of treating e.g. 3.7% Health as
+    3.7 Health points.
+    """
+    out={}
+    for name,value,is_pct in _stat_entries(mod):
+        key=f"{_canonical_stat_name(name)} %" if is_pct else _canonical_stat_name(name)
+        out[key]=out.get(key,0.0)+value
+    return out
 
 def primary_name(mod):
     return str(mod.get("primary_stat") or "").strip()
 
 
 def final_stats(build, base_stats=None):
-    """Calculate stats from a six-mod build, including standard set bonuses."""
-    result = dict(base_stats or {})
+    """Calculate final character stats from base stats + mod flats/% + set bonuses.
 
+    Health/Protection/Offense/Speed/Defense set bonuses are percentage bonuses
+    on the character base stat. Potency/Tenacity/Critical Chance/Critical
+    Damage/Critical Avoidance are percentage-point bonuses, matching the
+    game's displayed stat units.
+    """
+    base={str(k):to_float(v) for k,v in (base_stats or {}).items()}
+    result=dict(base)
+    percent_add={}
+    flat_add={}
     for mod in build:
-        for name, value in mod_stats(mod).items():
-            result[name] = to_float(result.get(name)) + value
+        for name,value in mod_stats(mod).items():
+            if name.endswith('%'):
+                key=_canonical_stat_name(name)
+                percent_add[key]=percent_add.get(key,0.0)+to_float(value)/100.0
+            else:
+                key=_canonical_stat_name(name)
+                flat_add[key]=flat_add.get(key,0.0)+to_float(value)
 
-    counts = {}
+    counts={}
     for mod in build:
-        name = mod_set(mod)
-        if name:
-            counts[name] = counts.get(name, 0) + 1
+        name=mod_set(mod)
+        if name: counts[name]=counts.get(name,0)+1
 
-    # SWGOH mod-set bonuses. A six-mod set may contain multiple bonuses.
-    bonuses = {
-        "Health": (2, 0.10),
-        "Protection": (2, 0.10),
-        "Offense": (4, 0.15),
-        "Speed": (4, 0.15),
-        "Critical Damage": (4, 0.08),
-        "Critical Chance": (2, 0.08),
-        "Defense": (2, 0.25),
-        "Potency": (2, 0.15),
-        "Tenacity": (2, 0.20),
-        "Critical Avoidance": (2, 0.20),
+    # Relative-to-base bonuses (Health/Protection/Offense/Speed/Defense).
+    relative_bonuses={
+        "Health": (2,0.10), "Protection": (2,0.10), "Offense": (4,0.15),
+        "Speed": (4,0.15), "Defense": (2,0.25),
     }
-    stat_for_set = {
-        "Health": "Health",
-        "Protection": "Protection",
-        "Offense": "Offense",
-        "Speed": "Speed",
-        "Critical Damage": "Critical Damage",
-        "Critical Chance": "Critical Chance",
-        "Defense": "Defense",
-        "Potency": "Potency",
-        "Tenacity": "Tenacity",
-        "Critical Avoidance": "Critical Avoidance",
+    # Percentage-point bonuses for percentage-style game stats.
+    additive_bonuses={
+        "Critical Damage": (4,0.08), "Critical Chance": (2,0.08),
+        "Potency": (2,0.15), "Tenacity": (2,0.20), "Critical Avoidance": (2,0.20),
     }
-    for set_name, (required, bonus) in bonuses.items():
-        n = counts.get(set_name, 0)
-        if n >= required:
-            stat = stat_for_set[set_name]
-            result[stat] = to_float(result.get(stat)) * (1.0 + bonus * (n // required))
+    for set_name,(required,bonus) in relative_bonuses.items():
+        n=counts.get(set_name,0)
+        if n>=required:
+            percent_add[set_name]=percent_add.get(set_name,0.0)+bonus*(n//required)
+    for set_name,(required,bonus) in additive_bonuses.items():
+        n=counts.get(set_name,0)
+        if n>=required:
+            # Store additive percentage points as a fraction.
+            percent_add[set_name]=percent_add.get(set_name,0.0)+bonus*(n//required)
 
+    # Apply flat mod contributions first, then base-relative percentages.
+    for key,value in flat_add.items():
+        result[key]=to_float(result.get(key))+value
+    for key,ratio in percent_add.items():
+        if key in {"Potency","Tenacity","Critical Chance","Critical Damage","Critical Avoidance"}:
+            result[key]=to_float(result.get(key))+ratio
+        else:
+            result[key]=to_float(result.get(key))+to_float(base.get(key))*ratio
     return result
-
 
 def _get_kyber_set_distribution(kyber):
     """Return set usage weights from either dict or Kyber's list format."""
