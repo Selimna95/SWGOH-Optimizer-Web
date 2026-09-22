@@ -1,8 +1,8 @@
-# SWGOH Optimizer Web V31
+# SWGOH Optimizer Web V31.1
 
 Static GitHub Pages application for SWGOH roster and mod analysis.
 
-### V31 — Réaffectation intelligente
+### V31.1 — Réaffectation intelligente
 1. Open Analyse Mods.
 2. Open a character report or the mod inventory.
 3. Click an equipped mod.

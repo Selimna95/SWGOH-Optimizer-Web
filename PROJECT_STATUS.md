@@ -1,4 +1,4 @@
-# SWGOH Optimizer Web — V31
+# SWGOH Optimizer Web — V31.1
 
 ## New feature: Réaffectation intelligente des mods
 
