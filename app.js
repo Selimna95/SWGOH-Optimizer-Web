@@ -46,8 +46,14 @@ function fillCharacters(names) {
   if(!available.length){const o=document.createElement('option');o.textContent='Aucun profil d’optimisation disponible';o.disabled=true;o.selected=true;select.appendChild(o);}
 }
 
+const DEFAULT_WORKER_URL = 'https://swgoh-optimizer-relay.lorg75017.workers.dev';
+
 function workerUrl() {
-  return String(localStorage.getItem('swgohRelayUrl') || $('relayUrl')?.value || '').trim().replace(/\/$/, '');
+  return String(
+    localStorage.getItem('swgohRelayUrl') ||
+    $('relayUrl')?.value ||
+    DEFAULT_WORKER_URL
+  ).trim().replace(/\/$/, '');
 }
 function saveWorkerUrl() {
   const v=String($('relayUrl').value||'').trim().replace(/\/$/,'');
