@@ -1,4 +1,4 @@
-# SWGOH Optimizer Web — V10
+# SWGOH Optimizer Web — V15
 
 ## État
 
@@ -50,3 +50,8 @@ Ne pas modifier le Worker tant que le chargement API fonctionne.
 - Correction du décodage des mods : primaire/secondaires structurés, valeurs d'affichage SWGOH.GG privilégiées.
 - Les pages publiques des mods sont parcourues jusqu'à 100 pages et fusionnées avec l'API comme filet de sécurité.
 - Le Worker accepte désormais les pages 1 à 100.
+
+
+## V15
+
+Ajout de la récupération à la demande des profils Kyber depuis les pages publiques SWGOH.GG via le Worker Cloudflare. Le profil sélectionné est parsé localement puis transmis au moteur Python/Pyodide. Le Worker ajoute les routes `best-mods` et `characters-index`.
