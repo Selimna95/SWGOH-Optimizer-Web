@@ -46,7 +46,7 @@ Ne pas modifier le Worker tant que le chargement API fonctionne.
 - Résumé des mods filtrés, équipés, libres et niveau 15.
 - Affichage des 4 secondaires, primaire, slot, set, niveau et rareté.
 
-## V13
+## V14
 - Correction du décodage des mods : primaire/secondaires structurés, valeurs d'affichage SWGOH.GG privilégiées.
 - Les pages publiques des mods sont parcourues jusqu'à 100 pages et fusionnées avec l'API comme filet de sécurité.
 - Le Worker accepte désormais les pages 1 à 100.
