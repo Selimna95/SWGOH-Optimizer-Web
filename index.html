@@ -54,6 +54,7 @@
         <div class="panel-title"><span class="section-icon">●</span> ÉTAT DU COMPTE</div>
         <div id="accountSummary" class="summary-grid"><span>Aucune donnée chargée.</span></div>
       </div>
+      <div class="panel dashboard-gp-panel"><div class="panel-title"><span class="section-icon">✦</span> PUISSANCE GALACTIQUE</div><div class="gp-total"><span>PUISSANCE TOTALE</span><strong id="gpTotal">0</strong><small id="gpBreakdown">En attente de synchronisation</small></div><div class="gp-breakdown"><div><span>TERRESTRE — PERSONNAGES</span><strong id="gpCharacters">0</strong></div><div><span>SPATIAL — VAISSEAUX</span><strong id="gpShips">0</strong></div></div></div>
       <div class="panel v18-dashboard-speed"><div class="panel-title"><span class="section-icon">⚡</span> VENTILATION DES MODS PAR VITESSE — V176</div><div id="v18DashboardSpeed" class="speed-recap-grid"></div><div class="v18-note">Cliquez sur une tranche pour ouvrir le détail complet de l’inventaire des mods.</div></div>
       <div class="panel log"><div class="panel-title"><span class="section-icon">◉</span> DERNIER CHARGEMENT</div><pre id="log">Entrez votre Ally Code pour charger le profil. Pour le chargement automatique, le Worker Cloudflare doit être configuré.</pre></div>
     </section>
@@ -63,7 +64,7 @@
         <div class="panel-title">OPTIMISATION V176</div>
         <div class="form-grid">
           <label>Personnage<select id="character"></select></label>
-          <label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="10"></label>
+          <label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="5"></label>
           <label>Limite / slot<input id="limitPerSlot" type="number" min="5" max="150" value="80"></label>
           <button id="runOptimizer" class="primary">LANCER L'OPTIMISATION</button>
         </div>
@@ -168,12 +169,6 @@
         <div class="data-character-filters" id="dataCharacterFilters">
           <label>FACTION<select id="dataFactionFilter"><option value="">Toutes les factions</option></select></label>
           <label>CÔTÉ<select id="dataSideFilter"><option value="ALL">TOUS</option><option value="LIGHT">CÔTÉ LUMINEUX</option><option value="DARK">CÔTÉ OBSCUR</option><option value="MIXED">NEUTRE</option></select></label>
-        </div>
-        <div class="mod-filters" id="modFilters" hidden>
-          <label>SET<select id="modSetFilter"><option value="">Tous les sets</option></select></label>
-          <label>SLOT<select id="modSlotFilter"><option value="">Tous les slots</option></select></label>
-          <label>ÉTAT<select id="modOwnerFilter"><option value="">Tous</option><option value="equipped">Équipés</option><option value="free">Libres</option></select></label>
-          <label>NIVEAU MIN.<input id="modLevelFilter" type="number" min="0" max="15" value="0"></label>
         </div>
         <div id="modSummary" class="mod-summary" hidden></div>
         <input id="dataSearch" class="data-search" type="search" placeholder="Rechercher un personnage, un vaisseau, un mod, un set…">
