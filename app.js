@@ -599,7 +599,13 @@ function characterAlignmentFromFactions(c){
   const hasD=fs.some(f=>['Sith','Sith Empire','Empire','Imperial Trooper','First Order','Separatist','Nightsister','Inquisitorius','Geonosian'].includes(f));
   if(hasL&&!hasD)return 'LIGHT'; if(hasD&&!hasL)return 'DARK'; return 'MIXED';
 }
-function relicLevelFromTier(value){const n=Number(value||0);if(!Number.isFinite(n)||n<=0)return 0;if(n<=2)return 0;return n-2;}
+function relicLevelFromTier(value){
+  // SWGOH/Comlink: relic.currentTier 0/1/2 = R0 (not relic), values >2 are actual relic + 2.
+  // Current game max is R10, so tier 12 = R10. Never display impossible R11+.
+  const n=Number(value);
+  if(!Number.isFinite(n)||n<=2)return 0;
+  return Math.max(0,Math.min(10,Math.floor(n)-2));
+}
 function auditRows(){
   const faction=analysisFaction||'Toutes les factions';
   let rows=charactersInFaction(faction).filter(c=>rosterUnitType(c)!=='ship').map(c=>{
