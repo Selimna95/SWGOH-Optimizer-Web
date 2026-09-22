@@ -12,16 +12,21 @@
 <body>
 <div class="scanlines"></div>
 <header class="topbar">
-  <div><span class="brand">SWGOH</span> <span class="accent">OPTIMIZER</span><span class="version">WEB V26</span></div>
-  <div id="runtime" class="status">INITIALISATION PYTHON…</div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SWGOH</span><span class="accent">OPTIMIZER</span></div><span class="version">WEB V27</span></div>
+  <div class="top-status-group">
+    <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
+    <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
+    <div class="top-pill"><span class="pill-icon">◈</span><span>UNITÉS</span><b id="topUnitsCount">0</b></div>
+    <div class="top-tools"><span>⚙</span><span>⋮</span></div>
+  </div>
 </header>
 <main class="layout">
   <aside class="sidebar">
-    <button class="nav active" data-page="dashboard">DASHBOARD</button>
-    <button class="nav" data-page="data">DONNÉES</button>
-    <button class="nav" data-page="mods-analysis">ANALYSE MODS</button>
-    <button class="nav" data-page="optimizer">OPTIMIZER</button>
-    <button class="nav" data-page="help">AIDE</button>
+    <button class="nav active" data-page="dashboard"><span class="nav-icon">⌂</span><span>DASHBOARD</span></button>
+    <button class="nav" data-page="data"><span class="nav-icon">▦</span><span>DONNÉES</span></button>
+    <button class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>ANALYSE MODS</span></button>
+    <button class="nav" data-page="optimizer"><span class="nav-icon">✦</span><span>OPTIMIZER</span></button>
+    <button class="nav" data-page="help"><span class="nav-icon">?</span><span>AIDE</span></button>
     <div class="side-note">100% navigateur<br>aucun PC serveur</div>
   </aside>
   <section class="content">
@@ -38,19 +43,19 @@
           <label class="secondary-upload" id="jsonImportControl" hidden>OU IMPORTER JSON<input id="fileInput" type="file" accept=".json,application/json"></label>
         </div>
       </div>
-      <div class="cards">
-        <div class="panel metric"><span>MODS CHARGÉS</span><strong id="modsCount">0</strong></div>
-        <div class="panel metric"><span>PERSONNAGES</span><strong id="charsCount">0</strong></div>
-        <div class="panel metric"><span>VAISSEAUX</span><strong id="shipsCount">0</strong></div>
-        <div class="panel metric"><span>UNITÉS TOTALES</span><strong id="unitsCount">0</strong></div>
-        <div class="panel metric" id="pythonMetric" hidden><span>PYTHON</span><strong id="pythonState">—</strong></div>
+      <div class="dashboard-kpis">
+        <div class="panel metric kpi-mods"><div class="kpi-icon">◈</div><div><span>MODS CHARGÉS</span><strong id="modsCount">0</strong><small>Inventaire disponible</small></div></div>
+        <div class="panel metric kpi-chars"><div class="kpi-icon">♙</div><div><span>PERSONNAGES</span><strong id="charsCount">0</strong><small>Unités jouables</small></div></div>
+        <div class="panel metric kpi-ships"><div class="kpi-icon">✦</div><div><span>VAISSEAUX</span><strong id="shipsCount">0</strong><small>Flotte chargée</small></div></div>
+        <div class="panel metric kpi-total"><div class="kpi-icon">★</div><div><span>UNITÉS TOTALES</span><strong id="unitsCount">0</strong><small>Roster complet</small></div></div>
+        <div class="panel account-health"><div class="health-ring"><b id="healthPercent">0%</b><span>PROFIL</span></div><div><span>ÉTAT DU COMPTE</span><strong id="healthText">En attente</strong><small>Synchronisation SWGOH.GG</small></div></div>
       </div>
-      <div class="panel quick-summary">
-        <div class="panel-title">ÉTAT DU COMPTE</div>
+      <div class="panel quick-summary dashboard-account-panel">
+        <div class="panel-title"><span class="section-icon">●</span> ÉTAT DU COMPTE</div>
         <div id="accountSummary" class="summary-grid"><span>Aucune donnée chargée.</span></div>
       </div>
-      <div class="panel v18-dashboard-speed"><div class="panel-title">VENTILATION DES MODS PAR VITESSE SECONDAIRE — V176</div><div id="v18DashboardSpeed" class="speed-recap-grid"></div><div class="v18-note">Cliquez sur une tranche pour ouvrir le détail complet de l’inventaire des mods.</div></div>
-      <div class="panel log"><div class="panel-title">JOURNAL</div><pre id="log">Entrez votre Ally Code pour charger le profil. Pour le chargement automatique, le Worker Cloudflare doit être configuré.</pre></div>
+      <div class="panel v18-dashboard-speed"><div class="panel-title"><span class="section-icon">⚡</span> VENTILATION DES MODS PAR VITESSE — V176</div><div id="v18DashboardSpeed" class="speed-recap-grid"></div><div class="v18-note">Cliquez sur une tranche pour ouvrir le détail complet de l’inventaire des mods.</div></div>
+      <div class="panel log"><div class="panel-title"><span class="section-icon">◉</span> DERNIER CHARGEMENT</div><pre id="log">Entrez votre Ally Code pour charger le profil. Pour le chargement automatique, le Worker Cloudflare doit être configuré.</pre></div>
     </section>
 
     <section id="optimizer" class="page">

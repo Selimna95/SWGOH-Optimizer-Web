@@ -120,6 +120,8 @@ function updateRosterCounts(characters, ships) {
   const c=Array.isArray(characters)?characters.length:0, s=Array.isArray(ships)?ships.length:0, m=Array.isArray(mods)?mods.length:0;
   setText('charsCount',c); setText('shipsCount',s); setText('unitsCount',c+s); setText('modsCount',m);
   setText('tabCharsCount',c); setText('tabShipsCount',s); setText('tabModsCount',m);
+  setText('topUnitsCount',c+s);
+  const pct=(c+s+m)>0?100:0; setText('healthPercent',pct+'%'); setText('healthText',pct?'Synchronisé':'En attente');
 }
 function optimizerProfileForCharacter(character) {
   if (!character || !optimizerProfiles || typeof optimizerProfiles !== 'object') return null;
@@ -267,7 +269,7 @@ async function loadRemotePlayer(){
   }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, utilise l’import JSON.');}
   finally{$('loadPlayer').disabled=false;$('loadPlayer').textContent='CHARGER MON PROFIL';}
 }
-function updateAccountSummary(title,fmt){$('accountSummary').innerHTML=`<div><span>JOUEUR</span><strong>${esc(title)}</strong></div><div><span>ALLY CODE</span><strong>${esc(fmt)}</strong></div><div><span>PERSONNAGES</span><strong>${rosterCharacters.length}</strong></div><div><span>VAISSEAUX</span><strong>${rosterShips.length}</strong></div><div><span>MODS</span><strong>${mods.length}</strong></div>`;}
+function updateAccountSummary(title,fmt){$('accountSummary').innerHTML=`<div><span>JOUEUR</span><strong>${esc(title)}</strong></div><div><span>ALLY CODE</span><strong>${esc(fmt)}</strong></div><div><span>PERSONNAGES</span><strong>${rosterCharacters.length}</strong></div><div><span>VAISSEAUX</span><strong>${rosterShips.length}</strong></div><div><span>MODS</span><strong>${mods.length}</strong></div>`;setText('topAccountName',title||'—');setText('topProfileState','CONNECTÉ');}
 
 function modSetLabel(value){
   const raw=String(value??'').trim();
