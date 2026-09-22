@@ -827,13 +827,13 @@ $('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];
 $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
   $('results').innerHTML='<div class="calculating">Préparation de l’optimisation…<br><small>Le calcul va maintenant s’exécuter dans un Worker séparé pour garder l’interface réactive.</small></div>';
-  if(!optimizerReady||!mods.length){$('optimizerError').textContent='Python ou mods non disponibles.';return;}
+  if(!mods.length){$('optimizerError').textContent='Aucun mod disponible. Chargez d’abord votre profil.';return;}
   const character=selectedCharacter();
   if(!character){$('optimizerError').textContent='Sélectionnez un personnage.';return;}
   const profile=await ensureSelectedKyberProfile();
   if(!profile){$('optimizerError').textContent=`Référence Kyber indisponible pour « ${character.name||character.baseId} ».`;$('results').innerHTML='';return;}
 
-  const nBuilds=Math.min(50,Math.max(1,Number($('buildCount').value)||10));
+  const nBuilds=Math.min(50,Math.max(1,Number($('buildCount').value)||5));
   const limitSlot=Math.min(150,Math.max(5,Number($('limitPerSlot').value)||80));
   $('runOptimizer').disabled=true;
   $('runOptimizer').textContent='CALCUL EN COURS…';
