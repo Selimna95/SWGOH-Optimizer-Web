@@ -1,10 +1,14 @@
-# SWGOH Optimizer Web — V42
+# V45 — Optimizer Ready Fix
 
-V42 is based on V39/V41 and keeps application logic intact while hardening Optimizer profile availability and improving dashboard ergonomics.
+Visual files are intentionally unchanged from V44.
 
-- 334 Optimizer profiles are bundled in `optimizer-profiles.js` as a same-origin fallback.
-- `app.js` first uses the embedded profiles, then JSON path fallbacks.
-- Kyber remains dynamic via SWGOH.GG, with a local Optimizer-profile reference fallback when Kyber is unavailable.
-- Dashboard typography, account summary, Galactic Power hierarchy and spacing were redesigned for readability.
-- Horizontal navigation bars remain available.
-- Python optimizer engine and Cloudflare relay code are preserved.
+Functional correction:
+- `optimizerReady` is set immediately at boot.
+- Worker initialization starts in the background.
+- UI/Kyber reference downloads no longer block the Optimizer.
+- Worker resources are versioned V45.
+- The dedicated Worker remains responsible for Pyodide + optimizer.py + optimizer_profiles.json.
+
+Root cause addressed:
+V44 awaited reference-data downloads before setting `optimizerReady=true`, so a slow or failed
+fetch left the Optimizer blocked with "Le moteur Optimizer n'est pas prêt".

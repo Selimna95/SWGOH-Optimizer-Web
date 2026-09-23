@@ -419,7 +419,7 @@ document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click'
 
 function getOptimizerWorker() {
   if (optimizerWorker) return optimizerWorker;
-  optimizerWorker = new Worker('./optimizer-worker.mjs?v=44', { type: 'module' });
+  optimizerWorker = new Worker('./optimizer-worker.mjs?v=45', { type: 'module' });
   optimizerWorker.addEventListener('error', (event) => {
     log('Erreur du Worker Python : ' + (event.message || 'erreur inconnue'));
   });
@@ -987,7 +987,7 @@ async function loadOptimizerReferenceData(){
     let loaded=null;
     for(const url of candidates){
       try{
-        const r=await fetch(url+'?v=44',{cache:'no-store'});
+        const r=await fetch(url+'?v=45',{cache:'no-store'});
         if(!r.ok)continue;
         const json=await r.json();
         if(json&&typeof json==='object'&&Object.keys(json).length){loaded=json;break;}
@@ -1010,7 +1010,7 @@ async function loadOptimizerReferenceData(){
   profiles={};
   for(const url of kyberCandidates){
     try{
-      const r=await fetch(url+'?v=44',{cache:'no-store'});
+      const r=await fetch(url+'?v=45',{cache:'no-store'});
       if(r.ok){const json=await r.json();if(json&&typeof json==='object'){profiles=json;break;}}
     }catch(e){}
   }
@@ -1019,23 +1019,34 @@ async function loadOptimizerReferenceData(){
 }
 
 async function boot(){
-  setRuntime('CHARGEMENT DES DONNÉES OPTIMIZER…');
-  $('pythonState').textContent='CHARGEMENT';
-  try{
-    await loadOptimizerReferenceData();
-  }catch(e){
-    log('Chargement des références UI impossible : '+(e?.message||e));
-  }
-  // Le Worker est autonome en V44 : il charge lui-même optimizer_profiles.json.
+  // V45: l'activation de l'Optimizer ne dépend plus des téléchargements
+  // de références UI. V44 pouvait laisser optimizerReady=false pendant ces
+  // requêtes et afficher "Le moteur Optimizer n'est pas prêt".
   optimizerReady=true;
   $('pythonState').textContent='WORKER';
   setRuntime('MOTEUR OPTIMIZER PRÊT',true);
-  log(`Worker Optimizer prêt. Profils UI locaux : ${Object.keys(optimizerProfiles||{}).length}.`);
-  // Pyodide principal est facultatif. Son chargement ne doit jamais bloquer l'Optimizer.
+  log('Moteur Optimizer autorisé immédiatement. Initialisation du Worker en arrière-plan…');
+
+  try{
+    getOptimizerWorker();
+    log('Worker Optimizer initialisé.');
+  }catch(e){
+    log('Initialisation du Worker différée : '+(e?.message||e));
+  }
+
+  // Les profils UI/Kyber sont facultatifs pour l'activation du moteur.
+  try{
+    await loadOptimizerReferenceData();
+    log(`Références UI chargées. Profils Optimizer locaux : ${Object.keys(optimizerProfiles||{}).length}.`);
+  }catch(e){
+    log('Références UI non disponibles : le Worker reste autonome.');
+  }
+
+  // Pyodide principal est facultatif et ne doit jamais bloquer l'Optimizer.
   try{
     if(typeof loadPyodide==='function'){
       pyodide=await loadPyodide();
-      const optimizerResponse=await fetch(new URL('./python/optimizer.py',document.baseURI).href+'?v=43',{cache:'no-store'});
+      const optimizerResponse=await fetch(new URL('./python/optimizer.py',document.baseURI).href+'?v=45',{cache:'no-store'});
       if(!optimizerResponse.ok) throw new Error(`optimizer.py HTTP ${optimizerResponse.status}`);
       const optimizer=await optimizerResponse.text();
       pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);
