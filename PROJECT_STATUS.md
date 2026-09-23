@@ -1,20 +1,3 @@
-# V47 — Optimizer Kyber Set/Primary Fix
+# V51 — Mod Visual Clean
 
-Visual files unchanged.
-
-Fixes:
-- Robust SWGOH.GG Kyber parser for exact grouped set recommendations.
-- All six primary slots shown, including fixed Square=Offense and Diamond=Defense.
-- Optimizer enforces the most popular exact six-mod Kyber set composition when available.
-- Set aliases normalized (Crit Chance/Critical Chance, Crit Damage/Critical Damage).
-- Result builds therefore cannot silently return an unrelated set composition when the Kyber plan is available.
-
-
-## V49 — MOD ICON DOT/TIER FIX
-- Mod icons now explicitly show 1–5 vs 6 dots.
-- 6-dot mods use a gold frame; 1–5 dots use a light frame.
-- Inventory and report labels distinguish Level 1–15, dots 1–6 and Tier E–A.
-- Inventory toolbar no longer wraps the sort control onto a second row on desktop.
-
-
-V50 — MOD ICON CORRECTION: tier E/D/C/B/A controls the base icon colour; dots 1–6 are a separate overlay. A 6E mod is therefore E-coloured with six dots, not gold.
+Dots et Tier sont maintenant deux couches indépendantes. Le fond dépend uniquement des dots (1–5 clair, 6 doré) et la couleur de l'icône dépend uniquement du Tier E/D/C/B/A. Le niveau 1–15 reste séparé.

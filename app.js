@@ -386,8 +386,24 @@ function parseNumberValue(v){const m=String(v??'').replace(/\s/g,'').match(/[+-]
 function slotFromShape(shape){const s=String(shape||'').toLowerCase();return ({'1':'Square','2':'Square','3':'Arrow','4':'Diamond','5':'Triangle','6':'Circle','7':'Cross',transmitter:'Square',receiver:'Arrow',processor:'Diamond','holo-array':'Triangle','data-bus':'Circle',multiplexer:'Cross'})[s]||shape;}
 function parseStatGeneric(node){if(!node)return{stat:'',value:0};const label=firstText(node,['.statmod-stat-label','[class*="statmod-stat-label"]','[data-stat-name]'])||node.getAttribute?.('data-stat-name')||'';const raw=firstText(node,['.statmod-stat-value','[class*="statmod-stat-value"]','[data-stat-value]'])||node.getAttribute?.('data-stat-value')||node.textContent||'';return{stat:label.trim(),value:parseNumberValue(raw)};}
 function parseModsPage(doc,page){
-  const nodes=[...doc.querySelectorAll('.collection-mod, [class*="collection-mod"], [data-mod-id], [data-id].mod')],result=[];
-  nodes.forEach((node,idx)=>{const alt=firstAttr(node,['.statmod-img','img[class*="statmod-img"]'],'alt');const words=alt.trim().split(/\s+/).filter(Boolean);const shape=words.at(-1)||'';const set=words.length>=5?words.slice(2,-1).join(' '):(words.length>=4?words[2]:'');const primary=parseStatGeneric(node.querySelector('.statmod-stats-1 .statmod-stat, [class*="statmod-stats-1"] [class*="statmod-stat"]'));const secondary=[...node.querySelectorAll('.statmod-stats-2 .statmod-stat, [class*="statmod-stats-2"] [class*="statmod-stat"]')].map(parseStatGeneric).filter(x=>x.stat);const char=firstAttr(node,['img.char-portrait-img','img[class*="char-portrait-img"]'],'alt');const level=parseNumberValue(firstText(node,['.statmod-level','[class*="statmod-level"]']));const rarity=node.querySelectorAll('.statmod-pip, [class*="statmod-pip"]').length;const id=node.getAttribute('data-id')||node.getAttribute('data-mod-id')||`gg-${page}-${idx}`;if(shape||set||primary.stat||secondary.length)result.push(normalizeMod({game_id:id,slot:slotFromShape(shape),set_name:set,rarity,level,primary_stat:primary.stat,primary_value:primary.value,secondary_stats:secondary,character:char},page*1000+idx));});
+  const nodes=[...doc.querySelectorAll('.collection-mod, [class*=\"collection-mod\"], [data-mod-id], [data-id].mod')],result=[];
+  nodes.forEach((node,idx)=>{
+    const img=node.querySelector('.statmod-img, img[class*=\"statmod-img\"]');
+    const alt=img?.getAttribute('alt')||'';
+    const src=img?.getAttribute('src')||img?.getAttribute('data-src')||'';
+    const words=alt.trim().split(/\s+/).filter(Boolean);
+    const shape=words.at(-1)||'';
+    const set=words.length>=5?words.slice(2,-1).join(' '):(words.length>=4?words[2]:'');
+    const primary=parseStatGeneric(node.querySelector('.statmod-stats-1 .statmod-stat, [class*=\"statmod-stats-1\"] [class*=\"statmod-stat\"]'));
+    const secondary=[...node.querySelectorAll('.statmod-stats-2 .statmod-stat, [class*=\"statmod-stats-2\"] [class*=\"statmod-stat\"]')].map(parseStatGeneric).filter(x=>x.stat);
+    const char=firstAttr(node,['img.char-portrait-img','img[class*=\"char-portrait-img\"]'],'alt');
+    const level=parseNumberValue(firstText(node,['.statmod-level','[class*=\"statmod-level\"]']));
+    const rarity=node.querySelectorAll('.statmod-pip, [class*=\"statmod-pip\"]').length;
+    const id=node.getAttribute('data-id')||node.getAttribute('data-mod-id')||`gg-${page}-${idx}`;
+    if(shape||set||primary.stat||secondary.length){
+      result.push(normalizeMod({game_id:id,slot:slotFromShape(shape),set_name:set,rarity,dots:rarity,level,primary_stat:primary.stat,primary_value:primary.value,secondary_stats:secondary,character:char,asset_src:src,raw_alt:alt},page*1000+idx));
+    }
+  });
   return result.filter(Boolean);
 }
 function parseCharacters(doc){const result=[],nodes=[...doc.querySelectorAll('.collection-char-list .collection-char, .collection-char, [class*="collection-char"]')],seen=new Set();for(const node of nodes){const name=firstText(node,['.collection-char-name-link','[class*="collection-char-name"]','a[href*="/character/"]']);if(!name||seen.has(name))continue;seen.add(name);const level=parseNumberValue(firstText(node,['.char-portrait-full-level','[class*="char-portrait-full-level"]']));let gear=0;const portrait=node.querySelector('.player-char-portrait,[class*="player-char-portrait"]');for(let i=1;i<=13;i++)if(portrait?.classList.contains(`char-portrait-full-gear-t${i}`))gear=i;const stars=[...node.querySelectorAll('.star, [class*="star"]')].filter(x=>!String(x.className).includes('inactive')).length;result.push({name,level,gear,stars});}return result;}
@@ -467,8 +483,10 @@ function modSlotLabel(value){
 function modIconTier(m){
   const raw=String(m?.tier??m?.quality??m?.grade??m?.modTier??m?.mod_tier??m?.rarityTier??m?.rarity_tier??'').trim().toUpperCase();
   if(/^[A-E]$/.test(raw))return raw;
+  const assetText=String(m?.asset_src??m?.icon_url??m?.iconUrl??m?.image_url??m?.imageUrl??m?.icon??m?.image??'');
+  const assetHit=assetText.match(/[-_]([A-E])\.(?:png|webp)(?:$|[?#])/i);
+  if(assetHit)return assetHit[1].toUpperCase();
   const text=String(m?.name??m?.displayName??m?.raw_alt??m?.alt??'');
-  // SWGoH mod names commonly end in the tier letter (…-A / … B).
   const hit=text.match(/(?:^|[\s_-])([A-E])(?:$|[\s_-])/i);
   return hit?hit[1].toUpperCase():'E';
 }
@@ -496,7 +514,13 @@ function modAssetName(m){
   const set=modSetLabel(m?.set_name??m?.set??m?.setId??m?.set_id).trim();
   const slot=modSlotLabel(m?.slot??m?.slot_id??m?.slotId??m?.modSlot).trim();
   const shape={Square:'Transmitter',Arrow:'Receiver',Diamond:'Processor',Triangle:'Holo-Array',Circle:'Data-Bus',Cross:'Multiplexer'}[slot]||'Transmitter';
-  const safeSet=set.replace(/\s+/g,'-');
+  const assetSet={
+    'Crit Chance':'Critical Chance',
+    'Crit Damage':'Critical Damage',
+    'Critical Chance':'Critical Chance',
+    'Critical Damage':'Critical Damage'
+  }[set]||set;
+  const safeSet=assetSet.replace(/\s+/g,'-');
   return `Mod-${safeSet}-${shape}-${modIconTier(m)}.png`;
 }
 function modIconUrl(m){
@@ -511,9 +535,9 @@ function modIconHtml(m, size='56'){
   const asset=esc(modAssetName(m));
   const dots=modDots(m);
   const tier=modIconTier(m);
-  // Important: dots are NOT the tier. A 6E keeps the E mod texture and simply
-  // gets the VI-dot indicator. The tier letter controls the texture colour.
-  return `<span class="mod-visual tier-${tier}" data-dots="${dots}" data-tier="${tier}" title="${name} — ${dots} dots · Tier ${tier}"><span class="mod-visual-frame"><img class="mod-visual-base" src="${esc(modIconUrl(m))}" alt="${asset}" referrerpolicy="no-referrer"></span><img class="mod-visual-dots" src="${esc(modDotsUrl(m))}" alt="${dots} dots" referrerpolicy="no-referrer"><span class="mod-visual-level">${num(m?.level)}</span></span>`;
+  const slot=modSlotLabel(m?.slot??m?.slot_id??m?.slotId??m?.modSlot);
+  const slotClass=slot.toLowerCase().replace(/[^a-z]+/g,'-');
+  return `<span class=\"mod-visual tier-${tier} dots-${dots} slot-${slotClass}\" data-dots=\"${dots}\" data-tier=\"${tier}\" data-slot=\"${esc(slot)}\" title=\"${name} — ${dots} dots · Tier ${tier}\"><span class=\"mod-visual-frame\"><img class=\"mod-visual-base\" src=\"${esc(modIconUrl(m))}\" alt=\"${asset}\" referrerpolicy=\"no-referrer\"></span><img class=\"mod-visual-dots\" src=\"${esc(modDotsUrl(m))}\" alt=\"${dots} dots\" referrerpolicy=\"no-referrer\"><span class=\"mod-visual-level\">${num(m?.level)}</span></span>`;
 }
 function normalizeModForDisplay(m){
   if(!m)return m;
@@ -526,6 +550,9 @@ function normalizeModForDisplay(m){
   out.dots=Number(out.dots??out.dotCount??out.pips??out.rarity??0);
   out.tier=out.tier??out.quality??out.grade??out.modTier??out.mod_tier??out.rarityTier??'';
   out.raw_alt=out.raw_alt??out.alt??out.imageAlt??out.name??'';
+  out.asset_src=out.asset_src??out.icon_url??out.iconUrl??out.image_url??out.imageUrl??out.icon??out.image??'';
+  out.tier=modIconTier(out);
+  out.dots=modDots(out);
   return out;
 }
 function prepareModFilters(){

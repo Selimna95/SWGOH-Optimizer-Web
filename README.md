@@ -1,9 +1,10 @@
-# SWGOH Optimizer Web — V42
+# SWGOH Optimizer Web V51 — Mod Visual propre
 
-V42 preserves V39 functionality and the Galactic Command visual direction while fixing Optimizer data availability and dashboard ergonomics.
+- 1–5 dots : fond clair/blanc
+- 6 dots : fond doré
+- Tier E/D/C/B/A : couleur de l'icône
+- Niveau 1–15 : badge séparé
 
-Upload the **contents** of `v42` to the `main` branch of GitHub Pages.
-Keep `styles.css`/other existing base assets if present; V42 uses `galactic-command.css` plus `visual-v42.css`.
+Exemples : 5E = blanc + E, 6E = doré + E, 5A = blanc + A, 6A = doré + A.
 
-
-V50 — MOD ICON CORRECTION: tier E/D/C/B/A controls the base icon colour; dots 1–6 are a separate overlay. A 6E mod is therefore E-coloured with six dots, not gold.
+Le parsing du HTML récupère aussi le fichier de texture réellement utilisé par SWGOH.GG pour déterminer le tier lorsqu'il est disponible.

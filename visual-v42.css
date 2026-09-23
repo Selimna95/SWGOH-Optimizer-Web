@@ -450,3 +450,15 @@ body{font-size:14px!important;overflow-x:hidden!important}
   .mod-visual-base{width:44px;height:44px}
 }
 
+
+/* V51 — Dots and tier are independent visual layers. */
+.mod-visual-frame{position:relative;overflow:hidden;border:0;box-shadow:0 1px 0 rgba(255,255,255,.28) inset,0 0 0 1px rgba(18,28,35,.55);background:linear-gradient(145deg,#f8fbfd,#d8e0e5)}
+.mod-visual.dots-6 .mod-visual-frame{background:linear-gradient(145deg,#ffe78b 0%,#d6a93a 52%,#9b6d14 100%);box-shadow:0 1px 0 rgba(255,248,194,.85) inset,0 0 8px rgba(235,190,65,.32)}
+.mod-visual-frame:before{content:"";position:absolute;inset:2px;background:rgba(255,255,255,.24);z-index:0;pointer-events:none}.mod-visual.dots-6 .mod-visual-frame:before{background:rgba(255,244,174,.20)}
+.mod-visual-base{position:relative;z-index:1;filter:none!important}.mod-visual-dots{z-index:4}.mod-visual-level{z-index:5}
+.mod-visual.slot-square .mod-visual-frame{clip-path:polygon(8% 3%,92% 3%,97% 8%,97% 92%,92% 97%,8% 97%,3% 92%,3% 8%)}
+.mod-visual.slot-arrow .mod-visual-frame{clip-path:polygon(50% 1%,97% 50%,50% 99%,3% 50%)}
+.mod-visual.slot-diamond .mod-visual-frame{clip-path:polygon(50% 1%,99% 50%,50% 99%,1% 50%)}
+.mod-visual.slot-triangle .mod-visual-frame{clip-path:polygon(50% 2%,98% 94%,2% 94%)}
+.mod-visual.slot-circle .mod-visual-frame{border-radius:50%}
+.mod-visual.slot-cross .mod-visual-frame{clip-path:polygon(32% 2%,68% 2%,68% 32%,98% 32%,98% 68%,68% 68%,68% 98%,32% 98%,32% 68%,2% 68%,2% 32%,32% 32%)}
