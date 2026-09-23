@@ -940,14 +940,53 @@ function renderModsAnalysis(){
   setAnalysisTab(tab);
 }
 
-async function boot(){try{setRuntime('CHARGEMENT PYTHON…');pyodide=await loadPyodide();const optimizer=await fetch('python/optimizer.py').then(r=>r.text());const kyber=await fetch('python/kyber_profiles.json').then(r=>r.text());const optimizerProfilesText=await fetch('python/optimizer_profiles.json').then(r=>r.text());optimizerProfiles=JSON.parse(optimizerProfilesText);pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);pyodide.FS.writeFile('/home/pyodide/kyber_profiles.json',kyber);pyodide.FS.writeFile('/home/pyodide/optimizer_profiles.json',optimizerProfilesText);pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer, json`);profiles=JSON.parse(kyber);optimizerReady=true;$('pythonState').textContent='OK';setRuntime('PYTHON WEBASSEMBLY PRÊT',true);log('Moteur Python chargé dans le navigateur.');}catch(e){setRuntime('ERREUR PYTHON');$('pythonState').textContent='ERREUR';log('Erreur Python: '+e);}}
+async function loadOptimizerReferenceData(){
+  const [kyberResponse, optimizerProfilesResponse]=await Promise.all([
+    fetch('python/kyber_profiles.json',{cache:'no-store'}),
+    fetch('python/optimizer_profiles.json',{cache:'no-store'})
+  ]);
+  if(!kyberResponse.ok) throw new Error(`Impossible de charger kyber_profiles.json (HTTP ${kyberResponse.status})`);
+  if(!optimizerProfilesResponse.ok) throw new Error(`Impossible de charger optimizer_profiles.json (HTTP ${optimizerProfilesResponse.status})`);
+  profiles=await kyberResponse.json();
+  optimizerProfiles=await optimizerProfilesResponse.json();
+}
+
+async function boot(){
+  try{
+    setRuntime('CHARGEMENT DES DONNÉES OPTIMIZER…');
+    await loadOptimizerReferenceData();
+    // Le calcul est exécuté dans le Worker dédié. Le moteur principal reste disponible comme secours,
+    // mais son absence ne doit plus désactiver l'Optimizer ni les statistiques du rapport personnage.
+    optimizerReady=true;
+    $('pythonState').textContent='WORKER';
+    setRuntime('MOTEUR OPTIMIZER DISPONIBLE',true);
+    log('Profils Optimizer et données Kyber chargés. Calcul Python déporté dans le Worker.');
+    try{
+      if(typeof loadPyodide==='function'){
+        pyodide=await loadPyodide();
+        const optimizer=await fetch('python/optimizer.py',{cache:'no-store'}).then(r=>r.text());
+        pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);
+        pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer`);
+        log('Moteur Python principal disponible en secours.');
+      }
+    }catch(e){
+      log('Moteur Python principal indisponible : le Worker reste utilisé pour l’optimisation.');
+    }
+  }catch(e){
+    optimizerReady=false;
+    setRuntime('DONNÉES OPTIMIZER INDISPONIBLES');
+    $('pythonState').textContent='ERREUR';
+    log('Erreur données Optimizer : '+e);
+  }
+}
 
 $('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
 
 $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
   $('results').innerHTML='<div class="calculating">Préparation de l’optimisation…<br><small>Le calcul va maintenant s’exécuter dans un Worker séparé pour garder l’interface réactive.</small></div>';
-  if(!optimizerReady||!mods.length){$('optimizerError').textContent='Python ou mods non disponibles.';return;}
+  if(!mods.length){$('optimizerError').textContent='Aucun mod disponible. Chargez d’abord votre profil.';return;}
+  if(!optimizerReady){$('optimizerError').textContent='Les données Optimizer ne sont pas encore disponibles. Rechargez la page.';return;}
   const character=selectedCharacter();
   if(!character){$('optimizerError').textContent='Sélectionnez un personnage.';return;}
   const profile=await ensureSelectedKyberProfile();

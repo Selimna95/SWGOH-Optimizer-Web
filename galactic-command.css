@@ -333,3 +333,98 @@ body:after{content:"";position:fixed;inset:-20%;z-index:-6;opacity:.45;backgroun
   .gp-total strong{font-size:29px!important}
   .gp-breakdown strong{font-size:14px!important}
 }
+
+
+/* ================= V38 HOTFIX ================= */
+/* Analyse : les options restent sur une ligne, sans écraser le titre ni les panneaux. */
+.analysis-header{
+  display:grid!important;
+  grid-template-columns:minmax(260px,1fr) auto!important;
+  align-items:end!important;
+  gap:16px!important;
+}
+.analysis-tabs{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  max-width:min(100%,760px)!important;
+  padding:4px 2px 6px!important;
+  scrollbar-width:thin;
+}
+.analysis-tab{
+  flex:0 0 auto!important;
+  white-space:nowrap!important;
+  min-height:36px!important;
+  padding:9px 12px!important;
+}
+@media(max-width:1050px){
+  .analysis-header{grid-template-columns:1fr!important;align-items:stretch!important}
+  .analysis-tabs{max-width:100%!important;width:100%!important}
+}
+
+/* Dashboard PG : une seule ligne, total compact, terrestre/spatial plus présents. */
+.dashboard-gp-panel{overflow:hidden!important}
+.gp-command-strip{
+  display:grid!important;
+  grid-template-columns:minmax(230px,.72fr) minmax(0,1.28fr)!important;
+  align-items:stretch!important;
+  min-height:104px!important;
+}
+.gp-total{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:center!important;
+  padding:10px 18px!important;
+  border-right:1px solid rgba(55,181,226,.18)!important;
+}
+.gp-total strong{
+  font-size:clamp(27px,2.7vw,38px)!important;
+  line-height:1!important;
+  margin:4px 0!important;
+}
+.gp-total small{font-size:8px!important;white-space:nowrap!important}
+.gp-breakdown{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:0!important;
+  margin:0!important;
+  background:transparent!important;
+  border:0!important;
+}
+.gp-breakdown div{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:center!important;
+  min-width:0!important;
+  padding:10px 18px!important;
+  background:linear-gradient(135deg,rgba(9,37,59,.78),rgba(5,17,31,.9))!important;
+}
+.gp-breakdown div+div{border-left:1px solid rgba(55,181,226,.18)!important}
+.gp-breakdown div:first-child{box-shadow:inset 0 3px 0 #39d7ff!important}
+.gp-breakdown div:last-child{box-shadow:inset 0 3px 0 #a96cff!important}
+.gp-breakdown span{font-size:9px!important;letter-spacing:.14em!important;text-align:center!important}
+.gp-breakdown strong{font-size:clamp(22px,2.4vw,34px)!important;line-height:1!important;margin-top:7px!important}
+@media(max-width:760px){
+  .gp-command-strip{grid-template-columns:1fr!important}
+  .gp-total{border-right:0!important;border-bottom:1px solid rgba(55,181,226,.18)!important}
+  .gp-breakdown{min-height:92px!important}
+}
+
+/* Rapport personnage : le tableau de statistiques reste visible et lisible. */
+.report-section .report-stats-wrap{display:block!important;overflow-x:auto!important;min-height:80px!important}
+.report-stats{display:table!important;width:100%!important;min-width:620px!important;visibility:visible!important;opacity:1!important}
+.report-stats thead,.report-stats tbody{visibility:visible!important;display:table-row-group!important}
+.report-stats tr{display:table-row!important}
+.report-stats th,.report-stats td{display:table-cell!important}
+.report-stats td{color:#b8cfdb!important}
+.report-stats td:first-child{color:#e5f8ff!important;font-weight:800!important}
+.report-stats td:nth-child(3){color:#72e6ff!important;font-weight:800!important}
+.report-stats td:nth-child(4){color:#a8f0cf!important;font-weight:800!important}
+
+/* Optimizer : message d'erreur plus explicite et bouton toujours exploitable. */
+#runOptimizer{min-width:190px}
+#optimizerError:empty{display:none}
+#optimizerError{margin-top:10px!important;padding:10px 12px!important;border-left:2px solid #ff5b83!important;background:rgba(255,61,110,.07)!important;color:#ff8baa!important}

@@ -1,4 +1,4 @@
-import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.mjs";
+import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.mjs";
 
 let pyodideReadyPromise = (async () => {
   const pyodide = await loadPyodide();

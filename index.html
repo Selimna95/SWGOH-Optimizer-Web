@@ -55,7 +55,13 @@
         <div class="panel-title"><span class="section-icon">●</span> ÉTAT DU COMPTE</div>
         <div id="accountSummary" class="summary-grid"><span>Aucune donnée chargée.</span></div>
       </div>
-      <div class="panel dashboard-gp-panel"><div class="panel-title"><span class="section-icon">✦</span> PUISSANCE GALACTIQUE</div><div class="gp-total"><span>PUISSANCE TOTALE</span><strong id="gpTotal">0</strong><small id="gpBreakdown">En attente de synchronisation</small></div><div class="gp-breakdown"><div><span>TERRESTRE — PERSONNAGES</span><strong id="gpCharacters">0</strong></div><div><span>SPATIAL — VAISSEAUX</span><strong id="gpShips">0</strong></div></div></div>
+      <div class="panel dashboard-gp-panel">
+  <div class="panel-title"><span class="section-icon">✦</span> PUISSANCE GALACTIQUE</div>
+  <div class="gp-command-strip">
+    <div class="gp-total"><span>PUISSANCE TOTALE</span><strong id="gpTotal">0</strong><small id="gpBreakdown">En attente de synchronisation</small></div>
+    <div class="gp-breakdown"><div><span>TERRESTRE — PERSONNAGES</span><strong id="gpCharacters">0</strong></div><div><span>SPATIAL — VAISSEAUX</span><strong id="gpShips">0</strong></div></div>
+  </div>
+</div>
       <div class="panel v18-dashboard-speed"><div class="panel-title"><span class="section-icon">⚡</span> VENTILATION DES MODS PAR VITESSE — V176</div><div id="v18DashboardSpeed" class="speed-recap-grid"></div><div class="v18-note">Cliquez sur une tranche pour ouvrir le détail complet de l’inventaire des mods.</div></div>
       <div class="panel log"><div class="panel-title"><span class="section-icon">◉</span> DERNIER CHARGEMENT</div><pre id="log">Entrez votre Ally Code pour charger le profil. Pour le chargement automatique, le Worker Cloudflare doit être configuré.</pre></div>
     </section>
@@ -232,7 +238,7 @@
     </section>
   </section>
 </main>
-<script src="https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
