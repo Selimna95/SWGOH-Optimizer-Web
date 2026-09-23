@@ -511,8 +511,9 @@ function modIconHtml(m, size='56'){
   const asset=esc(modAssetName(m));
   const dots=modDots(m);
   const tier=modIconTier(m);
-  const dotMarks=Array.from({length:dots},()=>'<i></i>').join('');
-  return `<span class="mod-visual ${modDotsClass(m)} tier-${tier}" data-dots="${dots}" data-tier="${tier}" title="${name} — ${dots} dots · Tier ${tier}"><span class="mod-visual-frame"><img class="mod-visual-base" src="${esc(modIconUrl(m))}" alt="${asset}" referrerpolicy="no-referrer"></span><span class="mod-visual-dots-css" aria-label="${dots} dots">${dotMarks}</span><span class="mod-visual-level">${num(m?.level)}</span></span>`;
+  // Important: dots are NOT the tier. A 6E keeps the E mod texture and simply
+  // gets the VI-dot indicator. The tier letter controls the texture colour.
+  return `<span class="mod-visual tier-${tier}" data-dots="${dots}" data-tier="${tier}" title="${name} — ${dots} dots · Tier ${tier}"><span class="mod-visual-frame"><img class="mod-visual-base" src="${esc(modIconUrl(m))}" alt="${asset}" referrerpolicy="no-referrer"></span><img class="mod-visual-dots" src="${esc(modDotsUrl(m))}" alt="${dots} dots" referrerpolicy="no-referrer"><span class="mod-visual-level">${num(m?.level)}</span></span>`;
 }
 function normalizeModForDisplay(m){
   if(!m)return m;

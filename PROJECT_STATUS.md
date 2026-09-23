@@ -15,3 +15,6 @@ Fixes:
 - 6-dot mods use a gold frame; 1–5 dots use a light frame.
 - Inventory and report labels distinguish Level 1–15, dots 1–6 and Tier E–A.
 - Inventory toolbar no longer wraps the sort control onto a second row on desktop.
+
+
+V50 — MOD ICON CORRECTION: tier E/D/C/B/A controls the base icon colour; dots 1–6 are a separate overlay. A 6E mod is therefore E-coloured with six dots, not gold.
