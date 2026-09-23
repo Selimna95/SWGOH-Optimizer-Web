@@ -1,4 +1,4 @@
-# V37 — GALACTIC COMMAND DECK
+# V39 — GALACTIC COMMAND DECK
 
 - Navigation principale transformée en barre horizontale pour libérer la largeur utile.
 - Puissance Galactique compactée pour réduire son emprise visuelle.

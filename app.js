@@ -941,42 +941,56 @@ function renderModsAnalysis(){
 }
 
 async function loadOptimizerReferenceData(){
-  const [kyberResponse, optimizerProfilesResponse]=await Promise.all([
-    fetch('python/kyber_profiles.json',{cache:'no-store'}),
-    fetch('python/optimizer_profiles.json',{cache:'no-store'})
-  ]);
-  if(!kyberResponse.ok) throw new Error(`Impossible de charger kyber_profiles.json (HTTP ${kyberResponse.status})`);
-  if(!optimizerProfilesResponse.ok) throw new Error(`Impossible de charger optimizer_profiles.json (HTTP ${optimizerProfilesResponse.status})`);
-  profiles=await kyberResponse.json();
-  optimizerProfiles=await optimizerProfilesResponse.json();
+  // Les profils Kyber sont une référence facultative : la page peut les récupérer
+  // dynamiquement via SWGOH.GG pour les personnages absents du petit cache local.
+  // Les données optimizer locales, elles, doivent être chargées indépendamment.
+  const optimizerUrl=new URL('./python/optimizer_profiles.json',document.baseURI).href;
+  const kyberUrl=new URL('./python/kyber_profiles.json',document.baseURI).href;
+  const optimizerResponse=await fetch(optimizerUrl+'?v=39',{cache:'no-store'});
+  if(!optimizerResponse.ok) throw new Error(`Impossible de charger optimizer_profiles.json (HTTP ${optimizerResponse.status})`);
+  optimizerProfiles=await optimizerResponse.json();
+  try{
+    const kyberResponse=await fetch(kyberUrl+'?v=39',{cache:'no-store'});
+    if(kyberResponse.ok) profiles=await kyberResponse.json();
+    else log(`Cache Kyber local indisponible (HTTP ${kyberResponse.status}) : récupération dynamique activée.`);
+  }catch(e){
+    profiles={};
+    log('Cache Kyber local indisponible : récupération dynamique activée.');
+  }
+  return true;
 }
 
 async function boot(){
+  setRuntime('CHARGEMENT DES DONNÉES OPTIMIZER…');
+  $('pythonState').textContent='CHARGEMENT';
   try{
-    setRuntime('CHARGEMENT DES DONNÉES OPTIMIZER…');
     await loadOptimizerReferenceData();
-    // Le calcul est exécuté dans le Worker dédié. Le moteur principal reste disponible comme secours,
-    // mais son absence ne doit plus désactiver l'Optimizer ni les statistiques du rapport personnage.
+    // Le calcul est exécuté dans le Worker dédié. Les profils locaux sont maintenant
+    // réellement disponibles avant d'activer le bouton Optimizer.
     optimizerReady=true;
     $('pythonState').textContent='WORKER';
-    setRuntime('MOTEUR OPTIMIZER DISPONIBLE',true);
-    log('Profils Optimizer et données Kyber chargés. Calcul Python déporté dans le Worker.');
-    try{
-      if(typeof loadPyodide==='function'){
-        pyodide=await loadPyodide();
-        const optimizer=await fetch('python/optimizer.py',{cache:'no-store'}).then(r=>r.text());
-        pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);
-        pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer`);
-        log('Moteur Python principal disponible en secours.');
-      }
-    }catch(e){
-      log('Moteur Python principal indisponible : le Worker reste utilisé pour l’optimisation.');
-    }
+    setRuntime('DONNÉES OPTIMIZER DISPONIBLES',true);
+    log(`Profils Optimizer chargés : ${Object.keys(optimizerProfiles||{}).length}. Calcul Python déporté dans le Worker.`);
   }catch(e){
     optimizerReady=false;
-    setRuntime('DONNÉES OPTIMIZER INDISPONIBLES');
     $('pythonState').textContent='ERREUR';
-    log('Erreur données Optimizer : '+e);
+    setRuntime('DONNÉES OPTIMIZER INDISPONIBLES');
+    log('Erreur données Optimizer : '+(e?.message||e));
+    return;
+  }
+  // Pyodide principal est facultatif. Son chargement ne doit jamais bloquer l'Optimizer.
+  try{
+    if(typeof loadPyodide==='function'){
+      pyodide=await loadPyodide();
+      const optimizerResponse=await fetch(new URL('./python/optimizer.py',document.baseURI).href+'?v=39',{cache:'no-store'});
+      if(!optimizerResponse.ok) throw new Error(`optimizer.py HTTP ${optimizerResponse.status}`);
+      const optimizer=await optimizerResponse.text();
+      pyodide.FS.writeFile('/home/pyodide/optimizer.py',optimizer);
+      pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer`);
+      log('Moteur Python principal disponible en secours.');
+    }
+  }catch(e){
+    log('Moteur Python principal indisponible : le Worker reste utilisé pour l’optimisation.');
   }
 }
 
