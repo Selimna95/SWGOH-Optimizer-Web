@@ -428,3 +428,63 @@ body:after{content:"";position:fixed;inset:-20%;z-index:-6;opacity:.45;backgroun
 #runOptimizer{min-width:190px}
 #optimizerError:empty{display:none}
 #optimizerError{margin-top:10px!important;padding:10px 12px!important;border-left:2px solid #ff5b83!important;background:rgba(255,61,110,.07)!important;color:#ff8baa!important}
+
+/* =====================================================================
+   V40 // FINAL VISUAL + LAYOUT PASS
+   Keeps the Galactic Command effects while restoring the base V33 layer.
+   ===================================================================== */
+.optimizer-status-label{margin-top:8px;color:#61d9ff;font:700 9px var(--display);letter-spacing:.08em;min-height:14px}
+
+/* Dashboard Galactic Power: one compact command strip, all three values on one line. */
+.dashboard-gp-panel{padding:14px 18px!important}
+.dashboard-gp-panel .panel-title{margin-bottom:8px!important}
+.gp-command-strip{display:grid!important;grid-template-columns:minmax(220px,.72fr) minmax(0,1.28fr)!important;gap:0!important;align-items:stretch!important;min-height:92px}
+.gp-total{display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;border-right:1px solid rgba(61,196,236,.22)!important;padding:8px 20px!important}
+.gp-total span{font-size:8px!important;letter-spacing:.16em!important;color:#7694a6!important}
+.gp-total strong{font-size:clamp(28px,3vw,44px)!important;line-height:1!important;margin:5px 0!important;letter-spacing:.04em!important}
+.gp-total small{font-size:8px!important;color:#597b8d!important;white-space:nowrap!important}
+.gp-breakdown{display:grid!important;grid-template-columns:1fr 1fr!important;align-items:stretch!important}
+.gp-breakdown>div{display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;padding:8px 18px!important;position:relative!important}
+.gp-breakdown>div+div{border-left:1px solid rgba(61,196,236,.22)!important}
+.gp-breakdown span{font-size:9px!important;letter-spacing:.11em!important;color:#718fa2!important}
+.gp-breakdown strong{font-size:clamp(28px,3vw,42px)!important;line-height:1!important;margin-top:6px!important;color:#e8fbff!important;text-shadow:0 0 18px rgba(67,231,255,.16)!important}
+.gp-breakdown>div:first-child strong{color:#55e5ff!important}
+.gp-breakdown>div:last-child strong{color:#b88cff!important}
+
+/* Analysis option buttons: never squeeze them into the title line. */
+.analysis-header{display:block!important;padding-bottom:0!important}
+.analysis-header>div:first-child{padding:14px 20px 8px!important}
+.analysis-tabs{width:100%!important;display:flex!important;flex-wrap:nowrap!important;gap:7px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:9px 12px 10px!important;border-top:1px solid rgba(55,181,226,.18)!important;scroll-snap-type:x proximity!important}
+.analysis-tab{flex:0 0 auto!important;min-height:38px!important;padding:0 15px!important;border:1px solid rgba(62,168,211,.24)!important;border-radius:7px!important;background:linear-gradient(180deg,rgba(8,31,48,.86),rgba(3,15,26,.94))!important;color:#7196aa!important;white-space:nowrap!important}
+.analysis-tab.active{color:#fff!important;border-color:#43e7ff!important;background:linear-gradient(135deg,rgba(22,145,190,.58),rgba(111,73,183,.58))!important;box-shadow:0 0 20px rgba(67,231,255,.14),inset 0 -2px 0 #fff!important}
+.analysis-tab:nth-child(2).active{border-color:#62f0ad!important;box-shadow:0 0 20px rgba(98,240,173,.12),inset 0 -2px 0 #fff!important}
+.analysis-tab:nth-child(3).active{border-color:#bd82ff!important;box-shadow:0 0 20px rgba(189,130,255,.14),inset 0 -2px 0 #fff!important}
+.analysis-tab:nth-child(4).active{border-color:#43e7ff!important}
+.analysis-tab:nth-child(5).active{border-color:#ffc857!important;box-shadow:0 0 20px rgba(255,200,87,.12),inset 0 -2px 0 #fff!important}
+
+/* Report statistics: always visible and readable, including empty-profile cases. */
+.report-stats-wrap{min-height:120px!important;overflow:auto!important}
+.report-stats{display:table!important;width:100%!important;min-width:620px!important;visibility:visible!important;opacity:1!important}
+.report-stats tbody tr:nth-child(even) td{background:rgba(255,255,255,.018)!important}
+.report-stats th{background:linear-gradient(180deg,rgba(12,48,72,.96),rgba(5,21,34,.98))!important;color:#63dcff!important}
+.report-stats td{color:#b8cfdb!important}
+.report-stats td:first-child{color:#e5f8ff!important;font-weight:800!important}
+.report-stats td:nth-child(3){color:#72e6ff!important;font-weight:800!important}
+.report-stats td:nth-child(4){color:#a8f0cf!important;font-weight:800!important}
+
+/* Optimizer command panel */
+#optimizer .controls{border-top:1px solid rgba(255,200,87,.35)!important}
+#optimizer .panel-title{color:#d9eaff!important}
+#optimizer .form-grid{align-items:end!important}
+#runOptimizer{min-height:46px!important}
+#optimizerError{border-left-color:#ff5574!important}
+
+@media(max-width:900px){
+  .gp-command-strip{grid-template-columns:1fr!important}
+  .gp-total{border-right:0!important;border-bottom:1px solid rgba(61,196,236,.22)!important}
+  .gp-breakdown strong{font-size:28px!important}
+}
+@media(max-width:760px){
+  .analysis-tabs{padding-left:7px!important}
+  .analysis-tab{min-height:34px!important;padding:0 11px!important;font-size:8px!important}
+}
