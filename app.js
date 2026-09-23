@@ -419,7 +419,7 @@ document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click'
 
 function getOptimizerWorker() {
   if (optimizerWorker) return optimizerWorker;
-  optimizerWorker = new Worker('./optimizer-worker.mjs?v=43', { type: 'module' });
+  optimizerWorker = new Worker('./optimizer-worker.mjs?v=44', { type: 'module' });
   optimizerWorker.addEventListener('error', (event) => {
     log('Erreur du Worker Python : ' + (event.message || 'erreur inconnue'));
   });
@@ -446,7 +446,7 @@ function runOptimizationInWorker(character, profile, nBuilds, limitSlot) {
       }
     };
     worker.addEventListener('message', onMessage);
-    worker.postMessage({ id, mods, profile, base_stats: baseStatsForCharacter(character), n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '' });
+    worker.postMessage({ id, mods, profile, base_stats: baseStatsForCharacter(character), n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '', character_base_id: character.baseId || character.base_id || '' });
   });
 }
 
@@ -971,33 +971,38 @@ function renderModsAnalysis(){
 }
 
 async function loadOptimizerReferenceData(){
-  // V42 : les 334 profils Optimizer sont embarqués dans optimizer-profiles.js.
-  // Le JSON reste la source de secours pour conserver une installation classique.
+  // V44: les profils Optimizer ne doivent plus être une dépendance bloquante.
+  // Le Worker sait maintenant charger optimizer_profiles.json lui-même.
+  // On tente les sources locales pour l'UI, mais l'Optimizer peut démarrer même
+  // si le script embarqué n'a pas été publié par GitHub Pages.
   const embedded=window.__SWGOH_OPTIMIZER_PROFILES__;
   if(embedded && typeof embedded==='object' && Object.keys(embedded).length){
     optimizerProfiles=embedded;
-    const count=Object.keys(optimizerProfiles).length;
-    if(count < 300) throw new Error(`Profils Optimizer incomplets (${count}/334).`);
-    log(`Profils Optimizer embarqués : ${count}.`);
+    log(`Profils Optimizer UI disponibles : ${Object.keys(optimizerProfiles).length}.`);
   }else{
     const candidates=[
       new URL('./python/optimizer_profiles.json',document.baseURI).href,
       new URL('/SWGOH-Optimizer-Web/python/optimizer_profiles.json',location.origin).href,
     ];
-    let loaded=null,lastError='';
+    let loaded=null;
     for(const url of candidates){
       try{
-        const r=await fetch(url+'?v=42',{cache:'no-store'});
-        if(!r.ok){lastError=`HTTP ${r.status}`;continue;}
+        const r=await fetch(url+'?v=44',{cache:'no-store'});
+        if(!r.ok)continue;
         const json=await r.json();
-        if(json && typeof json==='object' && Object.keys(json).length){loaded=json;break;}
-        lastError='JSON vide';
-      }catch(e){lastError=e?.message||String(e);}
+        if(json&&typeof json==='object'&&Object.keys(json).length){loaded=json;break;}
+      }catch(e){}
     }
-    if(!loaded) throw new Error(`Impossible de charger les profils Optimizer (${lastError||'source indisponible'}).`);
-    optimizerProfiles=loaded;
+    if(loaded){
+      optimizerProfiles=loaded;
+      log(`Profils Optimizer UI chargés depuis le JSON : ${Object.keys(optimizerProfiles).length}.`);
+    }else{
+      optimizerProfiles={};
+      log('Profils Optimizer UI non chargés : le Worker les récupérera directement depuis python/optimizer_profiles.json.');
+    }
   }
-  // Kyber est une référence facultative : SWGOH.GG sera interrogé au besoin.
+  // Kyber est une référence facultative : SWGOH.GG sera interrogé au besoin,
+  // puis le profil local du Worker sert de secours.
   const kyberCandidates=[
     new URL('./python/kyber_profiles.json',document.baseURI).href,
     new URL('/SWGOH-Optimizer-Web/python/kyber_profiles.json',location.origin).href,
@@ -1005,11 +1010,11 @@ async function loadOptimizerReferenceData(){
   profiles={};
   for(const url of kyberCandidates){
     try{
-      const r=await fetch(url+'?v=42',{cache:'no-store'});
+      const r=await fetch(url+'?v=44',{cache:'no-store'});
       if(r.ok){const json=await r.json();if(json&&typeof json==='object'){profiles=json;break;}}
     }catch(e){}
   }
-  log(`Références Kyber locales : ${Object.keys(profiles||{}).length}. Récupération SWGOH.GG activée pour les autres personnages.`);
+  log(`Références Kyber locales : ${Object.keys(profiles||{}).length}.`);
   return true;
 }
 
@@ -1018,19 +1023,14 @@ async function boot(){
   $('pythonState').textContent='CHARGEMENT';
   try{
     await loadOptimizerReferenceData();
-    // Le calcul est exécuté dans le Worker dédié. Les profils locaux sont maintenant
-    // réellement disponibles avant d'activer le bouton Optimizer.
-    optimizerReady=true;
-    $('pythonState').textContent='WORKER';
-    setRuntime('DONNÉES OPTIMIZER DISPONIBLES',true);
-    log(`Profils Optimizer disponibles : ${Object.keys(optimizerProfiles||{}).length}. Calcul Python déporté dans le Worker.`);
   }catch(e){
-    optimizerReady=false;
-    $('pythonState').textContent='ERREUR';
-    setRuntime('DONNÉES OPTIMIZER INDISPONIBLES');
-    log('Erreur données Optimizer : '+(e?.message||e));
-    return;
+    log('Chargement des références UI impossible : '+(e?.message||e));
   }
+  // Le Worker est autonome en V44 : il charge lui-même optimizer_profiles.json.
+  optimizerReady=true;
+  $('pythonState').textContent='WORKER';
+  setRuntime('MOTEUR OPTIMIZER PRÊT',true);
+  log(`Worker Optimizer prêt. Profils UI locaux : ${Object.keys(optimizerProfiles||{}).length}.`);
   // Pyodide principal est facultatif. Son chargement ne doit jamais bloquer l'Optimizer.
   try{
     if(typeof loadPyodide==='function'){
@@ -1053,7 +1053,7 @@ $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
   $('results').innerHTML='<div class="calculating">Préparation de l’optimisation…<br><small>Le calcul va maintenant s’exécuter dans un Worker séparé pour garder l’interface réactive.</small></div>';
   if(!mods.length){$('optimizerError').textContent='Aucun mod disponible. Chargez d’abord votre profil.';return;}
-  if(!optimizerReady || !Object.keys(optimizerProfiles||{}).length){$('optimizerError').textContent='Les profils Optimizer locaux ne sont pas chargés. Vérifiez que optimizer-profiles.js est présent dans le dépôt.';return;}
+  if(!optimizerReady){$('optimizerError').textContent='Le moteur Optimizer n’est pas prêt.';return;}
   const character=selectedCharacter();
   if(!character){$('optimizerError').textContent='Sélectionnez un personnage.';return;}
   const profile=await ensureSelectedKyberProfile();
