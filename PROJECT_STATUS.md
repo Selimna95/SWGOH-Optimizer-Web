@@ -1,14 +1,14 @@
-# V45 — Optimizer Ready Fix
+# V46 — Optimizer presentation correction
 
-Visual files are intentionally unchanged from V44.
+No scoring is displayed in Optimizer results.
 
-Functional correction:
-- `optimizerReady` is set immediately at boot.
-- Worker initialization starts in the background.
-- UI/Kyber reference downloads no longer block the Optimizer.
-- Worker resources are versioned V45.
-- The dedicated Worker remains responsible for Pyodide + optimizer.py + optimizer_profiles.json.
-
-Root cause addressed:
-V44 awaited reference-data downloads before setting `optimizerReady=true`, so a slow or failed
-fetch left the Optimizer blocked with "Le moteur Optimizer n'est pas prêt".
+Changes:
+- Removed the visible `Score` concept from each result.
+- Each build is identified as `BUILD 1`, `BUILD 2`, etc.
+- Set composition is displayed clearly for every build.
+- Primary stats are displayed clearly for every build, slot by slot.
+- The selected character's top information frame now shows:
+  - recommended sets and quantities;
+  - recommended primary stat by slot;
+  - character reference status.
+- Existing visual theme is preserved; this is an information hierarchy/content correction only.

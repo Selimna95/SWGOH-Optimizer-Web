@@ -216,13 +216,45 @@ function selectedCharacter() {
   const value=String($('character')?.value||'');
   return rosterCharacters.find(c=>String(c.name||c.character||c.baseId||'')===value) || null;
 }
+function optimizerRecommendationSummary(profile){
+  if(!profile || typeof profile!=='object') return {sets:'Référence de sets indisponible', primaries:'Référence de primaires indisponible'};
+  const sets=Array.isArray(profile.sets)?profile.sets:[];
+  const setText=sets.slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0)).slice(0,5)
+    .map(s=>`${s.name||'?'} ×${Number(s.count||0)}`).join(' · ') || 'Non disponible';
+  const slots=profile.slots||{};
+  const fixed={Square:'Offense',Diamond:'Defense'};
+  const ordered=['Square','Arrow','Diamond','Triangle','Circle','Cross'];
+  const primaries=ordered.map(slot=>{
+    if(fixed[slot]) return `${slot} : ${fixed[slot]}`;
+    const p=slots?.[slot]?.primaries||{};
+    const best=Object.entries(p).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0))[0];
+    return best ? `${slot} : ${best[0]}` : null;
+  }).filter(Boolean);
+  return {sets:setText,primaries:primaries.join(' · ')||'Non disponible'};
+}
 function updateCharacterInfo() {
   const c=selectedCharacter();
   if(!c){$('characterInfo').textContent='Aucun personnage sélectionné.';return;}
   const p=profileForCharacter(c);
   const local=optimizerProfileForCharacter(c);
   const ref=p?'profil Kyber disponible':(local?'référence Optimizer locale disponible':'référence indisponible');
-  $('characterInfo').innerHTML=`<span class="tag">${esc(c.baseId||c.base_id||'')}</span> <strong>${esc(c.name||c.character||c.baseId||'')}</strong> · Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${num(c.stars)}★ · Puissance ${num(c.power)} · ${ref}`;
+  const refProfile=p || null;
+  const rec=optimizerRecommendationSummary(refProfile);
+  $('characterInfo').innerHTML=`
+    <div class="optimizer-character-main">
+      <span class="tag">${esc(c.baseId||c.base_id||'')}</span>
+      <strong>${esc(c.name||c.character||c.baseId||'')}</strong>
+      <span>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${num(c.stars)}★ · Puissance ${num(c.power)}</span>
+      <span class="optimizer-reference">${esc(ref)}</span>
+    </div>
+    <div class="optimizer-character-recommendations">
+      <div class="optimizer-recommendation-block sets">
+        <b>SETS RECOMMANDÉS</b><span>${esc(rec.sets)}</span>
+      </div>
+      <div class="optimizer-recommendation-block primaries">
+        <b>PRIMAIRES RECOMMANDÉES</b><span>${esc(rec.primaries)}</span>
+      </div>
+    </div>`;
 }
 
 const DEFAULT_WORKER_URL = 'https://swgoh-optimizer-relay.lorg75017.workers.dev';
@@ -1089,7 +1121,41 @@ $('runOptimizer').addEventListener('click',async()=>{
     $('runOptimizer').textContent='LANCER L’OPTIMISATION';
   }
 });
-function renderResults(data){if(!data.length){$('results').textContent='Aucun build.';return;}$('results').innerHTML=data.map((r,i)=>`<article class="result"><div class="rank">#${i+1}</div><div><div class="result-head"><strong>Score ${Number(r.score).toFixed(2)}</strong></div><div class="stats">${Object.entries(r.stats||{}).map(([k,v])=>`${esc(k)}: ${typeof v==='number'?num(v,1):esc(v)}`).join(' · ')}</div><div class="build-grid">${(r.build||[]).map(m=>`<div class="mod-card"><strong>${esc(m.slot||'?')}</strong><span>${esc(m.set_name||m.set||'?')}</span><span>${esc(m.primary_stat||'?')} ${num(m.primary_value,1)}${String(m.primary_stat||'').endsWith(' %')?'%':''}</span><small>${esc([1,2,3,4].map(i=>m[`secondary_${i}_stat`]?displayModStat(m[`secondary_${i}_stat`],m[`secondary_${i}_value`]):'').filter(Boolean).join(' · '))}</small></div>`).join('')}</div></div></article>`).join('');}
+function renderResults(data){
+  if(!data.length){$('results').textContent='Aucun build.';return;}
+  $('results').innerHTML=data.map((r,i)=>{
+    const build=r.build||[];
+    const setCounts={};
+    build.forEach(m=>{const s=String(m.set_name||m.set||'').trim();if(s)setCounts[s]=(setCounts[s]||0)+1;});
+    const setSummary=Object.entries(setCounts).map(([s,n])=>`${s} ×${n}`).join(' · ')||'Sets non renseignés';
+    const primarySummary=build.map(m=>`${m.slot||'?'} : ${m.primary_stat||'?'}`).join(' · ');
+    const stats=Object.entries(r.stats||{}).map(([k,v])=>`${esc(k)}: ${typeof v==='number'?num(v,1):esc(v)}`).join(' · ');
+    return `<article class="result">
+      <div class="rank">BUILD ${i+1}</div>
+      <div>
+        <div class="result-head">
+          <strong>Configuration ${i+1}</strong>
+          <div class="result-summary">
+            <span><b>SETS</b> ${esc(setSummary)}</span>
+            <span><b>PRIMAIRES</b> ${esc(primarySummary)}</span>
+          </div>
+        </div>
+        <div class="stats">${stats}</div>
+        <div class="build-grid">${build.map(m=>{
+          const primary=String(m.primary_stat||'?');
+          const primaryValue=m.primary_value!=null?` ${num(m.primary_value,1)}${primary.endsWith(' %')?'%':''}`:'';
+          const secondaries=[1,2,3,4].map(j=>m[`secondary_${j}_stat`]?displayModStat(m[`secondary_${j}_stat`],m[`secondary_${j}_value`]):'').filter(Boolean).join(' · ');
+          return `<div class="mod-card">
+            <strong class="mod-slot">${esc(m.slot||'?')}</strong>
+            <span class="mod-set"><b>SET</b> ${esc(m.set_name||m.set||'?')}</span>
+            <span class="mod-primary"><b>PRIMAIRE</b> ${esc(primary)}${primaryValue}</span>
+            <small>${esc(secondaries)}</small>
+          </div>`;
+        }).join('')}</div>
+      </div>
+    </article>`;
+  }).join('');
+}
 
 $('reallocationSecondary')?.addEventListener('change',renderReallocationResults);
 $('runReallocation')?.addEventListener('click',renderReallocationResults);
