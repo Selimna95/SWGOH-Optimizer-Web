@@ -2,19 +2,17 @@ import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodi
 
 let pyodideReadyPromise = (async () => {
   const pyodide = await loadPyodide();
-  const optimizerResponse = await fetch(new URL("./python/optimizer.py?v=40", import.meta.url), { cache: "no-store" });
+  const optimizerResponse = await fetch(new URL("./python/optimizer.py?v=39", import.meta.url), { cache: "no-store" });
   if (!optimizerResponse.ok) throw new Error(`Impossible de charger optimizer.py (HTTP ${optimizerResponse.status})`);
   const optimizerSource = await optimizerResponse.text();
   pyodide.FS.writeFile("/home/pyodide/optimizer.py", optimizerSource);
   try {
-    const kyberResponse = await fetch(new URL("./python/kyber_data.py?v=40", import.meta.url), { cache: "no-store" });
+    const kyberResponse = await fetch(new URL("./python/kyber_data.py?v=39", import.meta.url), { cache: "no-store" });
     if (kyberResponse.ok) {
       const kyberSource = await kyberResponse.text();
       pyodide.FS.writeFile("/home/pyodide/kyber_data.py", kyberSource);
     }
   } catch (_) {}
-  // kyber_data.py is bundled in V40 so standalone/fallback Kyber lookup works
-  // even when the browser cannot reach SWGOH.GG.
   pyodide.runPython(`import sys; sys.path.append('/home/pyodide'); import optimizer`);
   return pyodide;
 })();
@@ -23,7 +21,7 @@ self.onmessage = async (event) => {
   const data = event.data || {};
   const id = data.id;
   try {
-    self.postMessage({ id, type: "status", message: "Moteur Python prêt. Calcul hors interface…" });
+    self.postMessage({ id, type: "status", message: "Moteur Python secondaire prêt. Calcul hors interface…" });
     const pyodide = await pyodideReadyPromise;
     pyodide.globals.set("mods_json", JSON.stringify(data.mods || []));
     pyodide.globals.set("profile_json", JSON.stringify(data.profile || {}));
