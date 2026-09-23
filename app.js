@@ -166,12 +166,121 @@ function normalizeKyberKey(value){return String(value||'').toLowerCase().normali
 function kyberProfileValid(p){if(!p||typeof p!=='object')return false;const a=p.averages||{};return Number(a.Speed||0)>=100&&Number(a.Health||0)>=10000&&Number(a.Protection||0)>=10000;}
 function cleanLinesFromDoc(doc){const body=doc?.body;if(!body)return[];const clone=body.cloneNode(true);clone.querySelectorAll('script,style,noscript').forEach(n=>n.remove());clone.querySelectorAll('br').forEach(n=>n.replaceWith(document.createTextNode('\n')));clone.querySelectorAll('div,p,li,tr,h1,h2,h3,h4,h5,h6,section,article,table,thead,tbody,th,td').forEach(n=>n.insertBefore(document.createTextNode('\n'),n.firstChild));return String(clone.textContent||'').split(/\n+/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);}
 function numberFromText(value){const m=String(value??'').replace(/,/g,'').match(/[-+]?[0-9]+(?:\.[0-9]+)?/);return m?Number(m[0]):0;}
-function parseKyberProfileHTML(text,character,kyberSlug){const lines=cleanLinesFromDoc(parseHTML(text));const profile={character:String(character||''),source:'SWGOH.GG Kyber / Top 1000 GAC',url:`https://swgoh.gg/units/${kyberSlug}/best-mods/`,sets:[],slots:{},averages:{},secondary_focus:{}};const pct=/^(.+?)\s+([0-9]+(?:\.[0-9]+)?)%$/;const findIndex=(pred,start=0)=>{for(let i=start;i<lines.length;i++)if(pred(lines[i]))return i;return -1;};let i=lines.indexOf('Primary Set');if(i>=0){const j=findIndex(x=>x==='Secondary Set',i+1);for(const line of lines.slice(i+1,j>=0?j:lines.length)){const m=line.match(pct);if(!m)continue;const label=m[1].trim();let base=label.replace(/^Triple\s+/,'').replace(/^Double\s+/,'').trim();if(base==='Crit Damage')base='Critical Damage';const count=label.startsWith('Triple ')?6:label.startsWith('Double ')?4:['Health','Defense','Potency','Tenacity','Critical Chance','Critical Avoidance'].includes(base)?2:4;profile.sets.push({name:base,count,weight:Number(m[2])/100});}}
-i=lines.indexOf('Secondary Stat Focus');if(i>=0){const j=findIndex(x=>x==='Relic',i+1);const labels=new Set(['Speed','Health','Protection','Offense','Defense','Potency','Tenacity','Critical Chance %','Critical Damage','Critical Chance','Offense %','Health %','Protection %','Defense %','Armor','Resistance','Physical Damage','Special Damage']);for(let k=i+1;k<(j>=0?j:lines.length)-1;k++){if(!labels.has(lines[k]))continue;const next=lines[k+1]||'';if(/avg/i.test(next)){profile.secondary_focus[lines[k]]=numberFromText(next);k++;}}}
-i=findIndex(x=>/^Average Stats for /i.test(x));if(i>=0){const j=findIndex(x=>/^Best Mod Set for /i.test(x),i+1);const block=lines.slice(i+1,j>=0?j:lines.length);for(const stat of ['Health','Protection','Speed','Physical Damage','Special Damage','Armor','Potency','Tenacity']){const idx=block.findIndex(x=>x===stat);if(idx>=0&&block[idx+1])profile.averages[stat]=numberFromText(block[idx+1]);}}
-for(const [slot,prefix] of [['Arrow','Best Arrow Mod '],['Triangle','Best Triangle Mod '],['Circle','Best Circle Mod '],['Cross','Best Cross Mod ']]){const idx=findIndex(x=>x.startsWith(prefix));if(idx<0)continue;const prim={};for(let k=idx+1;k<lines.length;k++){if(lines[k].startsWith('Best '))break;const m=lines[k].match(pct);if(m&&m[1]!=='Primary Stat')prim[m[1].trim()]=Number(m[2])/100;}if(Object.keys(prim).length)profile.slots[slot]={primaries:prim};}
-if(!Object.keys(profile.averages).length){const text=lines.join('\n');for(const stat of ['Health','Protection','Speed']){const m=text.match(new RegExp('\\b'+stat+'\\s+([0-9][0-9,]*(?:\\.[0-9]+)?)','i'));if(m)profile.averages[stat]=numberFromText(m[1]);}}return kyberProfileValid(profile)?profile:null;}
-async function fetchKyberProfile(character){if(!character)return null;const existing=profileForCharacter(character);if(kyberProfileValid(existing))return existing;const display=character.name||character.character||character.baseId||character.base_id||'';const candidates=[];const add=v=>{const s=slug(v);if(s&&!candidates.includes(s))candidates.push(s);};add(display);add(character.baseId||character.base_id);const tryCandidate=async candidate=>{try{const r=await fetch(`${workerUrl()}/?path=best-mods&slug=${encodeURIComponent(candidate)}`,{headers:{'Accept':'text/html,application/xhtml+xml'}});if(!r.ok)return null;const html=await r.text();if(!/Best Mods|Data Slice:\s*Kyber/i.test(html))return null;return parseKyberProfileHTML(html,display,candidate);}catch(e){return null;}};for(const candidate of candidates){const parsed=await tryCandidate(candidate);if(parsed){profiles[candidate]=parsed;return parsed;}}try{const r=await fetch(`${workerUrl()}/?path=characters-index`,{headers:{'Accept':'text/html,application/xhtml+xml'}});if(r.ok){const doc=parseHTML(await r.text());const wanted=normalizeKyberKey(display);for(const a of doc.querySelectorAll('a[href*="/units/"]')){const label=normalizeKyberKey(a.textContent);const href=a.getAttribute('href')||'';const m=href.match(/\/units\/([^/]+)/);if(label===wanted&&m){const candidate=m[1];const parsed=await tryCandidate(candidate);if(parsed){profiles[candidate]=parsed;return parsed;}}}}}catch(e){}return null;}
+function parseKyberProfileHTML(text,character,kyberSlug){
+  // V47: SWGOH.GG changes its DOM fairly often. Parse the visible text blocks
+  // instead of depending on one exact CSS structure. Keep the six-slot model
+  // explicit: Square/Transmitter and Diamond/Processor are fixed primaries.
+  const doc=parseHTML(text);
+  const lines=cleanLinesFromDoc(doc);
+  const normalized=lines.map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const profile={character:String(character||''),source:'SWGOH.GG Kyber / Top 1000 GAC',url:`https://swgoh.gg/units/${kyberSlug}/best-mods/`,sets:[],specific_sets:[],slots:{},averages:{},secondary_focus:{}};
+  const pct=/^(.+?)\s+([0-9]+(?:[.,][0-9]+)?)%$/;
+  const pctLine=(line)=>line.match(pct);
+  const nextIndex=(pred,start)=>{for(let i=start;i<normalized.length;i++)if(pred(normalized[i]))return i;return -1;};
+  const idx=(needle)=>normalized.findIndex(x=>x===needle||x.startsWith(needle));
+  const number=(v)=>Number(String(v??'').replace(/,/g,''));
+  const canonicalSet=(v)=>String(v||'').replace(/^Triple\s+/,'').replace(/^Double\s+/,'').trim().replace(/^Crit Chance$/,'Critical Chance').replace(/^Crit Damage$/,'Critical Damage');
+  const addSet=(name,weight)=>{name=String(name||'').trim();if(!name||!Number.isFinite(weight))return;const base=canonicalSet(name);let count=4;if(/^Triple\s+/i.test(name))count=6;else if(/^Double\s+/i.test(name))count=4;profile.sets.push({name:base,count,weight});};
+
+  // Primary-set distribution.
+  let i=idx('Primary Set');
+  if(i>=0){
+    const j=nextIndex(x=>x==='Secondary Set'||x.startsWith('Secondary Set'),i+1);
+    for(const line of normalized.slice(i+1,j>=0?j:normalized.length)){
+      const m=pctLine(line); if(!m)continue;
+      addSet(m[1],number(m[2])/100);
+    }
+  }
+
+  // Exact grouped set combinations, e.g. "Offense + Health 42.4%".
+  i=idx('Specific Mod Sets');
+  if(i>=0){
+    const j=nextIndex(x=>/^Arrow\b/i.test(x),i+1);
+    for(const line of normalized.slice(i+1,j>=0?j:normalized.length)){
+      const m=pctLine(line); if(!m)continue;
+      const name=m[1].trim();
+      if(!/[+]|^Triple\s|^Double\s/i.test(name))continue;
+      const parts=name.replace(/^Triple\s+/i,'').replace(/^Double\s+/i,'').split(/\s*\+\s*/).map(x=>canonicalSet(x)).filter(Boolean);
+      if(!parts.length)continue;
+      const counts={};
+      if(parts.length===1){counts[parts[0]]=/^Triple\s/i.test(name)?6:4;}
+      else {counts[parts[0]]=4;counts[parts[1]]=2;}
+      profile.specific_sets.push({name,weight:number(m[2])/100,counts});
+    }
+  }
+
+  // Some versions of the page expose the grouped sets in the prose rather than
+  // as a clean line. Recover the most common "X + Y 42.4%" forms as a fallback.
+  if(!profile.specific_sets.length){
+    const joined=normalized.join(' ');
+    const re=/([A-Za-z%][A-Za-z% ]+\+\s*[A-Za-z%][A-Za-z% ]+)\s+([0-9]+(?:[.,][0-9]+)?)%/g;
+    let m; while((m=re.exec(joined))){
+      const name=m[1].trim(); if(!/^(Offense|Health|Speed|Defense|Tenacity|Potency|Critical Chance|Critical Damage|Critical Avoidance)/i.test(name))continue;
+      const parts=name.split(/\s*\+\s*/).map(canonicalSet); if(parts.length!==2)continue;
+      const counts={};counts[parts[0]]=4;counts[parts[1]]=2;
+      profile.specific_sets.push({name,weight:number(m[2])/100,counts});
+      if(profile.specific_sets.length>=8)break;
+    }
+  }
+
+  // Average stats.
+  i=nextIndex(x=>/^Average Stats for /i.test(x),0);
+  if(i>=0){
+    const j=nextIndex(x=>/^Best Mod Set for /i.test(x),i+1);
+    const block=normalized.slice(i+1,j>=0?j:normalized.length);
+    for(const stat of ['Health','Protection','Speed','Physical Damage','Special Damage','Armor','Potency','Tenacity']){
+      const k=block.findIndex(x=>x===stat); if(k>=0&&block[k+1])profile.averages[stat]=number(block[k+1]);
+    }
+  }
+
+  // Primary distributions for all variable slots. Square and Diamond are fixed
+  // in SWGOH and are always shown in the recommendation header.
+  const sections=[['Arrow','Best Arrow Mod '],['Triangle','Best Triangle Mod '],['Circle','Best Circle Mod '],['Cross','Best Cross Mod ']];
+  for(const [slot,prefix] of sections){
+    const k=nextIndex(x=>x.startsWith(prefix),0); if(k<0)continue;
+    const end=nextIndex(x=>x.startsWith('Best ') && !x.startsWith(prefix),k+1);
+    const prim={};
+    for(const line of normalized.slice(k+1,end>=0?end:normalized.length)){
+      const m=pctLine(line); if(m&&m[1]!=='Primary Stat')prim[m[1].trim()]=number(m[2])/100;
+    }
+    if(Object.keys(prim).length)profile.slots[slot]={primaries:prim};
+  }
+  profile.slots.Square={primaries:{Offense:1}};
+  profile.slots.Diamond={primaries:{Defense:1}};
+
+  // Secondary-stat focus.
+  i=idx('Secondary Stat Focus');
+  if(i>=0){
+    const j=nextIndex(x=>/^Relic\b/i.test(x),i+1);
+    const labels=new Set(['Speed','Health','Protection','Offense','Defense','Potency','Tenacity','Critical Chance %','Critical Damage','Critical Chance','Offense %','Health %','Protection %','Defense %','Armor','Resistance','Physical Damage','Special Damage']);
+    for(let k=i+1;k<(j>=0?j:normalized.length)-1;k++){
+      if(!labels.has(normalized[k]))continue;
+      const next=normalized[k+1]||''; if(/avg/i.test(next)){profile.secondary_focus[normalized[k]]=number(next);k++;}
+    }
+  }
+
+  // Last-resort averages from the page text.
+  if(!Object.keys(profile.averages).length){
+    const joined=normalized.join('\n');
+    for(const stat of ['Health','Protection','Speed']){const m=joined.match(new RegExp('\\b'+stat+'\\s+([0-9][0-9,]*(?:\\.[0-9]+)?)','i'));if(m)profile.averages[stat]=number(m[1]);}
+  }
+  profile.specific_sets.sort((a,b)=>b.weight-a.weight);
+  return kyberProfileValid(profile)?profile:null;
+}
+async function fetchKyberProfile(character){
+  if(!character)return null;
+  const existing=profileForCharacter(character); if(kyberProfileValid(existing))return existing;
+  const display=character.name||character.character||character.baseId||character.base_id||'';
+  const candidates=[]; const add=v=>{const s=slug(v);if(s&&!candidates.includes(s))candidates.push(s);};
+  add(display); add(character.baseId||character.base_id);
+  const tryCandidate=async candidate=>{try{const r=await fetch(`${workerUrl()}/?path=best-mods&slug=${encodeURIComponent(candidate)}`,{headers:{'Accept':'text/html,application/xhtml+xml'}});if(!r.ok)return null;const html=await r.text();if(!/Best Mods|Data Slice:\s*Kyber/i.test(html))return null;return parseKyberProfileHTML(html,display,candidate);}catch(e){log(`Référence Kyber ${candidate}: ${e?.message||e}`);return null;}};
+  for(const candidate of candidates){const parsed=await tryCandidate(candidate);if(parsed){profiles[candidate]=parsed;return parsed;}}
+  try{
+    const r=await fetch(`${workerUrl()}/?path=characters-index`,{headers:{'Accept':'text/html,application/xhtml+xml'}});
+    if(r.ok){const doc=parseHTML(await r.text());const wanted=normalizeKyberKey(display);for(const a of doc.querySelectorAll('a[href*="/units/"]')){const label=normalizeKyberKey(a.textContent);const href=a.getAttribute('href')||'';const m=href.match(/\/units\/([^/]+)/);if(label===wanted&&m){const candidate=m[1];const parsed=await tryCandidate(candidate);if(parsed){profiles[candidate]=parsed;return parsed;}}}}
+  }catch(e){log(`Index personnages Kyber indisponible : ${e?.message||e}`);}
+  return null;
+}
 let kyberRequestSeq=0;
 function buildLocalOptimizerReference(character){
   const p=optimizerProfileForCharacter(character)||{};
@@ -218,9 +327,12 @@ function selectedCharacter() {
 }
 function optimizerRecommendationSummary(profile){
   if(!profile || typeof profile!=='object') return {sets:'Référence de sets indisponible', primaries:'Référence de primaires indisponible'};
-  const sets=Array.isArray(profile.sets)?profile.sets:[];
-  const setText=sets.slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0)).slice(0,5)
-    .map(s=>`${s.name||'?'} ×${Number(s.count||0)}`).join(' · ') || 'Non disponible';
+  const specific=Array.isArray(profile.specific_sets)?profile.specific_sets:[];
+  const setText=specific.slice(0,4).map(s=>{
+    const counts=s.counts||{};
+    const parts=Object.entries(counts).map(([name,n])=>`${name} ×${n}`).join(' + ');
+    return `${parts}${Number.isFinite(Number(s.weight))?' ('+(Number(s.weight)*100).toFixed(1)+'%)':''}`;
+  }).join(' · ') || (Array.isArray(profile.sets)?profile.sets.slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0)).slice(0,4).map(s=>`${s.name||'?'} ×${Number(s.count||0)}`).join(' · '):'') || 'Non disponible';
   const slots=profile.slots||{};
   const fixed={Square:'Offense',Diamond:'Defense'};
   const ordered=['Square','Arrow','Diamond','Triangle','Circle','Cross'];
@@ -451,7 +563,7 @@ document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click'
 
 function getOptimizerWorker() {
   if (optimizerWorker) return optimizerWorker;
-  optimizerWorker = new Worker('./optimizer-worker.mjs?v=45', { type: 'module' });
+  optimizerWorker = new Worker('./optimizer-worker.mjs?v=47', { type: 'module' });
   optimizerWorker.addEventListener('error', (event) => {
     log('Erreur du Worker Python : ' + (event.message || 'erreur inconnue'));
   });

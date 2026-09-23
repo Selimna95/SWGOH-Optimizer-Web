@@ -1,14 +1,10 @@
-# V46 — Optimizer presentation correction
+# V47 — Optimizer Kyber Set/Primary Fix
 
-No scoring is displayed in Optimizer results.
+Visual files unchanged.
 
-Changes:
-- Removed the visible `Score` concept from each result.
-- Each build is identified as `BUILD 1`, `BUILD 2`, etc.
-- Set composition is displayed clearly for every build.
-- Primary stats are displayed clearly for every build, slot by slot.
-- The selected character's top information frame now shows:
-  - recommended sets and quantities;
-  - recommended primary stat by slot;
-  - character reference status.
-- Existing visual theme is preserved; this is an information hierarchy/content correction only.
+Fixes:
+- Robust SWGOH.GG Kyber parser for exact grouped set recommendations.
+- All six primary slots shown, including fixed Square=Offense and Diamond=Defense.
+- Optimizer enforces the most popular exact six-mod Kyber set composition when available.
+- Set aliases normalized (Crit Chance/Critical Chance, Crit Damage/Critical Damage).
+- Result builds therefore cannot silently return an unrelated set composition when the Kyber plan is available.
