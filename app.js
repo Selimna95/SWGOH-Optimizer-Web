@@ -638,6 +638,20 @@ function auditRows(){
   else rows.sort((a,b)=>b.priority-a.priority||a.secSpeed-b.secSpeed||b.relic-a.relic||String(a.character.name||'').localeCompare(String(b.character.name||''),'fr'));
   return rows;
 }
+function factionBadgeHtml(name){
+  const label=String(name||'').trim();
+  if(!label)return '';
+  const key=compactKey(label);
+  let side='neutral';
+  if(['LIGHT','LUMIERE','JEDI','REPUBLIC','RESISTANCE','REBELS','PHOENIX','GALACTICREPUBLIC'].some(x=>key.includes(x))) side='light';
+  if(['DARK','OBSCUR','SITH','EMPIRE','FIRSTORDER','SEPARATISTS','NIGHTSISTERS'].some(x=>key.includes(x))) side='dark';
+  return `<span class=\"faction-badge ${side}\">${esc(label)}</span>`;
+}
+function factionBadgesHtml(list){
+  const values=Array.isArray(list)?list.filter(Boolean):[];
+  return values.length?`<span class=\"faction-badges\">${values.map(factionBadgeHtml).join('')}</span>`:'<span class=\"faction-badges\"><span class=\"faction-badge neutral\">Faction non renseignée</span></span>';
+}
+
 function renderSelectionPanel(){
   const factionSelect=$('analysisFaction'), charSelect=$('analysisCharacter'); if(!factionSelect||!charSelect)return;
   if(analysisMode==='character') analysisFaction='Toutes les factions';
@@ -652,7 +666,7 @@ function renderSelectionPanel(){
   const all=charactersInFaction(analysisFaction||'Toutes les factions').filter(c=>rosterUnitType(c)!=='ship');
   $('selectionMeta').textContent=`${rows.length} personnage(s) affiché(s) sur ${all.length} · ${analysisFaction||'Toutes les factions'}`;
   $('selectionTable').innerHTML=rows.map(r=>`<tr class="${r.class}" data-character-key="${esc(characterKey(r.character))}">
-    <td><strong>${esc(r.character.name||r.character.baseId)}</strong><small>${esc(r.factions.join(' · '))}</small></td>
+    <td><strong>${esc(r.character.name||r.character.baseId)}</strong>${factionBadgesHtml(r.factions)}</td>
     <td>${r.relic?'R'+num(r.relic):'—'}</td><td>${r.modCount}/6</td><td>${num(r.totalSpeed)}</td><td>${num(r.secSpeed)}</td><td>${r.speedCount}</td><td>${r.primarySpeed?num(r.primarySpeed):'NON'}</td><td><span class="audit-badge ${r.class}">${esc(r.status)}</span></td>
     <td><button type="button" class="detail-mods-btn" data-open-character="${esc(characterKey(r.character))}">OUVRIR LE RAPPORT</button></td>
   </tr>`).join('')||'<tr><td colspan="9">Aucun personnage ne correspond aux filtres.</td></tr>';
@@ -703,7 +717,7 @@ function renderCharacterReport(){
   box.innerHTML=`
     <div class="report-toolbar"><button class="analysis-back" id="backToCharacterSelection">← PERSONNAGE / FACTION</button><button class="detail-mods-btn" id="reportInventoryBtn">VOIR LES MODS DANS L’INVENTAIRE</button></div>
     <div class="report-header">
-      <div><span class="tag">RAPPORT PERSONNAGE</span><h1>${esc(c.name||c.baseId)}</h1><p>${esc(factions.join(' · ')||'Faction non renseignée')}</p></div>
+      <div><span class="tag">RAPPORT PERSONNAGE</span><h1>${esc(c.name||c.baseId)}</h1>${factionBadgesHtml(factions)}</div>
       <div class="report-identity"><div><span>NIVEAU</span><b>${num(c.level||p.level)}</b></div><div><span>GEAR</span><b>${num(c.gear||c.gear_level||p.gear_level)}</b></div><div><span>RELIC</span><b>${'R'+num(relicLevelFromTier(c.relic_tier??c.relicTier??p.relic_tier??0))}</b></div><div><span>ÉTOILES</span><b>${num(c.stars||c.rarity||p.rarity)}★</b></div><div><span>PUISSANCE</span><b>${num(c.power||c.power_rating||c.powerRating)}</b></div></div>
     </div>
     <div class="report-kpis"><div><span>MODS</span><strong>${cm.length}/6</strong></div><div><span>SPEED TOTALE DES MODS</span><strong>${num(totalSpeed)}</strong></div><div><span>SPEED SECONDAIRE</span><strong>+${num(secSpeed)}</strong></div><div><span>PRIMAIRE SPEED</span><strong>${primarySpeed?'+'+num(primarySpeed):'NON'}</strong></div><div><span>MODS AVEC SPEED</span><strong>${speedCount}/6</strong></div><div><span>STATUT V176</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
@@ -726,7 +740,7 @@ function renderCharacterDetail(){
   if(!c){box.innerHTML='<div class="empty">Sélectionnez un personnage.</div>';return;}
   const cm=getCharacterMods(c), s=v176ModStatus(cm);
   const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0), primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
-  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">PERSONNAGE</span><h2>${esc(c.name||c.baseId)}</h2><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${relicLevelFromTier(c.relic_tier??c.relicTier??0)?'R'+num(relicLevelFromTier(c.relic_tier??c.relicTier)):'Sans Relic'} · ${num(c.stars)}★ · Puissance ${num(c.power)} · Factions : ${esc((factionMap[characterKey(c)]||[]).join(' · ')||'—')}</p></div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods équipés</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
+  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">PERSONNAGE</span><h2>${esc(c.name||c.baseId)}</h2><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${relicLevelFromTier(c.relic_tier??c.relicTier??0)?'R'+num(relicLevelFromTier(c.relic_tier??c.relicTier)):'Sans Relic'} · ${num(c.stars)}★ · Puissance ${num(c.power)}</p>${factionBadgesHtml(factionMap[characterKey(c)]||[])}</div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods équipés</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
   <div class="character-detail-actions"><strong>DÉTAIL DES 6 MODS ÉQUIPÉS</strong><button type="button" class="detail-mods-btn" id="openCharacterInventory">OUVRIR DANS L’INVENTAIRE</button></div>
   <div class="mod-detail-grid">${[...cm,...Array(Math.max(0,6-cm.length)).fill(null)].slice(0,6).map((m,i)=>m?renderModCard(m):`<div class="mod-card empty-slot"><strong>${['Square','Arrow','Diamond','Triangle','Circle','Cross'][i]}</strong><span>MOD MANQUANT</span></div>`).join('')}</div>`;
   $('openCharacterInventory')?.addEventListener('click',()=>openCharacterInventory(c));
