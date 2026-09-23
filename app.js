@@ -464,6 +464,36 @@ function modSlotLabel(value){
   const map={'1':'Square','2':'Square','3':'Arrow','4':'Diamond','5':'Triangle','6':'Circle','7':'Cross','square':'Square','arrow':'Arrow','diamond':'Diamond','triangle':'Triangle','circle':'Circle','cross':'Cross','transmitter':'Square','receiver':'Arrow','processor':'Diamond','holo array':'Triangle','data bus':'Circle','multiplexer':'Cross'};
   return map[raw]||map[key]||raw;
 }
+function modIconTier(m){
+  const raw=String(m?.tier??m?.quality??m?.grade??m?.modTier??m?.mod_tier??m?.rarityTier??'').trim().toUpperCase();
+  if(/^[A-E]$/.test(raw))return raw;
+  const text=String(m?.name??m?.displayName??m?.raw_alt??'');
+  const hit=text.match(/\b([A-E])(?:-[A-E])?\b/i);
+  return hit?hit[1].toUpperCase():'E';
+}
+function modDots(m){
+  const raw=Number(m?.dots??m?.dotCount??m?.pips??m?.rarity??0);
+  return raw>=1&&raw<=6?raw:5;
+}
+function modAssetName(m){
+  const set=modSetLabel(m?.set_name??m?.set??m?.setId??m?.set_id).trim();
+  const slot=modSlotLabel(m?.slot??m?.slot_id??m?.slotId??m?.modSlot).trim();
+  const shape={Square:'Transmitter',Arrow:'Receiver',Diamond:'Processor',Triangle:'Holo-Array',Circle:'Data-Bus',Cross:'Multiplexer'}[slot]||'Transmitter';
+  const safeSet=set.replace(/\s+/g,'-');
+  return `Mod-${safeSet}-${shape}-${modIconTier(m)}.png`;
+}
+function modIconUrl(m){
+  // SWGoH Wiki exposes the game mod textures through its file redirect endpoint.
+  return `https://swgoh.wiki/wiki/Special:Redirect/file/${encodeURIComponent(modAssetName(m))}`;
+}
+function modDotsUrl(m){
+  return `https://swgoh.wiki/wiki/Special:Redirect/file/${encodeURIComponent(`Indicator-Mod-Dots-${modDots(m)}.png`)}`;
+}
+function modIconHtml(m, size='56'){
+  const name=esc(`${m?.set_name||'Mod'} · ${m?.slot||''}`.trim());
+  const asset=esc(modAssetName(m));
+  return `<span class="mod-visual" title="${name}"><img class="mod-visual-base" src="${esc(modIconUrl(m))}" alt="${asset}" loading="lazy" referrerpolicy="no-referrer"><img class="mod-visual-dots" src="${esc(modDotsUrl(m))}" alt="${modDots(m)} dots" loading="lazy" referrerpolicy="no-referrer"><span class="mod-visual-level">${num(m?.level)}</span></span>`;
+}
 function normalizeModForDisplay(m){
   if(!m)return m;
   const out={...m};
@@ -472,6 +502,9 @@ function normalizeModForDisplay(m){
   out.character=out.character??out.characterName??out.equippedTo??out.equipped_to??'';
   out.level=Number(out.level??0);
   out.rarity=Number(out.rarity??out.pips??0);
+  out.dots=Number(out.dots??out.dotCount??out.pips??out.rarity??0);
+  out.tier=out.tier??out.quality??out.grade??out.modTier??out.mod_tier??out.rarityTier??'';
+  out.raw_alt=out.raw_alt??out.alt??out.imageAlt??out.name??'';
   return out;
 }
 function prepareModFilters(){
@@ -905,7 +938,7 @@ function renderCharacterReport(){
 }
 function renderReportModCard(m){
   const x=modSpeedMetrics(m), sec=modSecondaries(m)||'Aucune';
-  return `<button type="button" class="report-mod-card" data-mod-index="${m._index??''}"><div class="report-mod-slot"><span>${esc(m.slot)}</span><em>${esc(m.set_name||'—')}</em></div><h3>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</h3><div class="report-mod-speed">${x.primary?'PRIMAIRE SPEED':(x.secondary?`SPEED SECONDAIRE +${num(x.secondary)}`:'SANS SPEED')}</div><p>${esc(sec)}</p><small>Niveau ${num(m.level)} · ${num(m.rarity)}★ · ${esc(m.character||'Libre')}</small></button>`;
+  return `<button type="button" class="report-mod-card" data-mod-index="${m._index??''}"><div class="report-mod-slot"><span>${esc(m.slot)}</span><em>${esc(m.set_name||'—')}</em>${modIconHtml(m,'52')}</div><h3>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</h3><div class="report-mod-speed">${x.primary?'PRIMAIRE SPEED':(x.secondary?`SPEED SECONDAIRE +${num(x.secondary)}`:'SANS SPEED')}</div><p>${esc(sec)}</p><small>Niveau ${num(m.level)} · ${num(m.rarity)}★ · ${esc(m.character||'Libre')}</small></button>`;
 }
 
 function renderCharacterDetail(){
@@ -924,7 +957,7 @@ function renderModCard(m){
   const sec=modSecondaries(m)||'—';
   const speedClass=x.primary?'speed_primary':speedCategory(speed);
   return `<button class="mod-detail-card ${speedClass}" data-mod-index="${m._index??''}">
-    <div class="mod-card-top"><strong>${esc(m.slot||'—')}</strong><span>${esc(m.set_name||'—')}</span></div>
+    <div class="mod-card-top"><strong>${esc(m.slot||'—')}</strong><span>${esc(m.set_name||'—')}</span>${modIconHtml(m,'54')}</div>
     <div class="mod-primary"><b>${esc(m.primary_stat||'—')}</b> ${num(m.primary_value,1)}</div>
     <div class="mod-speed-line">${x.primary?'Primaire Speed':(speed>0?`Speed secondaire +${num(speed)}`:'Sans Speed')}</div>
     <div class="mod-secondaries">${esc(sec)}</div>
@@ -971,12 +1004,12 @@ function renderInventory(){
   wrap.innerHTML=rows.map(m=>{
     const x=modSpeedMetrics(m);
     return `<tr class="${m._speedCategory}" data-mod-index="${m._index}">
-      <td><strong>${esc(m.slot||'—')}</strong></td><td>${esc(m.set_name||'—')}</td>
+      <td><strong>${esc(m.slot||'—')}</strong></td><td><div class="inventory-mod-icon">${modIconHtml(m)}</div></td><td>${esc(m.set_name||'—')}</td>
       <td><strong>${esc(m.primary_stat||'—')}</strong> ${num(m.primary_value,1)}</td>
       <td>${esc(modSecondaries(m)||'—')}</td><td class="speed-cell">${x.primary?'★':(x.secondary?`+${num(x.secondary)}`:'—')}</td>
-      <td>${num(m.level)}</td><td>${num(m.rarity)}★</td><td>${esc(m.character||'Libre')}</td>
+      <td>${num(m.level)}</td><td>${esc(m.character||'Libre')}</td>
     </tr>`;
-  }).join('')||'<tr><td colspan="8">Aucun mod ne correspond aux filtres.</td></tr>';
+  }).join('')||'<tr><td colspan="9">Aucun mod ne correspond aux filtres.</td></tr>';
   wrap.querySelectorAll('[data-mod-index]').forEach(row=>row.addEventListener('click',()=>showModInventoryDetail(Number(row.dataset.modIndex))));
 }
 function showModInventoryDetail(index){
@@ -991,7 +1024,7 @@ function showModInventoryDetail(index){
     <div><span>PRIMAIRE</span><b>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</b></div>
     <div><span>SPEED</span><b>${x.primary?'Primaire Speed':(x.secondary?`+${num(x.secondary)} secondaire`:'Aucune')}</b></div>
     <div><span>NIVEAU</span><b>${num(m.level)}</b></div>
-    <div><span>RARETÉ</span><b>${num(m.rarity)}★</b></div>
+    <div><span>MOD</span><b>${modIconHtml(m,'48')}</b></div>
   </div><h3>SECONDAIRES</h3><ul>${[1,2,3,4].map(i=>m[`secondary_${i}_stat`]?`<li>${esc(m[`secondary_${i}_stat`])} : <strong>${num(m[`secondary_${i}_value`],1)}</strong></li>`:'').join('')||'<li>Aucune donnée secondaire.</li>'}</ul>`;
   modal.hidden=false;
   $('modalReallocationBtn')?.addEventListener('click',()=>{closeModDetail();openReallocation(index);});
@@ -1084,9 +1117,9 @@ function renderReallocationResults(){
   }
   const order={'INCOMPLETS':0,'TRÈS FAIBLES':1,'FAIBLES':2,'MOYENS':3};
   rows.sort((a,b)=>(order[a.status]??9)-(order[b.status]??9)||b.value-a.value||String(a.character.name||'').localeCompare(String(b.character.name||''),'fr'));
-  box.innerHTML=rows.length?`<div class="reallocation-count">${rows.length} mod(s) correspondant à <strong>${esc(secondaryDisplayName($('reallocationSecondary')?.value))}</strong> · emplacement <strong>${esc(selectedSlot||'identique')}</strong> · set <strong>${esc(selected.set_name||'identique')}</strong></div><div class="reallocation-table-wrap"><table class="v18-table reallocation-table"><thead><tr><th>Personnage</th><th>État</th><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaire recherchée</th><th>Autres secondaires</th><th>Niveau</th></tr></thead><tbody>${rows.map(r=>{
+  box.innerHTML=rows.length?`<div class="reallocation-count">${rows.length} mod(s) correspondant à <strong>${esc(secondaryDisplayName($('reallocationSecondary')?.value))}</strong> · emplacement <strong>${esc(selectedSlot||'identique')}</strong> · set <strong>${esc(selected.set_name||'identique')}</strong></div><div class="reallocation-table-wrap"><table class="v18-table reallocation-table"><thead><tr><th>Personnage</th><th>Mod</th><th>État</th><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaire recherchée</th><th>Autres secondaires</th><th>Niveau</th></tr></thead><tbody>${rows.map(r=>{
     const m=r.mod; const others=[]; for(let i=1;i<=4;i++){const stat=m[`secondary_${i}_stat`];if(stat&&compactKey(secondaryDisplayName(stat))!==secondaryKey)others.push(`${secondaryDisplayName(stat)} ${num(m[`secondary_${i}_value`],1)}`);}
-    return `<tr data-reallocation-mod-index="${m._index}"><td><strong>${esc(r.character.name||r.character.baseId)}</strong></td><td><span class="audit-badge ${r.class}">${esc(r.status)}</span></td><td>${esc(m.slot||'—')}</td><td>${esc(m.set_name||'—')}</td><td>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</td><td class="reallocation-match">${esc(r.value)}</td><td>${esc(others.join(' · ')||'—')}</td><td>${num(m.level)}</td></tr>`;
+    return `<tr data-reallocation-mod-index="${m._index}"><td><strong>${esc(r.character.name||r.character.baseId)}</strong></td><td><div class="inventory-mod-icon">${modIconHtml(m,'48')}</div></td><td><span class="audit-badge ${r.class}">${esc(r.status)}</span></td><td>${esc(m.slot||'—')}</td><td>${esc(m.set_name||'—')}</td><td>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</td><td class="reallocation-match">${esc(r.value)}</td><td>${esc(others.join(' · ')||'—')}</td><td>${num(m.level)}</td></tr>`;
   }).join('')}</tbody></table></div>`:'<div class="empty">Aucun mod correspondant dans les catégories actuellement autorisées.</div>';
   box.querySelectorAll('[data-reallocation-mod-index]').forEach(row=>row.addEventListener('click',()=>showModInventoryDetail(Number(row.dataset.reallocationModIndex))));
 }

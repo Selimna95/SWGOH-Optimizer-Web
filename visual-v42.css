@@ -411,3 +411,67 @@ body{font-size:14px!important;overflow-x:hidden!important}
   .dashboard-kpis{grid-template-columns:1fr 1fr!important}
   #dashboard .hero h1{font-size:29px!important}
 }
+
+/* Mod visual assets — no general visual redesign */
+.mod-visual{
+  position:relative;
+  display:inline-flex;
+  width:56px;
+  height:56px;
+  align-items:center;
+  justify-content:center;
+  vertical-align:middle;
+  flex:0 0 auto;
+}
+.mod-visual-base{
+  width:54px;
+  height:54px;
+  object-fit:contain;
+  display:block;
+  filter:drop-shadow(0 0 4px rgba(57,230,255,.18));
+}
+.mod-visual-dots{
+  position:absolute;
+  top:-2px;
+  left:50%;
+  transform:translateX(-50%);
+  width:42px;
+  height:10px;
+  object-fit:contain;
+  pointer-events:none;
+}
+.mod-visual-level{
+  position:absolute;
+  right:-2px;
+  bottom:-2px;
+  min-width:18px;
+  height:18px;
+  padding:1px 4px;
+  border-radius:4px;
+  background:rgba(2,8,16,.9);
+  border:1px solid rgba(57,230,255,.35);
+  color:#eafcff;
+  font:700 10px/14px 'Share Tech Mono',monospace;
+  text-align:center;
+}
+.inventory-mod-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:62px;
+}
+.reallocation-table .inventory-mod-icon .mod-visual{width:50px;height:50px}
+.reallocation-table .inventory-mod-icon .mod-visual-base{width:48px;height:48px}
+.reallocation-table .inventory-mod-icon .mod-visual-dots{width:38px;height:9px}
+.reallocation-table .inventory-mod-icon .mod-visual-level{font-size:9px;min-width:16px;height:16px;line-height:12px}
+.report-mod-slot .mod-visual,
+.mod-card-top .mod-visual{margin-left:auto}
+.report-mod-slot{display:flex!important;align-items:center;gap:6px}
+.mod-card-top{display:flex!important;align-items:center;gap:6px}
+.mod-card-top .mod-visual{margin-left:auto}
+.modal-mod-grid .mod-visual{vertical-align:middle}
+@media(max-width:760px){
+  .inventory-mod-icon{min-height:54px}
+  .mod-visual{width:50px;height:50px}
+  .mod-visual-base{width:48px;height:48px}
+}
