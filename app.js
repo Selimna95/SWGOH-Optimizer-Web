@@ -171,7 +171,33 @@ for(const [slot,prefix] of [['Arrow','Best Arrow Mod '],['Triangle','Best Triang
 if(!Object.keys(profile.averages).length){const text=lines.join('\n');for(const stat of ['Health','Protection','Speed']){const m=text.match(new RegExp('\\b'+stat+'\\s+([0-9][0-9,]*(?:\\.[0-9]+)?)','i'));if(m)profile.averages[stat]=numberFromText(m[1]);}}return kyberProfileValid(profile)?profile:null;}
 async function fetchKyberProfile(character){if(!character)return null;const existing=profileForCharacter(character);if(kyberProfileValid(existing))return existing;const display=character.name||character.character||character.baseId||character.base_id||'';const candidates=[];const add=v=>{const s=slug(v);if(s&&!candidates.includes(s))candidates.push(s);};add(display);add(character.baseId||character.base_id);const tryCandidate=async candidate=>{try{const r=await fetch(`${workerUrl()}/?path=best-mods&slug=${encodeURIComponent(candidate)}`,{headers:{'Accept':'text/html,application/xhtml+xml'}});if(!r.ok)return null;const html=await r.text();if(!/Best Mods|Data Slice:\s*Kyber/i.test(html))return null;return parseKyberProfileHTML(html,display,candidate);}catch(e){return null;}};for(const candidate of candidates){const parsed=await tryCandidate(candidate);if(parsed){profiles[candidate]=parsed;return parsed;}}try{const r=await fetch(`${workerUrl()}/?path=characters-index`,{headers:{'Accept':'text/html,application/xhtml+xml'}});if(r.ok){const doc=parseHTML(await r.text());const wanted=normalizeKyberKey(display);for(const a of doc.querySelectorAll('a[href*="/units/"]')){const label=normalizeKyberKey(a.textContent);const href=a.getAttribute('href')||'';const m=href.match(/\/units\/([^/]+)/);if(label===wanted&&m){const candidate=m[1];const parsed=await tryCandidate(candidate);if(parsed){profiles[candidate]=parsed;return parsed;}}}}}catch(e){}return null;}
 let kyberRequestSeq=0;
-async function ensureSelectedKyberProfile(){const c=selectedCharacter();if(!c)return null;const seq=++kyberRequestSeq;$('characterInfo').innerHTML=`<span class="tag">${esc(c.baseId||c.base_id||'')}</span> <strong>${esc(c.name||c.character||c.baseId||'')}</strong> · récupération du profil Kyber…`;const p=await fetchKyberProfile(c);if(seq===kyberRequestSeq)updateCharacterInfo();if(p)log(`Référence Kyber récupérée : ${c.name||c.baseId}.`);else log(`Référence Kyber indisponible : ${c.name||c.baseId}.`);return p;}
+function buildLocalOptimizerReference(character){
+  const p=optimizerProfileForCharacter(character)||{};
+  const current=p.current_stats||{};
+  return {
+    character:String(character?.name||character?.baseId||''),
+    source:'Profil Optimizer local — référence de secours',
+    sets:{}, slots:{}, secondary_focus:{},
+    averages:{
+      Speed:Number(current.Speed||p.base_stats?.Speed||0),
+      Health:Number(current.Health||p.base_stats?.Health||0),
+      Protection:Number(current.Protection||p.base_stats?.Protection||0),
+      'Physical Damage':Number(current['Physical Damage']||p.base_stats?.['Physical Damage']||0),
+      'Special Damage':Number(current['Special Damage']||p.base_stats?.['Special Damage']||0)
+    }
+  };
+}
+async function ensureSelectedKyberProfile(){
+  const c=selectedCharacter();if(!c)return null;
+  const seq=++kyberRequestSeq;
+  $('characterInfo').innerHTML=`<span class="tag">${esc(c.baseId||c.base_id||'')}</span> <strong>${esc(c.name||c.character||c.baseId||'')}</strong> · récupération de la référence d’optimisation…`;
+  const p=await fetchKyberProfile(c);
+  const fallback=p||buildLocalOptimizerReference(c);
+  if(seq===kyberRequestSeq)updateCharacterInfo();
+  if(p) log(`Référence Kyber récupérée : ${c.name||c.baseId}.`);
+  else log(`SWGOH.GG indisponible pour ${c.name||c.baseId} : utilisation du profil Optimizer local comme référence de secours.`);
+  return fallback;
+}
 function fillCharacters(names) {
   rosterCharacters = Array.isArray(names) ? names : [];
   const select=$('character'); select.innerHTML='';
@@ -192,7 +218,9 @@ function updateCharacterInfo() {
   const c=selectedCharacter();
   if(!c){$('characterInfo').textContent='Aucun personnage sélectionné.';return;}
   const p=profileForCharacter(c);
-  $('characterInfo').innerHTML=`<span class="tag">${esc(c.baseId||c.base_id||'')}</span> <strong>${esc(c.name||c.character||c.baseId||'')}</strong> · Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${num(c.stars)}★ · Puissance ${num(c.power)} · ${p?'profil Kyber disponible':'profil Kyber non disponible actuellement'}`;
+  const local=optimizerProfileForCharacter(c);
+  const ref=p?'profil Kyber disponible':(local?'référence Optimizer locale disponible':'référence indisponible');
+  $('characterInfo').innerHTML=`<span class="tag">${esc(c.baseId||c.base_id||'')}</span> <strong>${esc(c.name||c.character||c.baseId||'')}</strong> · Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${num(c.stars)}★ · Puissance ${num(c.power)} · ${ref}`;
 }
 
 const DEFAULT_WORKER_URL = 'https://swgoh-optimizer-relay.lorg75017.workers.dev';
@@ -941,22 +969,43 @@ function renderModsAnalysis(){
 }
 
 async function loadOptimizerReferenceData(){
-  // Les profils Kyber sont une référence facultative : la page peut les récupérer
-  // dynamiquement via SWGOH.GG pour les personnages absents du petit cache local.
-  // Les données optimizer locales, elles, doivent être chargées indépendamment.
-  const optimizerUrl=new URL('./python/optimizer_profiles.json',document.baseURI).href;
-  const kyberUrl=new URL('./python/kyber_profiles.json',document.baseURI).href;
-  const optimizerResponse=await fetch(optimizerUrl+'?v=39',{cache:'no-store'});
-  if(!optimizerResponse.ok) throw new Error(`Impossible de charger optimizer_profiles.json (HTTP ${optimizerResponse.status})`);
-  optimizerProfiles=await optimizerResponse.json();
-  try{
-    const kyberResponse=await fetch(kyberUrl+'?v=39',{cache:'no-store'});
-    if(kyberResponse.ok) profiles=await kyberResponse.json();
-    else log(`Cache Kyber local indisponible (HTTP ${kyberResponse.status}) : récupération dynamique activée.`);
-  }catch(e){
-    profiles={};
-    log('Cache Kyber local indisponible : récupération dynamique activée.');
+  // V42 : les 334 profils Optimizer sont embarqués dans optimizer-profiles.js.
+  // Le JSON reste la source de secours pour conserver une installation classique.
+  const embedded=window.__SWGOH_OPTIMIZER_PROFILES__;
+  if(embedded && typeof embedded==='object' && Object.keys(embedded).length){
+    optimizerProfiles=embedded;
+    log(`Profils Optimizer embarqués : ${Object.keys(optimizerProfiles).length}.`);
+  }else{
+    const candidates=[
+      new URL('./python/optimizer_profiles.json',document.baseURI).href,
+      new URL('/SWGOH-Optimizer-Web/python/optimizer_profiles.json',location.origin).href,
+    ];
+    let loaded=null,lastError='';
+    for(const url of candidates){
+      try{
+        const r=await fetch(url+'?v=42',{cache:'no-store'});
+        if(!r.ok){lastError=`HTTP ${r.status}`;continue;}
+        const json=await r.json();
+        if(json && typeof json==='object' && Object.keys(json).length){loaded=json;break;}
+        lastError='JSON vide';
+      }catch(e){lastError=e?.message||String(e);}
+    }
+    if(!loaded) throw new Error(`Impossible de charger les profils Optimizer (${lastError||'source indisponible'}).`);
+    optimizerProfiles=loaded;
   }
+  // Kyber est une référence facultative : SWGOH.GG sera interrogé au besoin.
+  const kyberCandidates=[
+    new URL('./python/kyber_profiles.json',document.baseURI).href,
+    new URL('/SWGOH-Optimizer-Web/python/kyber_profiles.json',location.origin).href,
+  ];
+  profiles={};
+  for(const url of kyberCandidates){
+    try{
+      const r=await fetch(url+'?v=42',{cache:'no-store'});
+      if(r.ok){const json=await r.json();if(json&&typeof json==='object'){profiles=json;break;}}
+    }catch(e){}
+  }
+  log(`Références Kyber locales : ${Object.keys(profiles||{}).length}. Récupération SWGOH.GG activée pour les autres personnages.`);
   return true;
 }
 
@@ -970,7 +1019,7 @@ async function boot(){
     optimizerReady=true;
     $('pythonState').textContent='WORKER';
     setRuntime('DONNÉES OPTIMIZER DISPONIBLES',true);
-    log(`Profils Optimizer chargés : ${Object.keys(optimizerProfiles||{}).length}. Calcul Python déporté dans le Worker.`);
+    log(`Profils Optimizer disponibles : ${Object.keys(optimizerProfiles||{}).length}. Calcul Python déporté dans le Worker.`);
   }catch(e){
     optimizerReady=false;
     $('pythonState').textContent='ERREUR';
@@ -1000,7 +1049,7 @@ $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
   $('results').innerHTML='<div class="calculating">Préparation de l’optimisation…<br><small>Le calcul va maintenant s’exécuter dans un Worker séparé pour garder l’interface réactive.</small></div>';
   if(!mods.length){$('optimizerError').textContent='Aucun mod disponible. Chargez d’abord votre profil.';return;}
-  if(!optimizerReady){$('optimizerError').textContent='Les données Optimizer ne sont pas encore disponibles. Rechargez la page.';return;}
+  if(!optimizerReady || !Object.keys(optimizerProfiles||{}).length){$('optimizerError').textContent='Les profils Optimizer locaux ne sont pas chargés. Vérifiez que optimizer-profiles.js est présent dans le dépôt.';return;}
   const character=selectedCharacter();
   if(!character){$('optimizerError').textContent='Sélectionnez un personnage.';return;}
   const profile=await ensureSelectedKyberProfile();

@@ -1,5 +1,6 @@
-# SWGOH Optimizer Web — V39
+# SWGOH Optimizer Web — V42
 
-V39 est une évolution visuelle de V36. La navigation passe en barre horizontale afin de donner davantage de largeur aux tableaux et rapports. La Puissance Galactique est plus compacte et l'identité Star Wars / cockpit est renforcée par une palette multi-couleurs et des effets HUD.
+V42 preserves V39 functionality and the Galactic Command visual direction while fixing Optimizer data availability and dashboard ergonomics.
 
-Aucune logique métier n’est volontairement modifiée.
+Upload the **contents** of `v42` to the `main` branch of GitHub Pages.
+Keep `styles.css`/other existing base assets if present; V42 uses `galactic-command.css` plus `visual-v42.css`.

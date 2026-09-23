@@ -1,7 +1,10 @@
-# V39 — GALACTIC COMMAND DECK
+# SWGOH Optimizer Web — V42
 
-- Navigation principale transformée en barre horizontale pour libérer la largeur utile.
-- Puissance Galactique compactée pour réduire son emprise visuelle.
-- Palette Star Wars renforcée : cyan, bleu, violet, rouge, orange, or et vert.
-- Header et panneaux renforcés avec identité cockpit / command deck.
-- Logique applicative V36 conservée, dont analyse V176 et réaffectation Slot + Set.
+V42 is based on V39/V41 and keeps application logic intact while hardening Optimizer profile availability and improving dashboard ergonomics.
+
+- 334 Optimizer profiles are bundled in `optimizer-profiles.js` as a same-origin fallback.
+- `app.js` first uses the embedded profiles, then JSON path fallbacks.
+- Kyber remains dynamic via SWGOH.GG, with a local Optimizer-profile reference fallback when Kyber is unavailable.
+- Dashboard typography, account summary, Galactic Power hierarchy and spacing were redesigned for readability.
+- Horizontal navigation bars remain available.
+- Python optimizer engine and Cloudflare relay code are preserved.
