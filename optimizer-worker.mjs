@@ -2,12 +2,12 @@ import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodi
 
 let pyodideReadyPromise = (async () => {
   const pyodide = await loadPyodide();
-  const optimizerResponse = await fetch(new URL("./python/optimizer.py?v=39", import.meta.url), { cache: "no-store" });
+  const optimizerResponse = await fetch(new URL("./python/optimizer.py?v=43", import.meta.url), { cache: "no-store" });
   if (!optimizerResponse.ok) throw new Error(`Impossible de charger optimizer.py (HTTP ${optimizerResponse.status})`);
   const optimizerSource = await optimizerResponse.text();
   pyodide.FS.writeFile("/home/pyodide/optimizer.py", optimizerSource);
   try {
-    const kyberResponse = await fetch(new URL("./python/kyber_data.py?v=39", import.meta.url), { cache: "no-store" });
+    const kyberResponse = await fetch(new URL("./python/kyber_data.py?v=43", import.meta.url), { cache: "no-store" });
     if (kyberResponse.ok) {
       const kyberSource = await kyberResponse.text();
       pyodide.FS.writeFile("/home/pyodide/kyber_data.py", kyberSource);
