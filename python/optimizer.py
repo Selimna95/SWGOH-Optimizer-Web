@@ -96,7 +96,16 @@ def normalize_set(value):
     if isinstance(value, dict):
         value = value.get("name") or value.get("id") or value.get("setId") or value.get("modSetId")
     text = str(value or "").strip()
-    return SET_NAMES.get(text, text) if text else None
+    if not text:
+        return None
+    aliases = {
+        "crit chance":"Critical Chance", "critical chance":"Critical Chance",
+        "crit damage":"Critical Damage", "critical damage":"Critical Damage",
+        "crit avoidance":"Critical Avoidance", "critical avoidance":"Critical Avoidance",
+        "offense":"Offense", "health":"Health", "defense":"Defense",
+        "speed":"Speed", "potency":"Potency", "tenacity":"Tenacity",
+    }
+    return SET_NAMES.get(text, aliases.get(text.casefold(), text))
 
 def mod_set(mod):
     if not isinstance(mod, dict):
@@ -376,6 +385,49 @@ def build_score(build, kyber, weights, base_stats):
     return score
 
 
+def _kyber_set_plan(kyber):
+    """Return the most popular exact six-mod set composition from SWGOH.GG."""
+    if not isinstance(kyber, dict):
+        return None
+    entries = kyber.get("specific_sets") or []
+    if not isinstance(entries, list):
+        return None
+    best = None
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        counts = entry.get("counts")
+        if not isinstance(counts, dict):
+            continue
+        normalized = {normalize_set(k): int(v) for k,v in counts.items() if normalize_set(k) and int(v) > 0}
+        if sum(normalized.values()) != 6:
+            continue
+        weight = to_float(entry.get("weight"))
+        if best is None or weight > best[0]:
+            best = (weight, normalized, entry.get("name") or "")
+    return best
+
+
+def _partial_matches_set_plan(build, plan):
+    if not plan:
+        return True
+    counts = {}
+    for mod in build:
+        s = normalize_set(mod_set(mod))
+        counts[s] = counts.get(s, 0) + 1
+    return all(counts.get(name, 0) <= target for name, target in plan.items()) and all(name in plan for name in counts)
+
+
+def _matches_set_plan(build, plan):
+    if not plan:
+        return True
+    counts = {}
+    for mod in build:
+        s = normalize_set(mod_set(mod))
+        counts[s] = counts.get(s, 0) + 1
+    return counts == plan
+
+
 def optimize_kyber(
     mods,
     base_stats=None,
@@ -421,6 +473,9 @@ def optimize_kyber(
         "Potency": 0.1,
         "Tenacity": 0.1,
     }
+
+    set_plan_info = _kyber_set_plan(kyber)
+    set_plan = set_plan_info[1] if set_plan_info else None
 
     grouped = {slot: [] for slot in SLOTS}
     for mod in mods:
@@ -481,6 +536,8 @@ def optimize_kyber(
                 if mod_id(mod) in used:
                     continue
                 build = partial + (mod,)
+                if set_plan and not _partial_matches_set_plan(build, set_plan):
+                    continue
                 score = build_score(build, kyber, weights, base_stats)
                 expanded.append((score, build))
 
@@ -492,13 +549,26 @@ def optimize_kyber(
             except Exception:
                 pass
 
+    if set_plan:
+        exact_beam = [build for build in beam if _matches_set_plan(build, set_plan)]
+        if exact_beam:
+            beam = exact_beam
+        else:
+            # Inventory may not contain enough mods for the reference set plan.
+            # In that case do not invent a result: return the best unconstrained
+            # candidates only if the reference composition is impossible.
+            pass
+
     results = []
     for build in beam:
+        if set_plan and not _matches_set_plan(build, set_plan):
+            continue
         results.append(
             {
                 "build": list(build),
                 "score": build_score(build, kyber, weights, base_stats),
                 "stats": final_stats(build, base_stats),
+                "set_plan": set_plan or {},
             }
         )
 
