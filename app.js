@@ -465,15 +465,32 @@ function modSlotLabel(value){
   return map[raw]||map[key]||raw;
 }
 function modIconTier(m){
-  const raw=String(m?.tier??m?.quality??m?.grade??m?.modTier??m?.mod_tier??m?.rarityTier??'').trim().toUpperCase();
+  const raw=String(m?.tier??m?.quality??m?.grade??m?.modTier??m?.mod_tier??m?.rarityTier??m?.rarity_tier??'').trim().toUpperCase();
   if(/^[A-E]$/.test(raw))return raw;
-  const text=String(m?.name??m?.displayName??m?.raw_alt??'');
-  const hit=text.match(/\b([A-E])(?:-[A-E])?\b/i);
+  const text=String(m?.name??m?.displayName??m?.raw_alt??m?.alt??'');
+  // SWGoH mod names commonly end in the tier letter (…-A / … B).
+  const hit=text.match(/(?:^|[\s_-])([A-E])(?:$|[\s_-])/i);
   return hit?hit[1].toUpperCase():'E';
 }
 function modDots(m){
-  const raw=Number(m?.dots??m?.dotCount??m?.pips??m?.rarity??0);
-  return raw>=1&&raw<=6?raw:5;
+  const candidates=[
+    m?.dots,m?.dotCount,m?.dot_count,m?.pips,m?.pipCount,m?.rarity,m?.rarity_dots,m?.dot_rarity
+  ];
+  for(const v of candidates){
+    const n=Number(v);
+    if(Number.isInteger(n)&&n>=1&&n<=6)return n;
+  }
+  const text=String(m?.name??m?.displayName??m?.raw_alt??m?.alt??'');
+  const mk=text.match(/(?:MK|Mk)\s*([1-6])\b/i);
+  if(mk)return Number(mk[1]);
+  const roman=text.match(/(?:^|[\s_-])(VI|V|IV|III|II|I)(?:[-\s]|$)/i);
+  if(roman){
+    return ({I:1,II:2,III:3,IV:4,V:5,VI:6}[roman[1].toUpperCase()]||5);
+  }
+  return 5;
+}
+function modDotsClass(m){
+  return modDots(m)===6?'dots-6':'dots-1-5';
 }
 function modAssetName(m){
   const set=modSetLabel(m?.set_name??m?.set??m?.setId??m?.set_id).trim();
@@ -492,7 +509,10 @@ function modDotsUrl(m){
 function modIconHtml(m, size='56'){
   const name=esc(`${m?.set_name||'Mod'} · ${m?.slot||''}`.trim());
   const asset=esc(modAssetName(m));
-  return `<span class="mod-visual" title="${name}"><img class="mod-visual-base" src="${esc(modIconUrl(m))}" alt="${asset}" loading="lazy" referrerpolicy="no-referrer"><img class="mod-visual-dots" src="${esc(modDotsUrl(m))}" alt="${modDots(m)} dots" loading="lazy" referrerpolicy="no-referrer"><span class="mod-visual-level">${num(m?.level)}</span></span>`;
+  const dots=modDots(m);
+  const tier=modIconTier(m);
+  const dotMarks=Array.from({length:dots},()=>'<i></i>').join('');
+  return `<span class="mod-visual ${modDotsClass(m)} tier-${tier}" data-dots="${dots}" data-tier="${tier}" title="${name} — ${dots} dots · Tier ${tier}"><span class="mod-visual-frame"><img class="mod-visual-base" src="${esc(modIconUrl(m))}" alt="${asset}" referrerpolicy="no-referrer"></span><span class="mod-visual-dots-css" aria-label="${dots} dots">${dotMarks}</span><span class="mod-visual-level">${num(m?.level)}</span></span>`;
 }
 function normalizeModForDisplay(m){
   if(!m)return m;
@@ -586,7 +606,7 @@ function renderDataTable(){
     rows.sort((a,b)=>{const sa=String(a.set_name||''),sb=String(b.set_name||'');return sa.localeCompare(sb,'fr')||Number(b.level||0)-Number(a.level||0)||String(a.slot||'').localeCompare(String(b.slot||''),'fr');});
     $('dataTableMeta').textContent=`${rows.length} mod(s) affiché(s) sur ${mods.length}`;
     renderModSummary(rows);
-    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Slot</th><th>Set</th><th>Primaire</th><th>Secondaires</th><th>Niv.</th><th>Rareté</th><th>Équipé</th></tr></thead><tbody>${rows.map(m=>`<tr><td><strong>${esc(m.slot||'—')}</strong></td><td>${esc(m.set_name||'—')}</td><td><strong>${esc(m.primary_stat||'—')}</strong> ${num(m.primary_value,1)}${String(m.primary_stat||'').endsWith(' %')?'%':''}</td><td>${esc(modSecondaries(m)||'—')}</td><td>${num(m.level)}</td><td>${num(m.rarity)}★</td><td>${esc(m.character||'Libre')}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucun mod ne correspond aux filtres.</div>';
+    $('dataTable').innerHTML=rows.length?`<table><thead><tr><th>Slot</th><th>Mod</th><th>Set</th><th>Primaire</th><th>Secondaires</th><th>Niv.</th><th>Équipé</th></tr></thead><tbody>${rows.map(m=>`<tr><td><strong>${esc(m.slot||'—')}</strong></td><td><div class="inventory-mod-icon">${modIconHtml(m,'52')}</div></td><td>${esc(m.set_name||'—')}</td><td><strong>${esc(m.primary_stat||'—')}</strong> ${num(m.primary_value,1)}${String(m.primary_stat||'').endsWith(' %')?'%':''}</td><td>${esc(modSecondaries(m)||'—')}</td><td>${num(m.level)}</td><td>${esc(m.character||'Libre')}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucun mod ne correspond aux filtres.</div>';
   }
 }
 
@@ -596,7 +616,7 @@ document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click'
 
 function getOptimizerWorker() {
   if (optimizerWorker) return optimizerWorker;
-  optimizerWorker = new Worker('./optimizer-worker.mjs?v=47', { type: 'module' });
+  optimizerWorker = new Worker('./optimizer-worker.mjs?v=49', { type: 'module' });
   optimizerWorker.addEventListener('error', (event) => {
     log('Erreur du Worker Python : ' + (event.message || 'erreur inconnue'));
   });
@@ -938,7 +958,7 @@ function renderCharacterReport(){
 }
 function renderReportModCard(m){
   const x=modSpeedMetrics(m), sec=modSecondaries(m)||'Aucune';
-  return `<button type="button" class="report-mod-card" data-mod-index="${m._index??''}"><div class="report-mod-slot"><span>${esc(m.slot)}</span><em>${esc(m.set_name||'—')}</em>${modIconHtml(m,'52')}</div><h3>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</h3><div class="report-mod-speed">${x.primary?'PRIMAIRE SPEED':(x.secondary?`SPEED SECONDAIRE +${num(x.secondary)}`:'SANS SPEED')}</div><p>${esc(sec)}</p><small>Niveau ${num(m.level)} · ${num(m.rarity)}★ · ${esc(m.character||'Libre')}</small></button>`;
+  return `<button type="button" class="report-mod-card" data-mod-index="${m._index??''}"><div class="report-mod-slot"><span>${esc(m.slot)}</span><em>${esc(m.set_name||'—')}</em>${modIconHtml(m,'52')}</div><h3>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</h3><div class="report-mod-speed">${x.primary?'PRIMAIRE SPEED':(x.secondary?`SPEED SECONDAIRE +${num(x.secondary)}`:'SANS SPEED')}</div><p>${esc(sec)}</p><small>Niveau ${num(m.level)} · ${modDots(m)} dots · Tier ${modIconTier(m)} · ${esc(m.character||'Libre')}</small></button>`;
 }
 
 function renderCharacterDetail(){
