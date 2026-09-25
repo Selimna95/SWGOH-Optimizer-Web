@@ -1,0 +1,164 @@
+/* =========================================================
+   V67 — GALACTIC COMMAND LIVE DASHBOARD
+   Recomposition inspired by the approved cinematic mockup.
+   Uses the user's supplied space / city images.
+   ========================================================= */
+:root{
+  --v67-cyan:#28d9ff;
+  --v67-blue:#168cff;
+  --v67-purple:#a36cff;
+  --v67-gold:#ffd34d;
+  --v67-green:#4df0c3;
+  --v67-bg:#020913;
+  --v67-sidebar:220px;
+  --v67-header:92px;
+}
+
+html,body{background:#020711!important}
+body{overflow-x:hidden!important}
+.scanlines{opacity:.16!important}
+.hud-grid{opacity:.18!important}
+.hud-vignette{opacity:.55!important}
+
+/* HEADER: real supplied fleet image */
+.topbar{
+  height:var(--v67-header)!important;min-height:var(--v67-header)!important;
+  padding:0 18px!important;overflow:hidden!important;position:sticky!important;z-index:100!important;
+  background:
+    linear-gradient(90deg,rgba(1,7,14,.86) 0%,rgba(1,8,16,.58) 35%,rgba(1,7,14,.18) 70%,rgba(1,7,14,.78) 100%),
+    url('assets/backgrounds/v67-header-space.jpg') center 46%/cover no-repeat!important;
+  border-bottom:1px solid rgba(40,217,255,.7)!important;
+  box-shadow:0 0 28px rgba(0,150,255,.14),0 14px 38px rgba(0,0,0,.55)!important;
+}
+.topbar:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 0 20%,rgba(26,209,255,.08) 48%,transparent 75%);pointer-events:none}
+.topbar:after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,#24dfff 18%,#a9f4ff 50%,#24dfff 82%,transparent);opacity:.85}
+.topbar>*{position:relative;z-index:2}
+.brand-mark{width:58px!important;height:58px!important;border-radius:50%!important;font-size:27px!important;background:radial-gradient(circle,rgba(35,220,255,.25),rgba(0,12,24,.15) 62%,transparent 64%)!important;box-shadow:0 0 26px rgba(30,214,255,.34),inset 0 0 18px rgba(30,214,255,.12)!important}
+.brand{font-size:27px!important;letter-spacing:.08em!important}
+.accent{font-size:12px!important;letter-spacing:.2em!important}
+.version{font-size:8px!important;opacity:.62!important}
+.top-pill{background:rgba(2,13,24,.62)!important;border:1px solid rgba(40,217,255,.28)!important;box-shadow:inset 0 0 18px rgba(20,180,255,.035)!important}
+
+/* SIDEBAR: supplied vertical city image */
+.layout{grid-template-columns:var(--v67-sidebar) minmax(0,1fr)!important;min-height:calc(100vh - var(--v67-header))!important}
+.sidebar{
+  width:auto!important;top:var(--v67-header)!important;height:calc(100vh - var(--v67-header))!important;min-height:calc(100vh - var(--v67-header))!important;
+  padding:32px 8px 18px!important;gap:8px!important;overflow:hidden!important;position:sticky!important;
+  background:
+    linear-gradient(180deg,rgba(1,8,15,.46),rgba(1,8,15,.12) 44%,rgba(1,7,14,.82) 100%),
+    url('assets/backgrounds/v67-sidebar-city.jpg') center top/cover no-repeat!important;
+  border-right:1px solid rgba(40,217,255,.36)!important;
+  box-shadow:12px 0 44px rgba(0,0,0,.46),inset -1px 0 rgba(150,240,255,.08)!important;
+}
+.sidebar:before{content:"GALACTIC COMMAND // NAVIGATION"!important;display:block!important;position:relative!important;z-index:3!important;padding:0 14px 14px!important;color:rgba(76,183,211,.62)!important;font-size:7px!important;letter-spacing:.18em!important;background:none!important;border:0!important}
+.sidebar:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.05),transparent 65%,rgba(0,9,18,.52)),linear-gradient(0deg,rgba(0,5,12,.45),transparent 42%);z-index:0}
+.sidebar>*{position:relative;z-index:3}
+.nav{height:64px!important;min-height:64px!important;border-radius:5px!important;padding:0 14px!important;gap:14px!important;background:rgba(1,10,19,.22)!important;border-color:transparent!important;transition:transform .22s ease,background .22s ease,box-shadow .22s ease!important}
+.nav:hover{transform:translateX(4px)!important;background:rgba(17,105,145,.18)!important;box-shadow:0 0 22px rgba(35,208,255,.10)!important}
+.nav-icon{width:34px!important;height:34px!important;border-radius:9px!important;font-size:16px!important}
+.nav.active{background:linear-gradient(90deg,rgba(23,193,240,.42),rgba(74,77,210,.34))!important;border-color:#25dfff!important;box-shadow:0 0 26px rgba(30,211,255,.22),inset 0 0 20px rgba(40,210,255,.08)!important}
+.side-note{font-size:7px!important;opacity:.45!important;margin-top:auto!important}
+
+/* CONTENT */
+.content{padding:20px 20px 58px!important;position:relative!important}
+.content:before{content:"";position:absolute;left:0;right:0;top:0;height:340px;pointer-events:none;background:radial-gradient(circle at 64% 20%,rgba(25,177,255,.08),transparent 38%);opacity:.9}
+.page{max-width:1280px!important}
+
+/* HERO: image + profile integrated, less rectangular feeling */
+#dashboard .hero{
+  min-height:232px!important;height:232px!important;padding:28px 30px!important;gap:24px!important;grid-template-columns:minmax(0,1fr) 350px!important;align-items:center!important;position:relative!important;overflow:hidden!important;
+  background:
+    linear-gradient(90deg,rgba(1,8,15,.96) 0%,rgba(1,8,15,.76) 34%,rgba(1,8,15,.28) 62%,rgba(1,8,15,.18) 100%),
+    url('assets/backgrounds/v67-hero-space.jpg') center 48%/cover no-repeat!important;
+  border:1px solid rgba(37,211,255,.44)!important;border-radius:6px!important;
+  box-shadow:0 18px 50px rgba(0,0,0,.48),inset 0 0 60px rgba(34,197,255,.05)!important;
+}
+#dashboard .hero:before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,transparent 0 48%,rgba(31,206,255,.06) 48.2%,transparent 48.7%),radial-gradient(circle at 80% 30%,rgba(120,205,255,.10),transparent 32%);pointer-events:none}
+#dashboard .hero:after{content:"TACTICAL NETWORK // PROFILE ACCESS // SWGOH.GG";position:absolute;left:30px;top:12px;color:rgba(79,186,214,.52);font-size:7px;letter-spacing:.18em;pointer-events:none}
+#dashboard .hero>div:first-child{position:relative;z-index:2;align-self:center}
+#dashboard .hero .eyebrow{font-size:9px!important;letter-spacing:.24em!important;color:#2edcff!important}
+#dashboard .hero h1{font-size:clamp(43px,4.3vw,62px)!important;line-height:.94!important;letter-spacing:.005em!important;margin:7px 0 10px!important;text-shadow:0 0 24px rgba(120,220,255,.15)!important}
+#dashboard .hero p{max-width:680px!important;font-size:11px!important;line-height:1.48!important;color:rgba(203,235,247,.78)!important}
+#dashboard .hero .online-loader{position:relative!important;z-index:4!important;width:auto!important;max-width:none!important;margin:0!important;padding:17px!important;display:flex!important;flex-direction:column!important;gap:8px!important;background:linear-gradient(135deg,rgba(2,13,24,.74),rgba(2,14,26,.44))!important;border:1px solid rgba(38,215,255,.36)!important;clip-path:polygon(0 0,94% 0,100% 14%,100% 100%,6% 100%,0 86%)!important;box-shadow:0 0 28px rgba(24,184,255,.08)!important}
+.hero-profile-head{display:flex;align-items:center;gap:7px;color:#39e8c4;font-size:8px;letter-spacing:.15em}
+.profile-status-dot{width:8px;height:8px;border-radius:50%;background:#4df0c3;box-shadow:0 0 12px #4df0c3;animation:v67pulse 2.2s ease-in-out infinite}
+.hero-profile-head b{margin-left:auto;color:#d9f9ff;font-size:9px}
+.hero-profile-name{font-size:23px;font-weight:800;letter-spacing:.02em;color:#e7f8ff;text-shadow:0 0 14px rgba(55,211,255,.16)}
+.hero-profile-code{display:flex;align-items:center;gap:10px;color:rgba(95,187,214,.76);font-size:7px;letter-spacing:.16em}
+.hero-profile-code strong{font-size:11px;letter-spacing:.08em;color:#d8f7ff}
+.hero-loader-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-top:2px}
+.hero-loader-row label{font-size:7px!important;letter-spacing:.13em!important;color:rgba(112,196,222,.72)!important}
+.hero-loader-row input{margin-top:4px!important;height:36px!important;background:rgba(0,7,14,.68)!important;border-color:rgba(38,197,239,.28)!important}
+.hero-loader-row .primary{height:36px!important;white-space:nowrap!important;padding:0 16px!important}
+#dashboard .secondary-upload{display:none!important}
+
+/* slim identity rail under hero; it keeps IDs and app bindings but feels like telemetry */
+#dashboard .dashboard-identity-panel{margin-top:9px!important;min-height:44px!important;padding:7px 15px!important;display:flex!important;align-items:center!important;background:linear-gradient(90deg,rgba(2,13,23,.58),rgba(2,13,23,.18),transparent)!important;border:0!important;border-left:1px solid rgba(40,217,255,.55)!important;border-bottom:1px solid rgba(40,217,255,.18)!important;clip-path:polygon(0 0,100% 0,98.7% 100%,0 100%)!important}
+#dashboard .identity-label{font-size:7px!important;letter-spacing:.2em!important;color:rgba(65,190,220,.68)!important;min-width:82px!important}
+#dashboard .identity-summary{display:grid!important;grid-template-columns:minmax(220px,1fr) minmax(180px,.7fr)!important;gap:14px!important;flex:1!important}
+#dashboard .identity-summary>div{min-height:28px!important;padding:2px 12px!important;border:0!important;border-left:1px solid rgba(51,184,218,.20)!important;background:transparent!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:10px!important}
+#dashboard .identity-summary span{font-size:7px!important;color:rgba(91,181,209,.62)!important;letter-spacing:.15em!important}
+#dashboard .identity-summary strong{margin:0!important;font-size:12px!important;color:#dff8ff!important}
+
+/* KPIs: connected HUD ribbon instead of 4 rigid cards */
+#dashboard .dashboard-kpis{margin-top:9px!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:0!important;position:relative!important}
+#dashboard .dashboard-kpis:before{content:"";position:absolute;left:5%;right:5%;top:50%;height:1px;background:linear-gradient(90deg,transparent,#23dfff 15%,rgba(40,217,255,.3) 50%,#23dfff 85%,transparent);opacity:.45}
+#dashboard .dashboard-kpis .metric{min-height:102px!important;padding:15px 18px!important;border:0!important;border-top:1px solid rgba(38,213,255,.38)!important;border-bottom:1px solid rgba(38,213,255,.20)!important;background:linear-gradient(180deg,rgba(2,17,29,.78),rgba(1,10,18,.42))!important;clip-path:polygon(0 0,92% 0,100% 20%,100% 80%,92% 100%,0 100%,5% 50%)!important;position:relative!important;z-index:2!important}
+#dashboard .dashboard-kpis .metric + .metric{border-left:1px solid rgba(38,213,255,.17)!important}
+#dashboard .dashboard-kpis .metric:after{content:"";position:absolute;right:18px;top:8px;width:34px;height:1px;background:rgba(43,218,255,.55);box-shadow:0 0 9px rgba(43,218,255,.38)}
+#dashboard .dashboard-kpis .metric .kpi-icon{width:44px!important;height:44px!important;min-width:44px!important;border-radius:12px!important;background:rgba(0,10,18,.42)!important}
+#dashboard .dashboard-kpis .metric span{font-size:8px!important;letter-spacing:.10em!important;color:#67dfff!important}
+#dashboard .dashboard-kpis .metric strong{font-size:34px!important;line-height:1!important;margin:3px 0!important;text-shadow:0 0 14px rgba(77,222,255,.10)!important}
+#dashboard .dashboard-kpis .metric small{font-size:7px!important;opacity:.58!important}
+
+/* GALACTIC POWER — central holographic instrument */
+#dashboard .dashboard-gp-panel{margin-top:13px!important;padding:17px 20px 20px!important;position:relative!important;overflow:hidden!important;background:linear-gradient(180deg,rgba(2,16,29,.78),rgba(1,9,17,.42))!important;border:1px solid rgba(38,211,255,.30)!important;clip-path:polygon(0 0,98% 0,100% 12%,100% 88%,98% 100%,0 100%,1.5% 50%)!important}
+#dashboard .dashboard-gp-panel:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 58%,rgba(34,213,255,.11),transparent 24%),linear-gradient(90deg,transparent 49.9%,rgba(38,217,255,.12) 50%,transparent 50.1%);pointer-events:none}
+#dashboard .dashboard-gp-panel .panel-title{font-size:15px!important;color:#2edcff!important;position:relative;z-index:2}
+#dashboard .gp-command-strip{display:grid!important;grid-template-columns:1fr 1.05fr 1fr!important;min-height:198px!important;align-items:center!important;position:relative!important;z-index:2}
+#dashboard .gp-total{grid-column:2;grid-row:1;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;position:relative!important;height:185px!important;width:185px!important;justify-self:center!important;border-radius:50%!important;background:radial-gradient(circle,rgba(3,22,38,.92) 0 48%,rgba(3,16,28,.72) 49% 60%,transparent 61%)!important}
+#dashboard .gp-total:before{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(41,216,255,.65);box-shadow:0 0 16px rgba(29,210,255,.28),inset 0 0 15px rgba(28,215,255,.20);border-right-color:rgba(167,98,255,.8);transform:rotate(-25deg);animation:v67spin 18s linear infinite}
+#dashboard .gp-total:after{content:"";position:absolute;inset:-15px;border-radius:50%;border:1px dashed rgba(61,221,255,.28);box-shadow:0 0 22px rgba(34,211,255,.08);animation:v67spin 28s linear infinite reverse}
+#dashboard .gp-total span{font-size:8px!important;letter-spacing:.13em!important;color:#55e2ff!important;z-index:2}
+#dashboard .gp-total strong{font-size:36px!important;line-height:1!important;margin:6px 0!important;z-index:2;color:#ecfbff!important;text-shadow:0 0 18px rgba(54,218,255,.24)!important}
+#dashboard .gp-total small{font-size:7px!important;color:rgba(112,190,213,.55)!important;z-index:2}
+#dashboard .gp-breakdown{grid-column:1 / 4;grid-row:1;display:grid!important;grid-template-columns:1fr 1fr!important;align-items:center!important;height:100%!important;pointer-events:none}
+#dashboard .gp-breakdown>div{height:132px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;padding:20px 34px!important;position:relative!important;background:linear-gradient(90deg,rgba(0,18,30,.18),rgba(0,18,30,.52))!important;border-top:1px solid rgba(32,211,255,.22)!important;border-bottom:1px solid rgba(32,211,255,.16)!important;clip-path:polygon(0 15%,5% 0,90% 0,100% 50%,90% 100%,5% 100%,0 85%)!important}
+#dashboard .gp-breakdown>div:nth-child(1){grid-column:1;text-align:left!important;padding-right:135px!important}
+#dashboard .gp-breakdown>div:nth-child(2){grid-column:2;text-align:right!important;padding-left:135px!important;clip-path:polygon(10% 0,95% 0,100% 15%,100% 85%,95% 100%,10% 100%,0 50%)!important}
+#dashboard .gp-breakdown span{font-size:8px!important;letter-spacing:.10em!important;color:#63dfff!important}
+#dashboard .gp-breakdown strong{font-size:31px!important;line-height:1.05!important;margin-top:8px!important;color:#dffaff!important}
+#dashboard .gp-breakdown>div:nth-child(2) span,#dashboard .gp-breakdown>div:nth-child(2) strong{color:#bb8dff!important}
+
+/* SPEED: six live telemetry nodes */
+#dashboard .v18-dashboard-speed{margin-top:13px!important;padding:15px 18px 17px!important;background:linear-gradient(180deg,rgba(2,15,26,.76),rgba(1,9,16,.38))!important;border:1px solid rgba(38,210,255,.27)!important;clip-path:polygon(0 0,98.5% 0,100% 14%,100% 86%,98.5% 100%,0 100%,1.2% 50%)!important}
+#dashboard .v18-dashboard-speed .panel-title{font-size:14px!important;color:#2edcff!important}
+#dashboard .speed-recap-grid{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:9px!important}
+#dashboard .speed-recap-grid>*{min-height:82px!important;padding:12px 10px!important;background:rgba(1,13,23,.62)!important;border:1px solid rgba(45,209,255,.25)!important;clip-path:polygon(0 0,94% 0,100% 18%,100% 82%,94% 100%,0 100%,5% 50%)!important;transition:transform .22s ease,box-shadow .22s ease,background .22s ease!important}
+#dashboard .speed-recap-grid>*:hover{transform:translateY(-4px)!important;background:rgba(9,38,58,.68)!important;box-shadow:0 8px 22px rgba(23,206,255,.12)!important}
+#dashboard .v18-note{font-size:7px!important;opacity:.46!important;margin-top:7px!important}
+
+/* recent load telemetry */
+#dashboard .log{margin-top:10px!important;padding:11px 15px!important;background:rgba(2,13,22,.42)!important;border:0!important;border-left:2px solid rgba(46,218,255,.38)!important}
+#dashboard .log .panel-title{font-size:9px!important}
+#dashboard .log pre{font-size:8px!important;opacity:.55!important}
+
+@keyframes v67pulse{0%,100%{opacity:.55;transform:scale(.9)}50%{opacity:1;transform:scale(1.12)}}
+@keyframes v67spin{to{transform:rotate(335deg)}}
+
+@media(max-width:1100px){
+  :root{--v67-sidebar:190px}
+  .topbar{height:82px!important;min-height:82px!important}.sidebar{top:82px!important;height:calc(100vh - 82px)!important}
+  #dashboard .hero{grid-template-columns:minmax(0,1fr) 310px!important;height:225px!important;min-height:225px!important}
+  #dashboard .gp-breakdown strong{font-size:26px!important}
+  #dashboard .speed-recap-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:800px){
+  .layout{grid-template-columns:1fr!important}.sidebar{position:relative!important;top:auto!important;height:auto!important;min-height:auto!important;display:grid!important;grid-template-columns:repeat(4,1fr)!important;padding:8px!important}.sidebar:before,.side-note{display:none!important}.nav{height:52px!important;min-height:52px!important;padding:0 7px!important}.nav span:last-child{font-size:9px!important}
+  .content{padding:12px!important}
+  #dashboard .hero{height:auto!important;min-height:0!important;grid-template-columns:1fr!important;padding:24px!important}.hero .online-loader{grid-column:1!important}.hero-loader-row{grid-template-columns:1fr!important}
+  #dashboard .dashboard-kpis{grid-template-columns:1fr 1fr!important}.dashboard-kpis .metric{clip-path:none!important}
+  #dashboard .dashboard-identity-panel{display:none!important}
+  #dashboard .gp-command-strip{grid-template-columns:1fr!important;min-height:0!important}.gp-total{grid-column:1!important;grid-row:1!important}.gp-breakdown{grid-column:1!important;grid-row:2!important;gap:6px!important}.gp-breakdown>div{height:88px!important;padding:14px!important}.gp-breakdown>div:nth-child(1),.gp-breakdown>div:nth-child(2){padding:14px!important;text-align:left!important}
+  #dashboard .speed-recap-grid{grid-template-columns:1fr 1fr!important}
+}

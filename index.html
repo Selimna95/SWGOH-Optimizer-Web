@@ -15,13 +15,14 @@
   <link rel="stylesheet" href="visual-v61.css?v=61">
   <link rel="stylesheet" href="visual-v63.css?v=63">
   <link rel="stylesheet" href="visual-v64.css?v=64">
-  <title>SWGOH Optimizer — Galactic Command V66</title>
+  <title>SWGOH Optimizer — Galactic Command V67</title>
 <link rel="stylesheet" href="visual-v65.css?v=65">
+<link rel="stylesheet" href="visual-v67.css?v=67">
 </head>
 <body>
 <div class="scanlines"></div><div class="hud-vignette"></div><div class="hud-grid"></div>
 <header class="topbar"><div class="topbar-beam" aria-hidden="true"></div>
-  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SWGOH</span><span class="accent">OPTIMIZER</span></div><span class="version">GALACTIC COMMAND // V39</span></div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SWGOH</span><span class="accent">OPTIMIZER</span></div><span class="version">GALACTIC COMMAND // V67</span></div>
   <div class="top-status-group">
     <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
     <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
@@ -35,7 +36,6 @@
     <button class="nav" data-page="data"><span class="nav-icon">▦</span><span>DONNÉES</span></button>
     <button class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>ANALYSE MODS</span></button>
     <button class="nav" data-page="optimizer"><span class="nav-icon">✦</span><span>OPTIMIZER</span></button>
-    <button class="nav" data-page="help"><span class="nav-icon">?</span><span>AIDE</span></button>
     <div class="side-note">100% navigateur<br>aucun PC serveur</div>
   </aside>
   <section class="content">
@@ -48,8 +48,13 @@
           <p>V61 conserve les données validées la conversion Relic (R0 à R10) et le comptage Speed 6/6, tout en conservant l’analyse des mods du projet Windows V176 : récapitulatif Speed, sélection personnage/faction, détail des 6 mods équipés et inventaire complet.</p>
         </div>
         <div class="online-loader">
-          <label>ALLY CODE<input id="allyCode" inputmode="numeric" maxlength="11" placeholder="123-456-789"></label>
-          <button id="loadPlayer" class="primary">CHARGER MON PROFIL</button>
+          <div class="hero-profile-head"><span class="profile-status-dot"></span><span>PROFIL</span><b id="heroProfileState">EN ATTENTE</b></div>
+          <div class="hero-profile-name" id="heroPlayerName">Profil non chargé</div>
+          <div class="hero-profile-code"><span>ALLY CODE</span><strong id="heroPlayerAlly">—</strong></div>
+          <div class="hero-loader-row">
+            <label>ALLY CODE<input id="allyCode" inputmode="numeric" maxlength="11" placeholder="123-456-789"></label>
+            <button id="loadPlayer" class="primary">CHARGER MON PROFIL</button>
+          </div>
           <label class="secondary-upload" id="jsonImportControl" hidden>OU IMPORTER JSON<input id="fileInput" type="file" accept=".json,application/json"></label>
         </div>
       </div>
