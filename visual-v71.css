@@ -1,0 +1,187 @@
+/* SWGOH OPTIMIZER V71 — dashboard motion / energy-flow refinement */
+
+/* LEFT COMMAND NAV — bring controls back toward the top of the scene */
+@media (min-width:801px){
+  .sidebar{
+    padding-top:18px!important;
+    justify-content:flex-start!important;
+  }
+  .sidebar:before{
+    margin-bottom:10px!important;
+    padding-bottom:10px!important;
+  }
+  .sidebar .nav{
+    margin-top:0!important;
+    margin-bottom:4px!important;
+  }
+}
+
+/* GALACTIC POWER — exact optical centering of the reactor / total */
+#dashboard .gp-command-strip{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 280px minmax(0,1fr)!important;
+  grid-template-rows:1fr!important;
+  align-items:center!important;
+  min-height:225px!important;
+  overflow:hidden!important;
+}
+#dashboard .gp-total{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  transform:translate(-50%,-50%)!important;
+  width:218px!important;
+  height:218px!important;
+  margin:0!important;
+  grid-column:auto!important;
+  grid-row:auto!important;
+  z-index:8!important;
+}
+#dashboard .gp-total:before{
+  inset:4px!important;
+  transform:rotate(-24deg)!important;
+  transform-origin:50% 50%!important;
+  animation:v71reactorSpin 13s linear infinite!important;
+}
+#dashboard .gp-total:after{
+  inset:-11px!important;
+  transform-origin:50% 50%!important;
+  animation:v71reactorOrbit 22s linear infinite reverse!important;
+}
+@keyframes v71reactorSpin{
+  from{transform:rotate(-24deg)}
+  to{transform:rotate(336deg)}
+}
+@keyframes v71reactorOrbit{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(-360deg)}
+}
+
+/* LEFT / RIGHT masks remain anchored to the reactor */
+#dashboard .gp-breakdown>div:first-child{
+  grid-column:1!important;
+  grid-row:1!important;
+  z-index:4!important;
+}
+#dashboard .gp-breakdown>div:nth-child(2){
+  grid-column:3!important;
+  grid-row:1!important;
+  z-index:4!important;
+}
+
+/* ENERGY TRANSFER — thin animated data/energy streams between both masks */
+#dashboard .gp-energy-lines{
+  position:absolute!important;
+  inset:0!important;
+  z-index:6!important;
+  pointer-events:none!important;
+}
+#dashboard .gp-energy-lines .energy-line{
+  position:absolute!important;
+  display:block!important;
+  height:2px!important;
+  top:50%!important;
+  border-radius:999px!important;
+  transform-origin:left center!important;
+  overflow:visible!important;
+}
+#dashboard .gp-energy-lines .energy-line:before{
+  content:"";
+  position:absolute;
+  inset:-3px 0;
+  background:inherit;
+  filter:blur(4px);
+  opacity:.55;
+}
+#dashboard .gp-energy-lines .energy-line:after{
+  content:"";
+  position:absolute;
+  top:-3px;
+  left:-18px;
+  width:18px;
+  height:8px;
+  border-radius:50%;
+  background:linear-gradient(90deg,transparent,#8ff6ff,transparent);
+  box-shadow:0 0 10px #45eaff,0 0 22px rgba(69,234,255,.8);
+  animation:v71flowLeft 2.8s linear infinite;
+}
+#dashboard .gp-energy-lines .energy-left{
+  left:22%;
+  width:28%;
+  background:linear-gradient(90deg,transparent 0%,rgba(50,221,255,.25) 12%,#39e9ff 70%,#a7f8ff 100%);
+  transform:rotate(-4deg);
+  box-shadow:0 0 8px rgba(50,221,255,.75);
+}
+#dashboard .gp-energy-lines .energy-right{
+  left:50%;
+  width:28%;
+  background:linear-gradient(90deg,#a7f8ff 0%,#39e9ff 28%,rgba(50,221,255,.25) 88%,transparent 100%);
+  transform:rotate(4deg);
+  transform-origin:right center;
+  box-shadow:0 0 8px rgba(50,221,255,.75);
+}
+#dashboard .gp-energy-lines .energy-right:after{
+  left:auto;
+  right:-18px;
+  animation:v71flowRight 2.8s linear infinite;
+  background:linear-gradient(90deg,transparent,#bca0ff,#fff,transparent);
+  box-shadow:0 0 10px #a66bff,0 0 22px rgba(166,107,255,.8);
+}
+#dashboard .gp-energy-lines .energy-orbit{
+  left:34%;
+  width:32%;
+  height:1px!important;
+  top:43%!important;
+  background:linear-gradient(90deg,transparent,#4be9ff 22%,rgba(166,107,255,.95) 50%,#4be9ff 78%,transparent);
+  opacity:.55;
+  transform:rotate(0deg)!important;
+  box-shadow:0 0 10px rgba(66,232,255,.45);
+  animation:v71pulseFlow 3.6s ease-in-out infinite;
+}
+#dashboard .gp-energy-lines .energy-orbit:after{
+  left:50%;
+  top:-4px;
+  animation:v71flowCenter 2.2s linear infinite;
+  background:linear-gradient(90deg,transparent,#fff,#42e8ff,transparent);
+}
+@keyframes v71flowLeft{
+  0%{left:-18px;opacity:0}
+  12%{opacity:1}
+  78%{opacity:1}
+  100%{left:calc(100% + 10px);opacity:0}
+}
+@keyframes v71flowRight{
+  0%{right:-18px;opacity:0}
+  12%{opacity:1}
+  78%{opacity:1}
+  100%{right:calc(100% + 10px);opacity:0}
+}
+@keyframes v71flowCenter{
+  0%{left:-20px;opacity:0}
+  15%{opacity:1}
+  80%{opacity:1}
+  100%{left:calc(100% + 20px);opacity:0}
+}
+@keyframes v71pulseFlow{
+  0%,100%{opacity:.22;transform:scaleX(.92)!important}
+  50%{opacity:.8;transform:scaleX(1)!important}
+}
+
+/* small vertical energy filaments around the central reactor */
+#dashboard .gp-total{
+  box-shadow:0 0 45px rgba(39,213,255,.08),inset 0 0 25px rgba(39,213,255,.06)!important;
+}
+#dashboard .gp-total small{opacity:.72!important}
+
+@media(max-width:1100px) and (min-width:801px){
+  #dashboard .gp-command-strip{grid-template-columns:minmax(0,1fr) 230px minmax(0,1fr)!important;min-height:215px!important}
+  #dashboard .gp-total{width:190px!important;height:190px!important}
+  #dashboard .gp-energy-lines .energy-left{left:18%;width:31%}
+  #dashboard .gp-energy-lines .energy-right{left:51%;width:31%}
+}
+
+@media(max-width:800px){
+  #dashboard .gp-energy-lines{display:none!important}
+  #dashboard .gp-total{position:relative!important;left:auto!important;top:auto!important;transform:none!important}
+}
