@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+<defs>
+  <radialGradient id="space" cx="65%" cy="45%" r="75%"><stop stop-color="#0a2740"/><stop offset=".45" stop-color="#031322"/><stop offset="1" stop-color="#01050c"/></radialGradient>
+  <radialGradient id="planet" cx="38%" cy="30%"><stop stop-color="#9bd9ff" stop-opacity=".85"/><stop offset=".3" stop-color="#246eaa" stop-opacity=".75"/><stop offset=".7" stop-color="#082544"/><stop offset="1" stop-color="#020914"/></radialGradient>
+  <linearGradient id="hull" x1="0" x2="1"><stop stop-color="#a9d8ef"/><stop offset=".25" stop-color="#2f6f99"/><stop offset=".7" stop-color="#071725"/><stop offset="1" stop-color="#63dfff"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <pattern id="stars" width="170" height="130" patternUnits="userSpaceOnUse"><circle cx="15" cy="22" r="1" fill="#8feaff" opacity=".7"/><circle cx="90" cy="74" r=".7" fill="#fff" opacity=".55"/><circle cx="140" cy="35" r="1.2" fill="#6cbaff" opacity=".6"/><circle cx="55" cy="118" r=".7" fill="#fff" opacity=".45"/></pattern>
+</defs>
+<rect width="1600" height="900" fill="url(#space)"/>
+<rect width="1600" height="900" fill="url(#stars)" opacity=".7"/>
+<!-- planetary body -->
+<circle cx="1320" cy="250" r="360" fill="url(#planet)" opacity=".9"/>
+<ellipse cx="1320" cy="250" rx="430" ry="105" fill="none" stroke="#62cfff" stroke-opacity=".12" stroke-width="5"/>
+<ellipse cx="1320" cy="250" rx="470" ry="135" fill="none" stroke="#9a75ff" stroke-opacity=".08" stroke-width="2"/>
+<!-- distant city/structure -->
+<g opacity=".6" fill="#071b2b" stroke="#164e72">
+ <path d="M0 780 L40 570 70 780Z"/><path d="M55 780 L110 500 150 780Z"/><path d="M135 780 L175 600 210 780Z"/><path d="M190 780 L250 530 295 780Z"/>
+</g>
+<!-- capital ship -->
+<g transform="translate(760 125)" filter="url(#glow)">
+ <path d="M0 48 L120 28 L330 38 L500 65 L360 84 L155 78 Z" fill="url(#hull)" stroke="#8eeaff" stroke-opacity=".55"/>
+ <path d="M150 78 L290 110 L400 85 L330 75 Z" fill="#071522" stroke="#2e8fba"/>
+ <path d="M255 38 L330 0 L355 38 Z" fill="#0b1e2d" stroke="#57cfff"/>
+ <path d="M25 52 L-80 70 L0 40 Z" fill="#0a2336" stroke="#47d9ff"/>
+ <circle cx="155" cy="56" r="4" fill="#6effff"/><circle cx="205" cy="59" r="3" fill="#6effff"/>
+ <path d="M-110 78 L-25 60" stroke="#39e6ff" stroke-width="3" opacity=".7"/>
+</g>
+<!-- small starfighters -->
+<g fill="#5bdfff" opacity=".8"><path d="M1010 300 l32 -8 25 8-25 8z"/><path d="M1120 360 l24 -6 20 6-20 6z"/><path d="M920 330 l20 -5 18 5-18 5z"/></g>
+<!-- tactical grid -->
+<g stroke="#2edcff" stroke-opacity=".08" fill="none"><path d="M760 620 H1550"/><path d="M700 690 H1500"/><path d="M680 760 H1440"/><path d="M1000 500 V840"/><path d="M1180 450 V850"/><path d="M1360 430 V850"/></g>
+</svg>
