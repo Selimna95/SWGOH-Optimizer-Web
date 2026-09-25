@@ -226,3 +226,73 @@ button,input,select{max-width:100%;box-sizing:border-box}
   .nav,.primary,.analysis-tab,.data-tab,button,select,input{min-height:42px}
   .nav{min-height:44px}
 }
+
+/* Community / creator banner — Iceman YouTube */
+.creator-banner{
+  position:relative;
+  width:min(1180px, calc(100% - 28px));
+  margin:26px auto 22px;
+  min-height:92px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  padding:18px 22px;
+  overflow:hidden;
+  border:1px solid rgba(34,209,255,.45);
+  background:
+    linear-gradient(90deg, rgba(7,25,40,.96), rgba(4,15,28,.9) 58%, rgba(10,26,43,.96)),
+    radial-gradient(circle at 82% 50%, rgba(29,191,255,.18), transparent 35%);
+  clip-path:polygon(0 0,98.8% 0,100% 18%,100% 82%,98.8% 100%,0 100%,1.1% 82%,1.1% 18%);
+  box-shadow:0 0 24px rgba(0,184,255,.09), inset 0 0 28px rgba(0,162,255,.05);
+}
+.creator-banner::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(90deg, transparent, rgba(53,220,255,.07), transparent);
+  transform:translateX(-100%);
+  animation:creator-scan 7s linear infinite;
+}
+.creator-banner-glow{
+  position:absolute;
+  width:220px;height:220px;
+  right:14%;top:50%;
+  transform:translateY(-50%);
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(22,205,255,.13), transparent 66%);
+  filter:blur(3px);
+  pointer-events:none;
+}
+.creator-banner-copy{position:relative;z-index:2;display:flex;flex-direction:column;gap:4px;min-width:0}
+.creator-kicker{font-size:9px;letter-spacing:2px;color:#45d9ff;font-weight:700}
+.creator-banner-copy strong{font-size:21px;letter-spacing:1px;color:#e7f7ff;text-transform:uppercase}
+.creator-banner-copy>span:last-child{font-size:11px;color:#91aabd;letter-spacing:.35px}
+.creator-banner-link{
+  position:relative;z-index:2;
+  flex:0 0 auto;
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 18px;
+  color:#eafaff;
+  text-decoration:none;
+  border:1px solid rgba(255,72,72,.6);
+  background:linear-gradient(135deg,rgba(37,9,14,.95),rgba(18,28,42,.95));
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+}
+.creator-banner-link:hover{transform:translateY(-2px);border-color:#ff6767;box-shadow:0 0 22px rgba(255,64,64,.18)}
+.youtube-mark{width:28px;height:20px;border-radius:6px;display:grid;place-items:center;background:#ff3b3b;color:#fff;font-size:11px;line-height:1}
+.creator-banner-link>span:nth-child(2){font-size:10px;font-weight:800;letter-spacing:1px}
+.creator-arrow{font-size:18px;color:#ff7777}
+@keyframes creator-scan{to{transform:translateX(100%)}}
+
+@media (max-width:700px){
+  .creator-banner{width:calc(100% - 18px);margin:18px auto 14px;padding:16px;min-height:0;flex-direction:column;align-items:stretch;gap:13px}
+  .creator-banner-copy strong{font-size:18px}
+  .creator-banner-copy>span:last-child{font-size:10px}
+  .creator-banner-link{width:100%;justify-content:center}
+}
