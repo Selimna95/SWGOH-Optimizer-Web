@@ -523,21 +523,17 @@ function modAssetName(m){
   const safeSet=assetSet.replace(/\s+/g,'-');
   return `Mod-${safeSet}-${shape}-${modIconTier(m)}.png`;
 }
-function modIconUrl(m){
-  // SWGoH Wiki exposes the game mod textures through its file redirect endpoint.
-  return `https://swgoh.wiki/wiki/Special:Redirect/file/${encodeURIComponent(modAssetName(m))}`;
-}
-function modDotsUrl(m){
-  return `https://swgoh.wiki/wiki/Special:Redirect/file/${encodeURIComponent(`Indicator-Mod-Dots-${modDots(m)}.png`)}`;
-}
+function modIconUrl(m){ return ''; }
+function modDotsUrl(m){ return ''; }
 function modIconHtml(m, size='56'){
   const name=esc(`${m?.set_name||'Mod'} · ${m?.slot||''}`.trim());
-  const asset=esc(modAssetName(m));
   const dots=modDots(m);
   const tier=modIconTier(m);
   const slot=modSlotLabel(m?.slot??m?.slot_id??m?.slotId??m?.modSlot);
   const slotClass=slot.toLowerCase().replace(/[^a-z]+/g,'-');
-  return `<span class=\"mod-visual tier-${tier} dots-${dots} slot-${slotClass}\" data-dots=\"${dots}\" data-tier=\"${tier}\" data-slot=\"${esc(slot)}\" title=\"${name} — ${dots} dots · Tier ${tier}\"><span class=\"mod-visual-frame\"><img class=\"mod-visual-base\" src=\"${esc(modIconUrl(m))}\" alt=\"${asset}\" referrerpolicy=\"no-referrer\"></span><img class=\"mod-visual-dots\" src=\"${esc(modDotsUrl(m))}\" alt=\"${dots} dots\" referrerpolicy=\"no-referrer\"><span class=\"mod-visual-level\">${num(m?.level)}</span></span>`;
+  const dotsColor=dots===6?'gold':'white';
+  const tierClass={A:'tier-a',B:'tier-b',C:'tier-c',D:'tier-d',E:'tier-e'}[tier]||'tier-e';
+  return `<span class="mod-visual slot-${slotClass}" data-dots="${dots}" data-tier="${tier}" data-slot="${esc(slot)}" title="${name} — ${dots} dots · Tier ${tier} · Niveau ${num(m?.level)}"><span class="mod-visual-grade"><span class="mod-visual-dots-number dots-${dotsColor}">${dots}</span><span class="mod-visual-tier ${tierClass}">${tier}</span></span><span class="mod-visual-level">Niv. ${num(m?.level)}</span></span>`;
 }
 function normalizeModForDisplay(m){
   if(!m)return m;
