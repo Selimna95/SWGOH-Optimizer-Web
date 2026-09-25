@@ -104,8 +104,11 @@ function normalizeMod(m, index=0) {
   });
 
   out.level = Number(out.level ?? 0);
+  // Keep the real tier supplied by the player API. It is independent from dots and level.
+  out.tier = out.tier ?? out.quality ?? out.grade ?? out.modTier ?? out.mod_tier ?? out.rarityTier ?? out.rarity_tier ?? '';
+  out.pips = Number(out.pips ?? out.dotCount ?? out.dot_count ?? 0) || 0;
   out.rarity = Number(out.rarity ?? out.pips ?? 0);
-  out.character = out.character ?? out.characterName ?? out.equippedTo ?? out.equipped_to ?? out.usingIn ?? '';
+  out.character = out.character ?? out.characterName ?? out.equippedTo ?? out.equipped_to ?? out.unit_equiped ?? out.unitEquiped ?? out.location ?? out.usingIn ?? '';
   return out;
 }
 function extractMods(data) {
@@ -454,7 +457,18 @@ async function loadRemotePlayer(){
     }
     // Les pages publiques donnent les valeurs réellement affichées (ex. 8 Speed, 5.88%).
     // L'API reste un filet de sécurité pour les éventuels mods non présents dans les pages.
-    const merged=[...htmlMods];
+    const apiById=new Map(apiMods.map(m=>[String(m.game_id||''),m]));
+    const apiByShape=new Map();
+    for(const m of apiMods){
+      const key=[compactKey(m.character||m.location||m.unit_equiped||''),modSlotLabel(m.slot),modSetLabel(m.set_name||m.set||m.setId||m.set_id),Number(m.level||0),String(m.primary_stat||'')].join('|');
+      if(key!=='||||')apiByShape.set(key,m);
+    }
+    const merged=htmlMods.map(h=>{
+      const direct=apiById.get(String(h.game_id||''));
+      const key=[compactKey(h.character||''),modSlotLabel(h.slot),modSetLabel(h.set_name||''),Number(h.level||0),String(h.primary_stat||'')].join('|');
+      const api=direct||apiByShape.get(key);
+      return api ? normalizeMod({...h,...api,game_id:h.game_id||api.game_id,slot:h.slot||api.slot,set_name:h.set_name||api.set_name,primary_stat:h.primary_stat||api.primary_stat,primary_value:h.primary_value||api.primary_value,character:h.character||api.character||api.location||api.unit_equiped}) : h;
+    });
     const seenIds=new Set(merged.map(m=>m.game_id));
     for(const m of apiMods){ if(!seenIds.has(m.game_id)){ merged.push(m); seenIds.add(m.game_id); } }
     const seen=new Set();mods=merged.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
@@ -481,8 +495,15 @@ function modSlotLabel(value){
   return map[raw]||map[key]||raw;
 }
 function modIconTier(m){
-  const raw=String(m?.tier??m?.quality??m?.grade??m?.modTier??m?.mod_tier??m?.rarityTier??m?.rarity_tier??'').trim().toUpperCase();
+  const rawValue=m?.tier??m?.quality??m?.grade??m?.modTier??m?.mod_tier??m?.rarityTier??m?.rarity_tier??'';
+  const raw=String(rawValue).trim().toUpperCase();
   if(/^[A-E]$/.test(raw))return raw;
+  // SWGOH player data exposes the mod tier as a number in equippedStatMod.
+  // 1=E, 2=D, 3=C, 4=B, 5=A. Never fall back to E when a numeric tier exists.
+  const numericTier=Number(rawValue);
+  if(Number.isInteger(numericTier) && numericTier>=1 && numericTier<=5){
+    return ({1:'E',2:'D',3:'C',4:'B',5:'A'})[numericTier];
+  }
   const assetText=String(m?.asset_src??m?.icon_url??m?.iconUrl??m?.image_url??m?.imageUrl??m?.icon??m?.image??'');
   const assetHit=assetText.match(/[-_]([A-E])\.(?:png|webp)(?:$|[?#])/i);
   if(assetHit)return assetHit[1].toUpperCase();
@@ -492,7 +513,7 @@ function modIconTier(m){
 }
 function modDots(m){
   const candidates=[
-    m?.dots,m?.dotCount,m?.dot_count,m?.pips,m?.pipCount,m?.rarity,m?.rarity_dots,m?.dot_rarity
+    m?.pips,m?.dots,m?.dotCount,m?.dot_count,m?.pipCount,m?.rarity_dots,m?.dot_rarity,m?.rarity
   ];
   for(const v of candidates){
     const n=Number(v);
