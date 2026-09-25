@@ -1,0 +1,228 @@
+/* SWGOH OPTIMIZER V72 — responsive command deck
+   Mobile/tablet layout is intentionally rebuilt so the HUD remains usable instead of shrinking the desktop canvas. */
+
+html,body{max-width:100%;overflow-x:hidden}
+img,svg,video,canvas{max-width:100%}
+button,input,select{max-width:100%;box-sizing:border-box}
+
+/* ---------- TABLET + MOBILE: turn the desktop cockpit into a responsive command deck ---------- */
+@media (max-width:1050px){
+  .topbar{
+    position:sticky!important;
+    top:0!important;
+    z-index:60!important;
+    min-height:68px!important;
+    height:auto!important;
+    padding:9px 14px!important;
+  }
+  .top-brand{min-width:0!important;flex:1 1 auto!important}
+  .top-brand .version{display:none!important}
+  .top-brand .brand{font-size:18px!important}
+  .top-brand .accent{font-size:9px!important}
+  .top-status-group{min-width:0!important;max-width:58%!important}
+  .top-status-group .top-pill{white-space:nowrap!important}
+  .top-status-group .top-pill:nth-child(n+3),.top-tools{display:none!important}
+
+  .layout{
+    display:block!important;
+    min-height:0!important;
+  }
+  .sidebar{
+    position:sticky!important;
+    top:68px!important;
+    z-index:55!important;
+    width:100%!important;
+    height:62px!important;
+    min-height:62px!important;
+    box-sizing:border-box!important;
+    padding:7px 10px!important;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    gap:7px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    border-right:0!important;
+    border-bottom:1px solid rgba(66,232,255,.25)!important;
+    background:
+      linear-gradient(90deg,rgba(2,9,17,.97),rgba(3,16,27,.91)),
+      url('assets/backgrounds/v68-sidebar-city.jpg') center 42%/cover no-repeat!important;
+    box-shadow:0 8px 30px rgba(0,0,0,.45)!important;
+    scrollbar-width:none;
+  }
+  .sidebar::-webkit-scrollbar{display:none}
+  .sidebar:before{display:none!important}
+  .sidebar-orbit,.side-note{display:none!important}
+  .nav{
+    flex:0 0 auto!important;
+    width:auto!important;
+    min-width:125px!important;
+    height:46px!important;
+    padding:0 12px!important;
+    display:flex!important;
+    justify-content:flex-start!important;
+    gap:8px!important;
+    border-radius:5px!important;
+    font-size:10px!important;
+    letter-spacing:.08em!important;
+  }
+  .nav-icon{display:grid!important;width:22px!important;height:22px!important;font-size:10px!important;flex:0 0 22px!important}
+  .content{
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+    margin:0!important;
+    padding:14px 14px 45px!important;
+  }
+  .page{width:100%!important;max-width:none!important;min-width:0!important}
+
+  /* Hero */
+  #dashboard .hero{
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:18px!important;
+    padding:24px!important;
+    overflow:hidden!important;
+  }
+  #dashboard .hero h1{font-size:clamp(34px,6vw,58px)!important;line-height:.95!important;max-width:100%!important;overflow-wrap:anywhere}
+  #dashboard .hero p{max-width:700px!important;font-size:11px!important;line-height:1.55!important}
+  #dashboard .online-loader{width:100%!important;min-width:0!important;box-sizing:border-box!important}
+  .hero-loader-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  .hero-loader-row label,.hero-loader-row input,.hero-loader-row button{min-width:0!important;width:100%!important}
+
+  /* KPI ribbon */
+  .dashboard-kpis{
+    width:100%!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  .dashboard-kpis .metric{min-width:0!important;padding:13px!important}
+  .dashboard-kpis .metric strong{font-size:clamp(25px,4vw,34px)!important}
+  .dashboard-kpis .metric span{font-size:8px!important}
+  .dashboard-kpis .metric small{font-size:7px!important}
+  .dashboard-kpis .kpi-icon{flex:0 0 36px!important;width:36px!important;height:36px!important}
+
+  /* Galactic power: no desktop grid assumptions on smaller screens */
+  #dashboard .dashboard-gp-panel{width:100%!important;overflow:hidden!important}
+  #dashboard .gp-command-strip{
+    width:100%!important;
+    min-height:0!important;
+    height:auto!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:auto auto!important;
+    position:relative!important;
+    overflow:hidden!important;
+    padding:10px 0 14px!important;
+  }
+  #dashboard .gp-total{
+    position:relative!important;
+    left:auto!important;
+    top:auto!important;
+    transform:none!important;
+    grid-column:1!important;
+    grid-row:1!important;
+    justify-self:center!important;
+    align-self:center!important;
+    width:min(190px,58vw)!important;
+    height:min(190px,58vw)!important;
+    margin:4px auto 10px!important;
+    z-index:8!important;
+  }
+  #dashboard .gp-total strong{font-size:clamp(25px,6vw,38px)!important;white-space:nowrap!important}
+  #dashboard .gp-breakdown{
+    grid-column:1!important;
+    grid-row:2!important;
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+    margin:0!important;
+    z-index:4!important;
+  }
+  #dashboard .gp-breakdown>div,
+  #dashboard .gp-breakdown>div:nth-child(2),
+  #dashboard .gp-breakdown>div:first-child{
+    grid-column:auto!important;
+    grid-row:auto!important;
+    min-width:0!important;
+    padding:16px 8px!important;
+    text-align:center!important;
+    clip-path:none!important;
+    border-left:0!important;
+  }
+  #dashboard .gp-breakdown span{font-size:7px!important;line-height:1.35!important}
+  #dashboard .gp-breakdown strong{font-size:clamp(20px,4.7vw,30px)!important;white-space:nowrap!important}
+  #dashboard .gp-energy-lines{display:block!important;z-index:6!important;pointer-events:none!important}
+  #dashboard .gp-energy-lines .energy-left{left:8%!important;width:39%!important;transform:rotate(-7deg)!important}
+  #dashboard .gp-energy-lines .energy-right{left:53%!important;width:39%!important;transform:rotate(7deg)!important}
+  #dashboard .gp-energy-lines .energy-orbit{left:18%!important;width:64%!important;top:47%!important}
+
+  /* Speed telemetry */
+  .v18-dashboard-speed,.dashboard-gp-panel,.hero,.metric{max-width:100%!important}
+  .speed-recap-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important}
+  .speed-recap-grid>*{min-width:0!important}
+
+  /* All other screens */
+  .analysis-header{grid-template-columns:1fr!important}
+  .analysis-tabs{width:100%!important;max-width:100%!important;overflow-x:auto!important}
+  .analysis-two-col{grid-template-columns:1fr!important}
+  .table-panel,.reallocation-table-wrap,.data-table-wrap{overflow-x:auto!important;max-width:100%!important}
+  .form-grid{grid-template-columns:1fr 1fr!important}
+  .analysis-selectors{grid-template-columns:1fr 1fr!important}
+}
+
+@media (max-width:700px){
+  .topbar{padding:8px 10px!important;min-height:62px!important}
+  .top-brand .brand{font-size:16px!important}
+  .top-status-group{max-width:46%!important}
+  .top-status-group .top-pill{padding:7px 8px!important;font-size:8px!important}
+  .top-status-group .top-pill:nth-child(2){display:none!important}
+  .sidebar{top:62px!important;height:58px!important;min-height:58px!important;padding:6px 7px!important}
+  .nav{min-width:112px!important;height:44px!important;font-size:9px!important}
+  .content{padding:10px 9px 40px!important}
+  #dashboard .hero{padding:20px!important}
+  #dashboard .hero h1{font-size:clamp(30px,9vw,48px)!important}
+  #dashboard .hero p{font-size:10px!important}
+  .hero-loader-row{grid-template-columns:1fr!important;gap:8px!important}
+  .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .dashboard-kpis .metric{padding:11px 9px!important;gap:8px!important}
+  .dashboard-kpis .kpi-icon{width:32px!important;height:32px!important;flex-basis:32px!important}
+  .dashboard-kpis .metric strong{font-size:28px!important}
+  .dashboard-kpis .metric small{display:none!important}
+  #dashboard .gp-total{width:min(180px,62vw)!important;height:min(180px,62vw)!important}
+  #dashboard .gp-breakdown strong{font-size:21px!important}
+  .speed-recap-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .form-grid,.analysis-selectors,.data-character-filters,.reallocation-controls{grid-template-columns:1fr!important}
+  .modal{padding:10px!important}
+  .modal-box{width:100%!important;max-height:92vh!important;overflow:auto!important}
+  .results,.character-info{overflow-x:auto!important}
+}
+
+@media (max-width:460px){
+  .top-brand .brand{font-size:14px!important}
+  .top-brand .accent{font-size:7px!important}
+  .top-status-group .top-pill{display:none!important}
+  .nav{min-width:100px!important;padding:0 9px!important;font-size:8px!important}
+  .nav-icon{width:19px!important;height:19px!important;flex-basis:19px!important}
+  #dashboard .hero{padding:17px!important}
+  #dashboard .hero h1{font-size:29px!important}
+  .dashboard-kpis .metric{display:grid!important;grid-template-columns:32px minmax(0,1fr)!important}
+  .dashboard-kpis .metric strong{font-size:25px!important}
+  .dashboard-kpis .metric span{font-size:7px!important}
+  #dashboard .gp-breakdown{grid-template-columns:1fr!important}
+  #dashboard .gp-breakdown>div{padding:12px!important}
+  #dashboard .gp-breakdown strong{font-size:25px!important}
+  #dashboard .gp-energy-lines{display:none!important}
+  .speed-recap-grid{grid-template-columns:1fr 1fr!important}
+  .speed-recap-grid .speed-card strong{font-size:22px!important}
+}
+
+/* Touch targets: no tiny controls on phones/tablets. */
+@media (pointer:coarse){
+  .nav,.primary,.analysis-tab,.data-tab,button,select,input{min-height:42px}
+  .nav{min-height:44px}
+}
