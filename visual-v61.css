@@ -1,0 +1,17 @@
+/* V61 — reference alignment pass: composition only, no business logic changes. */
+@media (min-width: 1000px){
+  .sidebar{width:190px!important}
+  .main{margin-left:190px!important}
+  #dashboard .hero{grid-template-columns:minmax(0,1fr) 350px!important;min-height:300px!important}
+  #dashboard .hero h1{font-size:clamp(44px,4.15vw,62px)!important;white-space:nowrap!important;letter-spacing:.015em!important}
+  #dashboard .hero p{max-width:820px!important}
+  #dashboard .stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:12px!important}
+}
+.command-deck-art{background-image:url('assets/backgrounds/command-deck.svg')!important;background-size:cover!important;background-position:center!important}
+.hud-grid{opacity:.22!important}
+#dashboard .hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(1,8,15,.12),transparent 45%,rgba(25,118,167,.10));pointer-events:none}
+@media (max-width:999px){
+  .sidebar{width:100%!important}
+  .main{margin-left:0!important}
+  #dashboard .hero h1{white-space:normal!important}
+}

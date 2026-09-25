@@ -1067,10 +1067,10 @@ function renderInventory(){
   wrap.innerHTML=rows.map(m=>{
     const x=modSpeedMetrics(m);
     return `<tr class="${m._speedCategory}" data-mod-index="${m._index}">
-      <td><strong>${esc(m.slot||'—')}</strong></td><td><div class="inventory-mod-icon">${modIconHtml(m)}</div></td><td>${esc(m.set_name||'—')}</td>
+      <td>${esc(m.set_name||'—')}</td><td><strong>${esc(m.slot||'—')}</strong></td>
       <td><strong>${esc(m.primary_stat||'—')}</strong> ${num(m.primary_value,1)}</td>
       <td>${esc(modSecondaries(m)||'—')}</td><td class="speed-cell">${x.primary?'★':(x.secondary?`+${num(x.secondary)}`:'—')}</td>
-      <td>${num(m.level)}</td><td>${esc(m.character||'Libre')}</td>
+      <td><div class="inventory-mod-icon">${modIconHtml(m)}</div></td><td>${num(m.level)}</td><td>${esc(m.character||'Libre')}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="9">Aucun mod ne correspond aux filtres.</td></tr>';
   wrap.querySelectorAll('[data-mod-index]').forEach(row=>row.addEventListener('click',()=>showModInventoryDetail(Number(row.dataset.modIndex))));
