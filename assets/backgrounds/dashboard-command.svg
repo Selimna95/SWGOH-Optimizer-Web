@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+<defs>
+ <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#020915"/><stop offset=".55" stop-color="#031326"/><stop offset="1" stop-color="#01060e"/></linearGradient>
+ <radialGradient id="planet"><stop stop-color="#b9ecff"/><stop offset=".12" stop-color="#5eb6e8"/><stop offset=".55" stop-color="#123d70"/><stop offset="1" stop-color="#041223" stop-opacity="0"/></radialGradient>
+ <linearGradient id="city" x2="0" y2="1"><stop stop-color="#0d4c75"/><stop offset=".7" stop-color="#061d34"/><stop offset="1" stop-color="#020914"/></linearGradient>
+ <linearGradient id="ship" x2="1"><stop stop-color="#0e3a59"/><stop offset=".5" stop-color="#204f6d"/><stop offset="1" stop-color="#061827"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="7"/></filter>
+</defs>
+<rect width="1600" height="1000" fill="url(#bg)"/>
+<!-- stars -->
+<g fill="#bfeeff" opacity=".8">
+<circle cx="70" cy="90" r="1.5"/><circle cx="190" cy="170" r="1"/><circle cx="310" cy="72" r="1.2"/><circle cx="430" cy="130" r="1"/>
+<circle cx="560" cy="52" r="1.3"/><circle cx="690" cy="185" r="1"/><circle cx="820" cy="80" r="1.2"/><circle cx="980" cy="140" r="1"/>
+<circle cx="1120" cy="62" r="1.5"/><circle cx="1280" cy="160" r="1"/><circle cx="1430" cy="92" r="1.3"/><circle cx="1530" cy="210" r="1"/>
+<circle cx="1020" cy="310" r="1"/><circle cx="1340" cy="340" r="1.2"/><circle cx="1480" cy="420" r="1"/>
+</g>
+<g opacity=".35" stroke="#4adfff" stroke-width="1"><path d="M0 620H1600"/><path d="M0 760H1600"/></g>
+<!-- planet -->
+<circle cx="1125" cy="120" r="300" fill="url(#planet)"/>
+<g fill="none" stroke="#4f9bc8" opacity=".24">
+ <ellipse cx="1125" cy="120" rx="280" ry="78"/><ellipse cx="1125" cy="120" rx="310" ry="105"/>
+</g>
+<!-- distant nebula -->
+<ellipse cx="760" cy="310" rx="420" ry="150" fill="#07537a" opacity=".11" filter="url(#glow)"/>
+<!-- large star destroyer silhouette -->
+<g transform="translate(760 245)" fill="url(#ship)" stroke="#55dfff" stroke-opacity=".35">
+ <path d="M-370 80 L-35 -5 L365 72 L70 104 L-85 96 Z"/>
+ <path d="M-35 -5 L-7 -82 L28 -12 Z"/>
+ <path d="M-85 96 L-155 124 L-80 91 ZM70 104 L148 126 L86 96 Z"/>
+ <path d="M-4 -79 L9 -111 L20 -80 Z"/>
+ <path d="M-265 67 L-360 46 L-294 78 Z"/>
+ <path d="M265 68 L365 46 L296 80 Z"/>
+</g>
+<g stroke="#4beaff" stroke-width="3" opacity=".45" filter="url(#glow)">
+ <path d="M395 330h-100"/><path d="M1125 322h-120"/>
+</g>
+<!-- left futuristic city -->
+<g transform="translate(0 540)" fill="url(#city)" stroke="#1b6d9c" stroke-opacity=".38">
+ <path d="M0 460V190h34v-86h28v102h22V156h39v-54h24v112h25V128h40v-68h22v110h28v-146h28v168h31v-94h42v352Z"/>
+ <path d="M0 460h420V330h-28v-44h-25v75h-34v-104h-28v104h-41v-72h-31v72h-43v-128h-28v128h-42v-64h-30v64h-42v-96h-31v96H0Z"/>
+</g>
+<!-- traffic/landing lights -->
+<g fill="#55eaff">
+ <circle cx="110" cy="830" r="2"/><circle cx="205" cy="900" r="2"/><circle cx="318" cy="862" r="2"/><circle cx="470" cy="790" r="2"/>
+</g>
+<!-- lower fog -->
+<rect y="820" width="1600" height="180" fill="#01060c" opacity=".58"/>
+<path d="M0 850 C260 790 480 900 700 850 S1120 800 1600 860" fill="none" stroke="#1785b6" stroke-opacity=".22"/>
+</svg>
