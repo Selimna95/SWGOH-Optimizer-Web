@@ -1,0 +1,150 @@
+
+/* =========================================================
+   V65 — IMAGES FOURNIES PAR L'UTILISATEUR
+   Les trois zones graphiques utilisent maintenant les images
+   fournies, recadrées et colorimétrées pour l'interface.
+   ========================================================= */
+:root{
+  --v65-header:94px;
+  --v65-sidebar:220px;
+}
+
+/* Remove the synthetic decorations that were competing with the real artwork. */
+.topbar .topbar-beam,
+#dashboard .hero .galactic-band,
+#dashboard .hero .laser-sweep,
+.sidebar-orbit{display:none!important}
+
+/* HEADER — ZGnnxWZ.jpg, recadrée + teinte bleu/cyan */
+.topbar{
+  height:var(--v65-header)!important;
+  min-height:var(--v65-header)!important;
+  overflow:hidden!important;
+  position:sticky!important;
+  top:0!important;
+  z-index:50!important;
+  background:
+    linear-gradient(90deg,rgba(0,8,16,.76) 0%,rgba(0,10,20,.42) 42%,rgba(0,9,18,.28) 68%,rgba(0,7,14,.72) 100%),
+    url('assets/backgrounds/header-space.jpg') center center/cover no-repeat!important;
+  border-bottom:1px solid rgba(39,215,255,.65)!important;
+  box-shadow:0 8px 34px rgba(0,0,0,.55),inset 0 -1px rgba(100,235,255,.24)!important;
+}
+.topbar:before{
+  content:"";
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(1,10,18,.16),transparent 45%,rgba(0,6,13,.28));
+}
+.topbar:after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:linear-gradient(90deg,transparent,#27dfff 20%,#b4f5ff 50%,#27dfff 80%,transparent);
+  opacity:.75;pointer-events:none;
+}
+.topbar>*{position:relative;z-index:2}
+
+/* LEFT STRIP — image verticale fournie */
+.layout{
+  grid-template-columns:var(--v65-sidebar) minmax(0,1fr)!important;
+  min-height:calc(100vh - var(--v65-header))!important;
+}
+.sidebar{
+  width:auto!important;
+  top:var(--v65-header)!important;
+  height:calc(100vh - var(--v65-header))!important;
+  min-height:calc(100vh - var(--v65-header))!important;
+  position:sticky!important;
+  overflow:hidden!important;
+  padding:58px 8px 18px!important;
+  background:
+    linear-gradient(180deg,rgba(0,7,14,.60) 0%,rgba(0,9,18,.30) 42%,rgba(0,7,14,.80) 100%),
+    url('assets/backgrounds/sidebar-space.jpg') center top/cover no-repeat!important;
+  border-right:1px solid rgba(42,211,255,.34)!important;
+  box-shadow:10px 0 42px rgba(0,0,0,.42),inset -1px 0 rgba(122,238,255,.10)!important;
+}
+.sidebar:after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:linear-gradient(90deg,rgba(0,4,9,.10),rgba(0,15,28,.04) 65%,rgba(0,6,12,.38));
+}
+.sidebar:before{
+  content:"COMMAND DECK // NAVIGATION"!important;
+  display:block!important;position:absolute!important;top:20px!important;left:13px!important;
+  padding:0!important;height:auto!important;
+  color:rgba(74,158,182,.70)!important;font-size:8px!important;letter-spacing:.16em!important;
+  border:0!important;background:none!important;z-index:3!important;
+}
+.sidebar>*{position:relative;z-index:2}
+
+/* NAV remains compact, so the supplied artwork stays visible */
+.nav{
+  height:64px!important;min-height:64px!important;
+  margin:0 0 9px!important;padding:0 18px!important;
+  background:rgba(1,11,19,.28)!important;
+  border-radius:3px!important;
+}
+.nav.active{
+  background:linear-gradient(90deg,rgba(26,188,235,.48),rgba(74,86,218,.42))!important;
+  border-color:#22dcff!important;
+  box-shadow:0 0 25px rgba(24,207,255,.20),inset 0 0 18px rgba(40,210,255,.10)!important;
+}
+.nav[data-page="help"]{display:none!important}
+
+/* HERO — même image fournie, nouveau cadrage horizontal */
+#dashboard .hero{
+  height:194px!important;
+  min-height:194px!important;
+  overflow:hidden!important;
+  position:relative!important;
+  padding:24px 28px!important;
+  grid-template-columns:minmax(0,1fr) 300px!important;
+  gap:28px!important;
+  align-items:center!important;
+  background:
+    linear-gradient(90deg,rgba(0,8,16,.94) 0%,rgba(0,8,16,.82) 34%,rgba(0,8,16,.48) 61%,rgba(0,8,16,.20) 100%),
+    url('assets/backgrounds/hero-space.jpg') center center/cover no-repeat!important;
+  border-color:rgba(37,211,255,.52)!important;
+}
+#dashboard .hero>div:first-child{
+  grid-column:1!important;grid-row:1!important;position:relative!important;z-index:2!important;
+}
+#dashboard .hero .online-loader{
+  grid-column:2!important;grid-row:1!important;position:relative!important;z-index:3!important;
+  width:auto!important;margin:0!important;padding:14px!important;
+  background:rgba(0,9,17,.78)!important;
+  border:1px solid rgba(46,215,255,.30)!important;
+}
+#dashboard .hero h1{
+  font-size:clamp(39px,4.1vw,58px)!important;
+  line-height:.95!important;margin:4px 0 9px!important;
+  white-space:nowrap!important;
+}
+#dashboard .hero p{max-width:690px!important;font-size:11px!important;line-height:1.45!important}
+#dashboard .hero:after{right:18px!important;top:13px!important;opacity:.45!important}
+
+/* keep the dashboard rhythm from V64 */
+.dashboard-kpis{margin-top:16px!important;gap:9px!important}
+.metric,.account-health{min-height:112px!important;padding:15px!important}
+.dashboard-account-panel,.dashboard-gp-panel,.v18-dashboard-speed{
+  margin-top:16px!important;border-radius:3px!important;
+}
+
+@media(max-width:1100px){
+  .topbar{height:82px!important;min-height:82px!important}
+  .layout{grid-template-columns:190px minmax(0,1fr)!important}
+  .sidebar{top:82px!important;height:calc(100vh - 82px)!important}
+}
+@media(max-width:760px){
+  .topbar{height:58px!important;min-height:58px!important}
+  .layout{display:block!important}
+  .sidebar{
+    top:58px!important;height:54px!important;min-height:54px!important;
+    padding:6px!important;background:rgba(0,8,14,.96)!important;
+  }
+  .sidebar:before{display:none!important}
+  .nav{height:40px!important;min-height:40px!important;margin:0!important}
+  #dashboard .hero{
+    height:auto!important;min-height:390px!important;
+    grid-template-columns:1fr!important;
+  }
+  #dashboard .hero>div:first-child,
+  #dashboard .hero .online-loader{grid-column:1!important;grid-row:auto!important}
+  #dashboard .hero h1{white-space:normal!important;font-size:34px!important}
+}
