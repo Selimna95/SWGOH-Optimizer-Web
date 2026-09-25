@@ -13,32 +13,18 @@
   <link rel="stylesheet" href="visual-v59.css?v=59">
   <link rel="stylesheet" href="visual-v60.css?v=60">
   <link rel="stylesheet" href="visual-v61.css?v=61">
-  <link rel="stylesheet" href="visual-v62.css?v=62">
-  <title>SWGOH Optimizer — Galactic Command V62</title>
+  <link rel="stylesheet" href="visual-v63.css?v=63">
+  <title>SWGOH Optimizer — Galactic Command V63</title>
 </head>
 <body>
 <div class="scanlines"></div><div class="hud-vignette"></div><div class="hud-grid"></div>
-<header class="topbar">
-  <div class="topbar-beam" aria-hidden="true"></div>
-  <div class="top-brand">
-    <span class="brand-mark" aria-hidden="true">⚙</span>
-    <div class="brand-block">
-      <div class="brand">SWGOH OPTIMIZER</div>
-      <div class="brand-subtitle">Analyse · Roster · Mods · Optimizer · Votre avantage stratégique</div>
-    </div>
-  </div>
-  <div class="top-command-art" aria-hidden="true"></div>
-  <div class="top-account">
-    <div class="account-menu">
-      <span class="account-avatar" aria-hidden="true">♟</span>
-      <span class="account-label">Mon compte</span>
-      <span class="account-chevron">⌄</span>
-    </div>
-    <button class="top-action" type="button" aria-label="Paramètres">⚙</button>
-    <button class="top-action" type="button" aria-label="Thème">☼</button>
-    <span id="topProfileState" hidden>EN ATTENTE</span>
-    <span id="topAccountName" hidden>—</span>
-    <span id="topUnitsCount" hidden>0</span>
+<header class="topbar"><div class="topbar-beam" aria-hidden="true"></div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SWGOH</span><span class="accent">OPTIMIZER</span></div><span class="version">GALACTIC COMMAND // V39</span></div>
+  <div class="top-status-group">
+    <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
+    <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
+    <div class="top-pill"><span class="pill-icon">◈</span><span>UNITÉS</span><b id="topUnitsCount">0</b></div>
+    <div class="top-tools"><span>⚙</span><span>⋮</span></div>
   </div>
 </header>
 <main class="layout">
@@ -47,6 +33,7 @@
     <button class="nav" data-page="data"><span class="nav-icon">▦</span><span>DONNÉES</span></button>
     <button class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>ANALYSE MODS</span></button>
     <button class="nav" data-page="optimizer"><span class="nav-icon">✦</span><span>OPTIMIZER</span></button>
+    <button class="nav" data-page="help"><span class="nav-icon">?</span><span>AIDE</span></button>
     <div class="side-note">100% navigateur<br>aucun PC serveur</div>
   </aside>
   <section class="content">
@@ -54,13 +41,13 @@
       <div class="hero panel">
         <div class="galactic-band" aria-hidden="true"></div><div class="laser-sweep" aria-hidden="true"></div>
         <div>
-          <div class="eyebrow">LOCAL · WEB APPLICATION</div>
+          <div class="eyebrow">LOCAL WEB APPLICATION</div>
           <h1>SWGOH Optimizer</h1>
-          <p>Analysez vos données, optimisez votre roster, vos mods et vos équipes.<br>Tout ce qu’il vous faut pour progresser et obtenir un avantage stratégique.</p>
+          <p>V61 conserve les données validées la conversion Relic (R0 à R10) et le comptage Speed 6/6, tout en conservant l’analyse des mods du projet Windows V176 : récapitulatif Speed, sélection personnage/faction, détail des 6 mods équipés et inventaire complet.</p>
         </div>
         <div class="online-loader">
-          <label>ID COMPTE<input id="allyCode" inputmode="numeric" maxlength="11" placeholder="123-456-789"></label>
-          <button id="loadPlayer" class="primary">♟ &nbsp; CHARGER MON PROFIL</button>
+          <label>ALLY CODE<input id="allyCode" inputmode="numeric" maxlength="11" placeholder="123-456-789"></label>
+          <button id="loadPlayer" class="primary">CHARGER MON PROFIL</button>
           <label class="secondary-upload" id="jsonImportControl" hidden>OU IMPORTER JSON<input id="fileInput" type="file" accept=".json,application/json"></label>
         </div>
       </div>

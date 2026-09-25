@@ -1,0 +1,11 @@
+/* V63 — restore the three visual image bands from the reference composition. */
+.topbar{background:linear-gradient(90deg,rgba(1,8,14,.72),rgba(1,8,14,.20) 58%,rgba(1,8,14,.72)),url('assets/backgrounds/header-command.svg') center/cover no-repeat!important;position:sticky!important;overflow:hidden!important;}
+.topbar:after{content:"";position:absolute;inset:0;pointer-events:none;border-bottom:1px solid rgba(71,226,255,.35);box-shadow:inset 0 -1px rgba(150,240,255,.1),inset 0 0 45px rgba(28,180,255,.08)}
+.topbar>*{position:relative;z-index:2}
+.sidebar{background:linear-gradient(180deg,rgba(1,9,16,.78),rgba(1,7,13,.35) 48%,rgba(1,7,13,.82)),url('assets/backgrounds/sidebar-city.svg') center/cover no-repeat!important;position:sticky!important;}
+.sidebar:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent 70%,rgba(31,210,255,.05)),linear-gradient(0deg,rgba(1,7,13,.25),transparent 35%);z-index:0}
+.sidebar>*{position:relative;z-index:2}
+#dashboard .hero{background:linear-gradient(90deg,rgba(1,8,15,.96) 0%,rgba(2,10,18,.88) 42%,rgba(2,10,18,.34) 73%,rgba(2,10,18,.10) 100%),url('assets/backgrounds/hero-command.svg') center/cover no-repeat!important;}
+#dashboard .hero:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent 58%,rgba(57,218,255,.08)),radial-gradient(circle at 78% 50%,rgba(65,217,255,.12),transparent 30%);}
+#dashboard .hero>*{position:relative;z-index:2}
+@media(max-width:999px){.topbar{background-position:center}.sidebar{background-position:center 70%}.hero{background-position:center}}
