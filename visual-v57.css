@@ -1,0 +1,236 @@
+/* ============================================================
+   V57 — FUTURISTIC SPATIAL TACTICAL DECK
+   Visual layer only. Data / optimizer / mod logic untouched.
+   Desktop composition follows the generated tactical-ship reference.
+   ============================================================ */
+:root{
+  --v57-bg:#020914;
+  --v57-panel:rgba(3,15,28,.88);
+  --v57-panel2:rgba(5,22,39,.94);
+  --v57-cyan:#39e6ff;
+  --v57-blue:#56a8ff;
+  --v57-purple:#a66cff;
+  --v57-green:#55efad;
+  --v57-gold:#ffd45b;
+  --v57-red:#ff587b;
+  --v57-text:#eaf8ff;
+  --v57-muted:#7692a7;
+}
+
+/* ---- global space-deck ---- */
+html,body{background:#020711!important}
+body{
+  background:
+    radial-gradient(ellipse at 72% 2%,rgba(43,143,214,.20),transparent 28%),
+    radial-gradient(ellipse at 6% 68%,rgba(40,92,160,.15),transparent 25%),
+    linear-gradient(180deg,#010610 0%,#03101d 46%,#020711 100%)!important;
+}
+body:before{
+  background-image:
+    linear-gradient(rgba(57,230,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(57,230,255,.022) 1px,transparent 1px)!important;
+  background-size:52px 52px!important;
+}
+body:after{opacity:.62!important}
+
+/* ---- command header ---- */
+.topbar{
+  height:86px!important;
+  padding:0 30px!important;
+  background:
+    linear-gradient(180deg,rgba(1,7,15,.98),rgba(2,11,20,.91)),
+    url('assets/backgrounds/dashboard.svg') center/cover!important;
+  border-bottom:1px solid rgba(57,230,255,.35)!important;
+  box-shadow:0 10px 40px rgba(0,0,0,.55),inset 0 -1px rgba(255,255,255,.05)!important;
+}
+.topbar:after{height:2px!important;background:linear-gradient(90deg,transparent,#39e6ff 18%,#9d73ff 52%,#39e6ff 82%,transparent)!important;opacity:.85!important}
+.topbar-beam{right:24%;width:300px!important}
+.top-brand{gap:14px!important}
+.brand-mark{
+  width:52px!important;height:52px!important;border-radius:50%!important;
+  border:1px solid var(--v57-cyan)!important;color:var(--v57-cyan)!important;
+  box-shadow:0 0 25px rgba(57,230,255,.22),inset 0 0 20px rgba(57,230,255,.12)!important;
+  font-size:25px!important;
+}
+.brand{font-size:22px!important;letter-spacing:.12em!important}
+.accent{font-size:10px!important;letter-spacing:.28em!important}
+.version{font-size:9px!important;color:#68879c!important}
+.top-status-group{gap:7px!important}
+.top-pill{border-color:rgba(57,230,255,.20)!important;background:rgba(4,17,29,.72)!important;border-radius:6px!important}
+
+/* ---- desktop tactical layout ---- */
+.layout{
+  display:grid!important;
+  grid-template-columns:220px minmax(0,1fr)!important;
+  min-height:calc(100vh - 86px)!important;
+}
+.sidebar{
+  position:sticky!important;top:86px!important;height:calc(100vh - 86px)!important;
+  width:auto!important;min-height:0!important;padding:22px 12px!important;
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:8px!important;overflow:hidden!important;
+  border-right:1px solid rgba(57,230,255,.16)!important;
+  border-bottom:0!important;
+  background:
+    linear-gradient(180deg,rgba(2,12,22,.96),rgba(2,7,14,.94)),
+    url('assets/backgrounds/dashboard.svg') left center/auto 100%!important;
+  box-shadow:12px 0 35px rgba(0,0,0,.35),inset -1px 0 rgba(57,230,255,.05)!important;
+}
+.sidebar:before{
+  content:'✦  COMMAND DECK'!important;
+  display:flex!important;align-items:center!important;
+  flex:0 0 auto!important;height:42px!important;padding:0 14px!important;
+  margin:0 0 10px!important;border-left:2px solid var(--v57-cyan)!important;
+  border-right:1px solid rgba(57,230,255,.15)!important;
+  color:#65eaff!important;background:linear-gradient(90deg,rgba(57,230,255,.10),transparent)!important;
+  font:900 10px var(--display)!important;letter-spacing:.15em!important;
+  text-shadow:0 0 13px rgba(57,230,255,.65)!important;
+}
+.sidebar-orbit{right:-120px!important;top:46%!important;border-color:rgba(57,230,255,.09)!important}
+.side-note{display:block!important;margin-top:auto!important;border-top:1px solid rgba(57,230,255,.12)!important;color:#49667a!important}
+.nav{
+  width:100%!important;min-width:0!important;height:52px!important;flex:0 0 auto!important;
+  justify-content:flex-start!important;padding:0 14px!important;border:1px solid transparent!important;
+  border-radius:7px!important;background:transparent!important;color:#7590a4!important;
+  font-size:12px!important;letter-spacing:.10em!important;
+}
+.nav:after{left:0!important;right:auto!important;width:3px!important;height:100%!important;bottom:0!important;background:var(--v41-accent)!important;opacity:.18!important}
+.nav:hover{background:rgba(57,230,255,.055)!important;border-color:rgba(57,230,255,.18)!important;color:#effcff!important}
+.nav.active{
+  color:#02131a!important;border-color:var(--v41-accent)!important;
+  background:linear-gradient(90deg,var(--v41-accent),rgba(105,224,255,.30),rgba(166,108,255,.24))!important;
+  box-shadow:0 0 25px rgba(57,230,255,.15),inset 0 0 18px rgba(255,255,255,.08)!important;
+}
+.nav.active:after{opacity:1!important;box-shadow:0 0 14px var(--v41-accent)!important}
+.nav-icon{width:29px!important;height:29px!important;border-radius:8px!important;font-size:14px!important}
+
+.content{padding:24px 26px 70px!important;background:linear-gradient(90deg,rgba(0,0,0,.10),transparent 10%,transparent 90%,rgba(0,0,0,.10))!important}
+.page{max-width:1550px!important}
+
+/* ---- panels: angular tactical console ---- */
+.panel{
+  border-radius:10px!important;
+  border-color:rgba(57,230,255,.22)!important;
+  background:linear-gradient(145deg,rgba(5,22,38,.94),rgba(2,10,19,.94))!important;
+  box-shadow:0 18px 45px rgba(0,0,0,.34),inset 0 0 35px rgba(57,230,255,.018)!important;
+}
+.panel:before{width:78px!important;background:linear-gradient(90deg,var(--v57-cyan),transparent)!important}
+.panel-title{padding:17px 20px 12px!important;color:#a9c8da!important;font-size:12px!important;letter-spacing:.13em!important}
+.panel-title:after{content:"";flex:1;height:1px;margin-left:14px;background:linear-gradient(90deg,rgba(57,230,255,.25),transparent)!important}
+
+/* ---- dashboard hero ---- */
+#dashboard .hero{
+  min-height:245px!important;padding:30px!important;
+  grid-template-columns:minmax(0,1fr) 315px!important;
+  background-image:
+    linear-gradient(90deg,rgba(2,8,15,.96) 0%,rgba(2,10,18,.86) 47%,rgba(2,10,18,.45) 100%),
+    url('assets/backgrounds/dashboard.svg')!important;
+  background-size:cover!important;background-position:center!important;
+  border-color:rgba(57,230,255,.32)!important;
+}
+#dashboard .hero:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent 0 55%,rgba(57,230,255,.08) 70%,transparent 100%);mix-blend-mode:screen}
+#dashboard .hero h1{font-size:clamp(36px,4.3vw,62px)!important;letter-spacing:.025em!important;text-shadow:0 0 28px rgba(57,230,255,.15)!important}
+#dashboard .hero p{max-width:790px!important;color:#87a5b8!important;font-size:13px!important}
+#dashboard .online-loader{border-color:rgba(57,230,255,.26)!important;background:rgba(2,10,18,.78)!important;box-shadow:inset 0 0 30px rgba(57,230,255,.045)!important}
+#dashboard .primary{min-height:46px!important}
+
+/* ---- dashboard KPI row ---- */
+.dashboard-kpis{grid-template-columns:repeat(4,minmax(0,1fr)) 1.15fr!important;gap:10px!important}
+.metric,.account-health{min-height:108px!important;padding:16px!important;border-radius:8px!important}
+.kpi-icon{width:46px!important;height:46px!important;border-radius:10px!important}
+.metric strong{font-size:29px!important}
+.metric:nth-child(2) .kpi-icon{color:var(--v57-cyan)!important;border-color:var(--v57-cyan)!important}
+.metric:nth-child(3) .kpi-icon{color:var(--v57-green)!important;border-color:var(--v57-green)!important}
+.metric:nth-child(4) .kpi-icon{color:var(--v57-gold)!important;border-color:var(--v57-gold)!important}
+.account-health{border-color:rgba(57,230,255,.28)!important}
+
+/* ---- account strip ---- */
+.dashboard-account-panel{margin-top:10px!important}
+.summary-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important;padding:0 18px 18px!important}
+.summary-grid>div{min-height:62px!important;padding:12px!important;background:linear-gradient(145deg,rgba(8,27,45,.68),rgba(3,13,24,.75))!important;border-color:rgba(111,172,205,.13)!important}
+
+/* ---- galactic power: three command blocks on one line ---- */
+.gp-command-strip{
+  grid-template-columns:minmax(245px,.7fr) minmax(0,1fr) minmax(0,1fr)!important;
+  min-height:136px!important;
+}
+.gp-total{padding:12px 18px!important;border-right:1px solid rgba(57,230,255,.18)!important}
+.gp-total strong{font-size:clamp(30px,3.1vw,48px)!important}
+.gp-breakdown div{min-height:136px!important;background:linear-gradient(145deg,rgba(6,30,48,.92),rgba(3,14,26,.96))!important}
+.gp-breakdown div:first-child{box-shadow:inset 0 3px 0 var(--v57-cyan)!important}
+.gp-breakdown div:last-child{box-shadow:inset 0 3px 0 var(--v57-purple)!important}
+.gp-breakdown div:first-child strong{color:#4eeaff!important}
+.gp-breakdown div:last-child strong{color:#b27cff!important}
+
+/* ---- speed distribution ---- */
+.speed-recap-grid{gap:10px!important;padding:4px 18px 18px!important}
+.speed-recap-grid>*{min-height:92px!important;border-radius:8px!important}
+
+/* ---- optimizer / analysis / data use same command-console language ---- */
+.controls,.analysis-header,.data-toolbar{border-color:rgba(57,230,255,.24)!important}
+.primary{border-radius:6px!important}
+input,select{border-radius:6px!important;background:rgba(3,13,24,.96)!important}
+.analysis-tabs,.data-tabs{background:rgba(2,9,17,.55)!important}
+
+/* ---- desktop density ---- */
+@media(min-width:1200px){
+  #dashboard .hero{min-height:260px!important}
+  .dashboard-kpis{margin-top:10px!important}
+}
+
+/* ---- tablet ---- */
+@media(max-width:1100px){
+  .top-status-group .top-pill:nth-child(3){display:none!important}
+  .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .account-health{grid-column:span 2}
+  .summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  #dashboard .hero{grid-template-columns:1fr!important}
+  #dashboard .online-loader{max-width:430px!important;margin-top:14px!important}
+}
+
+/* ---- phone: horizontal command deck, stacked tactical panels ---- */
+@media(max-width:760px){
+  .topbar{height:64px!important;padding:0 10px!important}
+  .brand-mark{width:38px!important;height:38px!important;font-size:18px!important}
+  .brand{font-size:14px!important}.accent,.version{display:none!important}
+  .top-status-group .top-pill{padding:5px 7px!important}.top-status-group .top-pill:nth-child(2){display:none!important}
+  .layout{display:block!important;min-height:calc(100vh - 120px)!important}
+  .sidebar{position:sticky!important;top:64px!important;height:56px!important;min-height:56px!important;width:100%!important;
+    padding:7px 8px!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:6px!important;
+    overflow-x:auto!important;border-right:0!important;border-bottom:1px solid rgba(57,230,255,.24)!important;
+    background:rgba(2,9,17,.97)!important}
+  .sidebar:before{height:38px!important;padding:0 10px!important;margin:0 3px 0 0!important;font-size:8px!important}
+  .nav{width:auto!important;min-width:max-content!important;height:38px!important;padding:0 11px!important;justify-content:center!important}
+  .nav-icon{width:22px!important;height:22px!important;font-size:11px!important}
+  .side-note,.sidebar-orbit{display:none!important}
+  .content{padding:12px 9px 45px!important}
+  #dashboard .hero{min-height:auto!important;padding:20px!important}
+  #dashboard .hero h1{font-size:30px!important}
+  #dashboard .hero p{font-size:12px!important}
+  .dashboard-kpis{grid-template-columns:1fr 1fr!important;gap:7px!important}
+  .metric,.account-health{min-height:92px!important;padding:12px!important;gap:8px!important}
+  .metric strong{font-size:21px!important}
+  .kpi-icon{width:36px!important;height:36px!important;font-size:15px!important}
+  .account-health{grid-column:1/-1}
+  .summary-grid{grid-template-columns:1fr 1fr!important;gap:7px!important}
+  .gp-command-strip{grid-template-columns:1fr!important}
+  .gp-total{min-height:92px!important;border-right:0!important;border-bottom:1px solid rgba(57,230,255,.18)!important}
+  .gp-breakdown{display:grid!important;grid-template-columns:1fr 1fr!important}
+  .gp-breakdown div{min-height:100px!important;padding:12px 7px!important}
+  .gp-breakdown strong{font-size:24px!important}
+  .speed-recap-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .speed-recap-grid>*{min-height:76px!important}
+  .form-grid{grid-template-columns:1fr!important}
+  #runOptimizer{grid-column:auto!important;min-width:0!important;width:100%!important}
+  .analysis-selectors{grid-template-columns:1fr!important}
+  .analysis-tabs,.data-tabs{overflow-x:auto!important}
+}
+@media(max-width:430px){
+  .dashboard-kpis{grid-template-columns:1fr!important}
+  .account-health{grid-column:auto}
+  .summary-grid{grid-template-columns:1fr!important}
+  .gp-breakdown{grid-template-columns:1fr!important}
+  .gp-breakdown div{border-right:0!important;border-bottom:1px solid rgba(57,230,255,.12)!important}
+  .speed-recap-grid{grid-template-columns:1fr 1fr!important}
+  #dashboard .hero h1{font-size:26px!important}
+}
