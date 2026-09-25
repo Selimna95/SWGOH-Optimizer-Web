@@ -1021,29 +1021,27 @@ function openCharacterInventory(character){
 function renderInventory(){
   const wrap=$('inventoryTable'), meta=$('inventoryMeta'); if(!wrap)return;
   const q=String($('analysisSearch')?.value||'').trim().toLowerCase();
-  const set=$('analysisSetFilter')?.value||'', slot=$('analysisSlotFilter')?.value||'', speed=$('analysisSpeedFilter')?.value||'', owner=$('analysisOwnerFilter')?.value||'', primary=$('analysisPrimaryFilter')?.value||'';
-  const minLevel=Number($('analysisLevelFilter')?.value||0);
+  const set=$('analysisSetFilter')?.value||'';
+  const slot=$('analysisSlotFilter')?.value||'';
+  const primary=$('analysisPrimaryFilter')?.value||'';
+  const secondary=$('analysisSecondaryFilter')?.value||'';
+  const speed=$('analysisSpeedFilter')?.value||'';
   let rows=inventoryRows().filter(m=>{
     if(q && !JSON.stringify(m).toLowerCase().includes(q))return false;
     if(set && m.set_name!==set)return false;
     if(slot && m.slot!==slot)return false;
-    if(speed && m._speedCategory!==speed)return false;
-    const equipped=String(m.character||'').trim()!=='';
-    if(owner==='equipped'&&!equipped)return false;
-    if(owner==='free'&&equipped)return false;
     if(primary && compactKey(m.primary_stat)!==compactKey(primary))return false;
-    if(m.level<minLevel)return false;
+    if(secondary){
+      let found=false;
+      for(let i=1;i<=4;i++){
+        if(compactKey(secondaryDisplayName(m[`secondary_${i}_stat`]))===compactKey(secondary)){found=true;break;}
+      }
+      if(!found)return false;
+    }
+    if(speed && m._speedCategory!==speed)return false;
     return true;
   });
-  const sort=$('analysisSort')?.value||'speed_desc';
-  rows.sort((a,b)=>{
-    if(sort==='speed_desc') return b._totalSpeed-a._totalSpeed;
-    if(sort==='speed_asc') return a._totalSpeed-b._totalSpeed;
-    if(sort==='level_desc') return b.level-a.level||b._totalSpeed-a._totalSpeed;
-    if(sort==='set') return String(a.set_name).localeCompare(String(b.set_name),'fr')||b._totalSpeed-a._totalSpeed;
-    if(sort==='slot') return String(a.slot).localeCompare(String(b.slot),'fr')||b._totalSpeed-a._totalSpeed;
-    return String(a.character||'').localeCompare(String(b.character||''),'fr');
-  });
+  rows.sort((a,b)=>b._totalSpeed-a._totalSpeed||String(a.set_name||'').localeCompare(String(b.set_name||''),'fr')||String(a.slot||'').localeCompare(String(b.slot||''),'fr'));
   meta.textContent=`${rows.length} mod(s) affiché(s) sur ${mods.length}`;
   wrap.innerHTML=rows.map(m=>{
     const x=modSpeedMetrics(m);
@@ -1077,9 +1075,14 @@ function closeModDetail(){if($('modDetailModal'))$('modDetailModal').hidden=true
 function prepareV18Filters(){
   const sets=[...new Set(mods.map(m=>normalizeModForDisplay(m).set_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
   const primaries=[...new Set(mods.map(m=>normalizeModForDisplay(m).primary_stat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
-  const setSel=$('analysisSetFilter'), primSel=$('analysisPrimaryFilter');
+  const secondaries=[...new Set(mods.flatMap(raw=>{
+    const m=normalizeModForDisplay(raw);
+    return [1,2,3,4].map(i=>m[`secondary_${i}_stat`]).filter(Boolean).map(secondaryDisplayName);
+  }))].sort((a,b)=>a.localeCompare(b,'fr'));
+  const setSel=$('analysisSetFilter'), primSel=$('analysisPrimaryFilter'), secSel=$('analysisSecondaryFilter');
   if(setSel)setSel.innerHTML='<option value="">Tous les sets</option>'+sets.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
   if(primSel)primSel.innerHTML='<option value="">Toutes les primaires</option>'+primaries.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  if(secSel)secSel.innerHTML='<option value="">Toutes les secondaires</option>'+secondaries.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
 }
 function secondaryDisplayName(name){
   const raw=String(name||'').trim();
@@ -1364,7 +1367,7 @@ $('analysisAuditSpeed')?.addEventListener('change',()=>{analysisAuditSpeed=$('an
 $('analysisAuditSort')?.addEventListener('change',()=>{analysisAuditSort=$('analysisAuditSort').value;renderSelectionPanel();});
 $('analysisCharacter')?.addEventListener('change',()=>{analysisSelectedCharacter=$('analysisCharacter').value;setAnalysisTab('report');});
 $('analysisMode')?.addEventListener('change',()=>{analysisMode=$('analysisMode').value;renderSelectionPanel();});
-['analysisSearch','analysisSetFilter','analysisSlotFilter','analysisSpeedFilter','analysisOwnerFilter','analysisPrimaryFilter','analysisLevelFilter','analysisSort'].forEach(id=>$(id)?.addEventListener('input',renderInventory));
+['analysisSearch','analysisSetFilter','analysisSlotFilter','analysisPrimaryFilter','analysisSecondaryFilter','analysisSpeedFilter'].forEach(id=>$(id)?.addEventListener('input',renderInventory));
 $('closeModDetail')?.addEventListener('click',closeModDetail);
 $('modDetailModal')?.addEventListener('click',e=>{if(e.target.id==='modDetailModal')closeModDetail();});
 

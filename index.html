@@ -172,13 +172,11 @@
           <select id="analysisSlotFilter">
             <option value="">Tous les slots</option><option value="Square">Square</option><option value="Arrow">Arrow</option><option value="Diamond">Diamond</option><option value="Triangle">Triangle</option><option value="Circle">Circle</option><option value="Cross">Cross</option>
           </select>
+          <select id="analysisPrimaryFilter"><option value="">Toutes les primaires</option></select>
+          <select id="analysisSecondaryFilter"><option value="">Toutes les secondaires</option></select>
           <select id="analysisSpeedFilter">
             <option value="">Toutes les vitesses</option><option value="1_10">1 – 10</option><option value="11_15">11 – 15</option><option value="16_21">16 – 21</option><option value="22plus">&gt; 21</option><option value="primary_speed">Primaire Speed</option><option value="no_speed">Sans Speed</option>
           </select>
-          <select id="analysisOwnerFilter"><option value="">Tous</option><option value="equipped">Équipés</option><option value="free">Libres</option></select>
-          <select id="analysisPrimaryFilter"><option value="">Toutes les primaires</option></select>
-          <label class="compact-label">Niv. ≥ <input id="analysisLevelFilter" type="number" min="0" max="15" value="0"></label>
-          <select id="analysisSort"><option value="speed_desc">Speed ↓</option><option value="speed_asc">Speed ↑</option><option value="level_desc">Niveau ↓</option><option value="set">Set</option><option value="slot">Slot</option><option value="owner">Propriétaire</option></select>
         </div>
         <div id="inventoryMeta" class="table-meta"></div>
         <div class="inventory-wrap"><table class="v18-table"><thead><tr><th>Slot</th><th>Mod</th><th>Set</th><th>Primaire</th><th>Secondaires</th><th>Speed</th><th>Niv.</th><th>Propriétaire</th></tr></thead><tbody id="inventoryTable"></tbody></table></div>
