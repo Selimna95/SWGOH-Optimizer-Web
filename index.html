@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="visual-v61.css?v=61">
   <link rel="stylesheet" href="visual-v63.css?v=63">
   <link rel="stylesheet" href="visual-v64.css?v=64">
-  <title>SWGOH Optimizer — Galactic Command V64</title>
+  <title>SWGOH Optimizer — Galactic Command V66</title>
 <link rel="stylesheet" href="visual-v65.css?v=65">
 </head>
 <body>
@@ -53,16 +53,18 @@
           <label class="secondary-upload" id="jsonImportControl" hidden>OU IMPORTER JSON<input id="fileInput" type="file" accept=".json,application/json"></label>
         </div>
       </div>
+      <div class="panel dashboard-identity-panel">
+        <div class="identity-label">PROFIL ACTIF</div>
+        <div id="accountSummary" class="identity-summary">
+          <div><span>JOUEUR</span><strong id="playerName">Profil non chargé</strong></div>
+          <div><span>ALLY CODE</span><strong id="playerAlly">—</strong></div>
+        </div>
+      </div>
       <div class="dashboard-kpis">
         <div class="panel metric kpi-mods"><div class="kpi-icon">◈</div><div><span>MODS CHARGÉS</span><strong id="modsCount">0</strong><small>Inventaire disponible</small></div></div>
         <div class="panel metric kpi-chars"><div class="kpi-icon">♙</div><div><span>PERSONNAGES</span><strong id="charsCount">0</strong><small>Unités jouables</small></div></div>
         <div class="panel metric kpi-ships"><div class="kpi-icon">✦</div><div><span>VAISSEAUX</span><strong id="shipsCount">0</strong><small>Flotte chargée</small></div></div>
         <div class="panel metric kpi-total"><div class="kpi-icon">★</div><div><span>UNITÉS TOTALES</span><strong id="unitsCount">0</strong><small>Roster complet</small></div></div>
-        <div class="panel account-health"><div class="health-ring"><b id="healthPercent">0%</b><span>PROFIL</span></div><div><span>ÉTAT DU COMPTE</span><strong id="healthText">En attente</strong><small>Synchronisation SWGOH.GG</small></div></div>
-      </div>
-      <div class="panel quick-summary dashboard-account-panel">
-        <div class="panel-title"><span class="section-icon">●</span> ÉTAT DU COMPTE</div>
-        <div id="accountSummary" class="summary-grid"><span>Aucune donnée chargée.</span></div>
       </div>
       <div class="panel dashboard-gp-panel">
   <div class="panel-title"><span class="section-icon">✦</span> PUISSANCE GALACTIQUE</div>

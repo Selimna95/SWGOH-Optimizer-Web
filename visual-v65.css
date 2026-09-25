@@ -148,3 +148,77 @@
   #dashboard .hero .online-loader{grid-column:1!important;grid-row:auto!important}
   #dashboard .hero h1{white-space:normal!important;font-size:34px!important}
 }
+
+
+/* =========================================================
+   V66 — PRESENTATION DASHBOARD
+   Hero -> identité joueur -> 4 KPI -> puissance galactique
+   ========================================================= */
+#dashboard .dashboard-identity-panel{
+  margin-top:10px!important;
+  min-height:66px!important;
+  padding:10px 18px!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:24px!important;
+  background:linear-gradient(90deg,rgba(2,17,28,.96),rgba(3,19,31,.72),rgba(2,12,21,.90))!important;
+  border:1px solid rgba(38,211,255,.30)!important;
+  border-left:3px solid rgba(39,219,255,.78)!important;
+  position:relative!important;
+  overflow:hidden!important;
+}
+#dashboard .dashboard-identity-panel:after{
+  content:"";position:absolute;right:0;top:0;bottom:0;width:34%;
+  background:linear-gradient(90deg,transparent,rgba(29,180,225,.06));pointer-events:none;
+}
+#dashboard .identity-label{
+  color:#35d9ff!important;font-size:9px!important;letter-spacing:.18em!important;
+  font-weight:700!important;white-space:nowrap!important;min-width:92px!important;
+}
+#dashboard .identity-summary{
+  display:grid!important;grid-template-columns:minmax(220px,1fr) minmax(180px,.65fr)!important;
+  gap:8px!important;flex:1!important;position:relative!important;z-index:2!important;
+}
+#dashboard .identity-summary>div{
+  min-height:42px!important;padding:7px 14px!important;
+  border:1px solid rgba(61,177,219,.22)!important;
+  background:rgba(0,11,20,.52)!important;
+  display:flex!important;flex-direction:column!important;justify-content:center!important;
+}
+#dashboard .identity-summary span{
+  color:rgba(102,185,211,.72)!important;font-size:8px!important;letter-spacing:.14em!important;
+}
+#dashboard .identity-summary strong{
+  margin-top:3px!important;color:#dff8ff!important;font-size:17px!important;letter-spacing:.03em!important;
+}
+#dashboard .dashboard-kpis{
+  margin-top:10px!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:8px!important;
+}
+#dashboard .dashboard-kpis .metric{
+  min-height:98px!important;padding:12px!important;
+}
+#dashboard .dashboard-kpis .metric .kpi-icon{width:42px!important;height:42px!important;min-width:42px!important;font-size:20px!important}
+#dashboard .dashboard-kpis .metric span{font-size:8px!important;letter-spacing:.08em!important}
+#dashboard .dashboard-kpis .metric strong{font-size:31px!important;line-height:1!important;margin:3px 0!important}
+#dashboard .dashboard-kpis .metric small{font-size:7px!important}
+#dashboard .dashboard-gp-panel{margin-top:12px!important}
+#dashboard .dashboard-gp-panel .panel-title{font-size:15px!important}
+#dashboard .gp-command-strip{min-height:145px!important}
+#dashboard .gp-total span,
+#dashboard .gp-breakdown span{font-size:8px!important;letter-spacing:.09em!important}
+#dashboard .gp-total strong{font-size:40px!important;line-height:1!important}
+#dashboard .gp-breakdown strong{font-size:39px!important;line-height:1!important}
+#dashboard .gp-total small{font-size:7px!important}
+
+@media(max-width:900px){
+  #dashboard .identity-summary{grid-template-columns:1fr 1fr!important}
+  #dashboard .gp-total strong,#dashboard .gp-breakdown strong{font-size:31px!important}
+}
+@media(max-width:700px){
+  #dashboard .dashboard-identity-panel{align-items:stretch;flex-direction:column;gap:7px}
+  #dashboard .identity-summary{grid-template-columns:1fr!important}
+  #dashboard .dashboard-kpis{grid-template-columns:1fr 1fr!important}
+  #dashboard .gp-command-strip{grid-template-columns:1fr!important}
+}
