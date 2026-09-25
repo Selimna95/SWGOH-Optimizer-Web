@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+<defs>
+  <radialGradient id="space" cx="55%" cy="35%" r="80%"><stop offset="0" stop-color="#092642"/><stop offset=".45" stop-color="#03111f"/><stop offset="1" stop-color="#01050b"/></radialGradient>
+  <radialGradient id="nebula" cx="50%" cy="50%"><stop offset="0" stop-color="#35d9ff" stop-opacity=".18"/><stop offset=".45" stop-color="#3768ff" stop-opacity=".07"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <radialGradient id="planet" cx="35%" cy="28%"><stop offset="0" stop-color="#9be8ff"/><stop offset=".25" stop-color="#3b9ed2"/><stop offset=".62" stop-color="#123c67"/><stop offset="1" stop-color="#030d18"/></radialGradient>
+  <linearGradient id="city" x1="0" x2="1"><stop stop-color="#04111d"/><stop offset="1" stop-color="#0b2a3c"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1600" height="1000" fill="url(#space)"/>
+<ellipse cx="1050" cy="360" rx="760" ry="430" fill="url(#nebula)"/>
+<g fill="#b8efff" opacity=".75">
+ <circle cx="74" cy="96" r="1.5"/><circle cx="158" cy="208" r="1"/><circle cx="242" cy="80" r="1.7"/><circle cx="342" cy="145" r="1"/><circle cx="460" cy="72" r="1.4"/><circle cx="578" cy="220" r="1.1"/><circle cx="710" cy="92" r="1.5"/><circle cx="825" cy="170" r="1"/><circle cx="935" cy="65" r="1.3"/><circle cx="1080" cy="122" r="1.2"/><circle cx="1190" cy="72" r="1.6"/><circle cx="1310" cy="160" r="1"/><circle cx="1440" cy="82" r="1.4"/><circle cx="1530" cy="230" r="1"/>
+ <circle cx="90" cy="470" r="1"/><circle cx="205" cy="560" r="1.3"/><circle cx="330" cy="390" r="1"/><circle cx="510" cy="520" r="1.5"/><circle cx="690" cy="430" r="1"/><circle cx="820" cy="570" r="1.2"/><circle cx="1280" cy="500" r="1.2"/><circle cx="1460" cy="420" r="1.4"/><circle cx="1550" cy="620" r="1"/>
+</g>
+<!-- distant planet -->
+<circle cx="1325" cy="170" r="290" fill="url(#planet)" opacity=".88"/>
+<path d="M1050 185c155-100 430-126 620-12" fill="none" stroke="#5fe5ff" stroke-opacity=".22" stroke-width="9"/>
+<path d="M1080 245c170-75 360-75 545-8M1095 330c145-48 330-45 515 0M1120 410c130-28 285-18 455 18" fill="none" stroke="#8ddcff" stroke-opacity=".10" stroke-width="8"/>
+<!-- tactical moon -->
+<circle cx="870" cy="690" r="170" fill="#071521" stroke="#1c668a" stroke-opacity=".35" stroke-width="3"/>
+<path d="M720 690c90-62 200-75 300-30" fill="none" stroke="#49dfff" stroke-opacity=".12" stroke-width="20"/>
+<!-- starship silhouette -->
+<g transform="translate(560 285)" filter="url(#glow)" opacity=".78">
+ <path d="M0 48L125 20 290 35 365 64 290 77 165 68 92 83 30 72z" fill="#0c2638" stroke="#6deaff" stroke-opacity=".58" stroke-width="2"/>
+ <path d="M105 35L170 0 225 8 190 40zM185 69L270 112 300 98 245 58z" fill="#123b56" stroke="#56dfff" stroke-opacity=".35"/>
+ <path d="M20 58L-65 85 55 69zM320 63L430 44 340 73z" fill="#16415b" stroke="#4ddfff" stroke-opacity=".3"/>
+ <path d="M-8 59h-45M-15 66h-65" stroke="#4fe8ff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+</g>
+<!-- distant fighter group -->
+<g fill="#1a5a79" opacity=".5"><path d="M420 650l45-8 24 8-24 7z"/><path d="M470 705l30-5 16 5-16 5z"/><path d="M1240 590l42-7 20 7-20 6z"/></g>
+<!-- futuristic city / station silhouette -->
+<g transform="translate(0 760)" fill="url(#city)">
+ <path d="M0 240V80l65-24v184zM70 240V20l44-18v238zM124 240V105l65-40v175zM194 240V42l34-15v213zM235 240V0l28 0v240zM270 240V72l70-30v198zM348 240V18l32-10v232zM390 240V105l52-45v180zM450 240V48l44-18v210z"/>
+</g>
+<g stroke="#3ce4ff" stroke-opacity=".18" stroke-width="2"><path d="M0 920h1600"/><path d="M0 955h1600"/></g>
+</svg>
