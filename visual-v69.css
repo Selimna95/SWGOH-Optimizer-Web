@@ -10,8 +10,8 @@ body{overflow-x:hidden}
 .layout{grid-template-columns:220px minmax(0,1fr)!important;min-height:100vh!important;padding-top:94px!important}
 .sidebar{position:fixed!important;left:0!important;top:94px!important;width:220px!important;height:calc(100vh - 94px)!important;box-sizing:border-box!important;z-index:400!important;padding:46px 12px 18px!important;background:linear-gradient(180deg,rgba(0,9,17,.24),rgba(0,8,15,.18) 40%,rgba(0,7,13,.62)),url('assets/backgrounds/v68-sidebar-city.jpg') center/cover no-repeat!important;border-right:1px solid rgba(50,221,255,.28)!important;box-shadow:9px 0 32px rgba(0,0,0,.30)!important}
 .sidebar:after{background:linear-gradient(180deg,rgba(0,7,13,.02),transparent 30%,rgba(0,0,0,.22)),linear-gradient(90deg,transparent 72%,rgba(0,0,0,.32))!important}
-.content{margin-left:220px!important;padding:20px 22px 70px!important;max-width:none!important}
-.page{max-width:1320px!important;margin:0 auto!important}
+.content{margin-left:0!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;padding:20px 22px 70px!important;max-width:none!important}
+.page{width:100%!important;max-width:1500px!important;margin:0 auto!important;box-sizing:border-box!important}
 /* hero */
 #dashboard .hero{height:240px!important;min-height:240px!important;padding:27px 34px!important;grid-template-columns:minmax(0,1fr) 350px!important;gap:24px!important;background:linear-gradient(90deg,rgba(1,10,17,.58) 0%,rgba(1,11,19,.34) 43%,rgba(1,10,18,.12) 68%,rgba(1,8,15,.34) 100%),url('assets/backgrounds/v68-hero-space.jpg') center 46%/cover no-repeat!important;border-color:rgba(50,221,255,.48)!important;box-shadow:inset 0 0 50px rgba(30,203,255,.06),0 15px 30px rgba(0,0,0,.28)!important}
 #dashboard .hero:before{background:linear-gradient(180deg,rgba(29,205,255,.03),transparent 40%,rgba(0,0,0,.14))!important}
@@ -53,3 +53,10 @@ body{overflow-x:hidden}
 @keyframes v69pulse{0%,100%{opacity:.45}50%{opacity:.85}}
 @media(max-width:1100px){.content{padding:16px!important}.page{max-width:none!important}#dashboard .hero{height:225px!important;min-height:225px!important;grid-template-columns:1fr 315px!important}.dashboard-kpis .metric{padding:15px!important}.dashboard-kpis .metric strong{font-size:30px!important}.gp-command-strip{grid-template-columns:1fr 235px 1fr!important}.gp-total{width:215px!important;height:215px!important}.gp-total strong{font-size:29px!important}.gp-breakdown strong{font-size:29px!important}}
 @media(max-width:800px){.topbar{position:relative!important;height:auto!important;min-height:72px!important}.layout{padding-top:0!important;display:block!important}.sidebar{position:relative!important;top:auto!important;width:100%!important;height:auto!important}.content{margin-left:0!important;padding:10px!important}#dashboard .hero{height:auto!important;min-height:0!important;grid-template-columns:1fr!important}.dashboard-kpis{grid-template-columns:1fr 1fr!important}.dashboard-kpis:before{display:none}.dashboard-kpis .metric{margin:0!important}.gp-command-strip{grid-template-columns:1fr!important}.gp-total{grid-column:1!important;grid-row:1!important}.gp-breakdown{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}.gp-breakdown>div,.gp-breakdown>div:nth-child(2){clip-path:none!important;text-align:left!important}.speed-recap-grid{grid-template-columns:repeat(2,1fr)!important}}
+
+/* V70 HOTFIX — restore full desktop content width; sidebar already occupies its grid track */
+@media(min-width:801px){
+  .layout{display:grid!important;grid-template-columns:220px minmax(0,1fr)!important;width:100%!important;}
+  .content{grid-column:2!important;margin-left:0!important;width:100%!important;min-width:0!important;}
+  #dashboard.page.active{width:100%!important;}
+}
