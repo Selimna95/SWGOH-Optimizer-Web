@@ -326,3 +326,18 @@ button,input,select{max-width:100%;box-sizing:border-box}
 .holocron-expert-links{display:grid;gap:7px;margin-top:13px}.holocron-expert-links button{border:1px solid rgba(170,132,255,.34);background:rgba(19,20,39,.7);color:#d8c6ff;text-align:left;padding:9px 11px;font-size:9px;font-weight:800;letter-spacing:.7px;cursor:pointer}
 @media(max-width:1050px){.holocron-levels{grid-template-columns:1fr 1fr}.holocron-priority{grid-column:1/-1}.creator-banner{width:calc(100% - 28px)!important;margin:20px auto!important}}
 @media(max-width:700px){.holocron-levels{grid-template-columns:1fr}.holocron-priority{grid-column:auto}.holocron-level{padding:16px}}
+
+/* V75 — rendre les dix emplacements de décision immédiatement visibles */
+.holocron-priority{grid-column:1/-1!important}
+.holocron-topchanges{margin:12px 0 14px}
+.holocron-topchanges-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 12px;margin-bottom:10px;border-left:2px solid #53dcae;background:rgba(5,15,25,.58)}
+.holocron-topchanges-status strong{font-size:11px;color:#c5f8e5;letter-spacing:.5px}
+.holocron-topchanges-status span{font-size:10px;line-height:1.45;color:#91aebc}
+.holocron-change-list{list-style:none;counter-reset:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px}
+.holocron-change-list li{display:flex;align-items:center;gap:10px;min-width:0;padding:9px 11px;border:1px solid rgba(83,220,174,.2);background:linear-gradient(100deg,rgba(13,39,43,.78),rgba(5,17,29,.72));}
+.change-rank{flex:0 0 28px;color:#6de5bd;font-size:14px;font-weight:900;text-align:center}
+.change-content{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}
+.change-content strong{font-size:10px;color:#e5f8f4;letter-spacing:.3px}
+.change-content small{font-size:9px;color:#91aebc;white-space:normal}
+.change-state{flex:0 0 auto;font-size:7px;font-weight:900;letter-spacing:.7px;color:#70d8bc;border:1px solid rgba(112,216,188,.28);padding:4px 5px}
+@media(max-width:700px){.holocron-change-list{grid-template-columns:1fr}.holocron-priority{grid-column:auto!important}}
