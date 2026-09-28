@@ -1,10 +1,10 @@
 {
-  "name": "SWGOH Optimizer Web V33 — Galactic Command",
-  "short_name": "SWGOH Optimizer",
+  "name": "Selimna’s Holocron",
+  "short_name": "Selimna’s Holocron",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#02050a",
   "theme_color": "#061421",
   "lang": "fr",
-  "description": "SWGOH Optimizer Web V33 — analyse des mods, roster et optimisation dans un HUD galactique futuriste."
+  "description": "Selimna’s Holocron Web V33 — Transforme ton inventaire de mods en décisions optimales."
 }

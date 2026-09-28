@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
-  <meta name="description" content="SWGOH Optimizer — Galactic Command V39 : roster, mods et optimisation dans le navigateur">
+  <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="galactic-command.css?v=51">
   <link rel="stylesheet" href="visual-v42.css?v=53">
@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="visual-v61.css?v=61">
   <link rel="stylesheet" href="visual-v63.css?v=63">
   <link rel="stylesheet" href="visual-v64.css?v=64">
-  <title>SWGOH Optimizer — Galactic Command V72</title>
+  <title>Selimna’s Holocron — V74</title>
 <link rel="stylesheet" href="visual-v65.css?v=65">
 <link rel="stylesheet" href="visual-v67.css?v=67">
 <link rel="stylesheet" href="visual-v68.css?v=68">
@@ -26,7 +26,7 @@
 <body>
 <div class="scanlines"></div><div class="hud-vignette"></div><div class="hud-grid"></div>
 <header class="topbar"><div class="topbar-beam" aria-hidden="true"></div>
-  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SWGOH</span><span class="accent">OPTIMIZER</span></div><span class="version">GALACTIC COMMAND // V70</span></div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V74</span></div>
   <div class="top-status-group">
     <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
     <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
@@ -48,8 +48,9 @@
         <div class="galactic-band" aria-hidden="true"></div><div class="laser-sweep" aria-hidden="true"></div>
         <div>
           <div class="eyebrow">LOCAL WEB APPLICATION</div>
-          <h1>SWGOH Optimizer</h1>
-          <p>Analysez votre roster, vos mods et votre puissance galactique depuis un poste de commandement tactique. Données du profil, flotte, personnages et télémétrie des mods V176 sont réunis dans une interface vivante.</p>
+          <h1>Selimna’s Holocron</h1>
+          <p class="holocron-slogan">Transforme ton inventaire de mods en décisions optimales.</p>
+          <p>Prends les bonnes décisions pour faire progresser ton roster. Des recommandations compréhensibles aux outils d’analyse les plus détaillés.</p>
         </div>
         <div class="online-loader">
           <div class="hero-profile-head"><span class="profile-status-dot"></span><span>PROFIL</span><b id="heroProfileState">EN ATTENTE</b></div>
@@ -68,6 +69,31 @@
         <div class="panel metric kpi-ships"><div class="kpi-icon">✦</div><div><span>VAISSEAUX</span><strong id="shipsCount">0</strong><small>Flotte chargée</small></div></div>
         <div class="panel metric kpi-total"><div class="kpi-icon">★</div><div><span>UNITÉS TOTALES</span><strong id="unitsCount">0</strong><small>Roster complet</small></div></div>
       </div>
+      <section class="holocron-workflow" aria-label="Parcours de décision Holocron">
+        <div class="holocron-section-heading"><span class="eyebrow">HOLOCRON // CENTRE DE DÉCISION</span><h2>De l’action à l’expertise</h2><p>Trois niveaux pour passer du changement concret à la maîtrise complète de tes mods.</p></div>
+        <div class="holocron-levels">
+          <article class="holocron-level holocron-priority">
+            <div class="holocron-level-index">01 <span>PRIORITÉ</span></div>
+            <h3>Les 10 changements qui améliorent le plus ton roster</h3>
+            <p class="holocron-level-desc">Identifie les réaffectations de mods à examiner en premier, selon les données réellement disponibles.</p>
+            <div class="holocron-empty" id="holocronTopChanges"><strong>En attente de ton profil</strong><span>Charge ton compte pour préparer les pistes d’amélioration. Aucun gain n’est inventé lorsque les données manquent.</span></div>
+            <button class="primary" type="button" data-page="optimizer" onclick="document.querySelector('[data-page=optimizer]').click()">ACCÉDER À L’OPTIMIZER ↗</button>
+          </article>
+          <article class="holocron-level holocron-why">
+            <div class="holocron-level-index">02 <span>COMPRENDRE</span></div>
+            <h3>Pourquoi ces changements ?</h3>
+            <p class="holocron-level-desc">Chaque recommandation doit être accompagnée de ses raisons : statistiques gagnées, rôle du personnage, mod déplacé et compromis éventuels.</p>
+            <ul><li>Comparer l’avant et l’après</li><li>Comprendre les priorités de statistiques</li><li>Identifier les compromis et limites</li></ul>
+            <span class="holocron-tag">EXPLICATIONS LIÉES AUX DONNÉES</span>
+          </article>
+          <article class="holocron-level holocron-expert">
+            <div class="holocron-level-index">03 <span>EXPERT</span></div>
+            <h3>Analyse experte</h3>
+            <p class="holocron-level-desc">Accède à l’ensemble des outils pour contrôler, comparer et affiner les choix manuellement.</p>
+            <div class="holocron-expert-links"><button type="button" data-page="mods-analysis" onclick="document.querySelector('[data-page=mods-analysis]').click()">ANALYSE DES MODS ↗</button><button type="button" data-page="data" onclick="document.querySelector('[data-page=data]').click()">DONNÉES DU ROSTER ↗</button><button type="button" data-page="optimizer" onclick="document.querySelector('[data-page=optimizer]').click()">OPTIMIZER V176 ↗</button></div>
+          </article>
+        </div>
+      </section>
       <div class="panel dashboard-gp-panel">
   <div class="panel-title"><span class="section-icon">✦</span> PUISSANCE GALACTIQUE</div>
   <div class="gp-command-strip">
