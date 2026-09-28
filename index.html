@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="visual-v61.css?v=61">
   <link rel="stylesheet" href="visual-v63.css?v=63">
   <link rel="stylesheet" href="visual-v64.css?v=64">
-  <title>Selimna’s Holocron — V74</title>
+  <title>Selimna’s Holocron — V76</title>
 <link rel="stylesheet" href="visual-v65.css?v=65">
 <link rel="stylesheet" href="visual-v67.css?v=67">
 <link rel="stylesheet" href="visual-v68.css?v=68">
@@ -26,7 +26,7 @@
 <body>
 <div class="scanlines"></div><div class="hud-vignette"></div><div class="hud-grid"></div>
 <header class="topbar"><div class="topbar-beam" aria-hidden="true"></div>
-  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V74</span></div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V76</span></div>
   <div class="top-status-group">
     <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
     <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
@@ -37,6 +37,7 @@
 <main class="layout">
   <aside class="sidebar"><div class="sidebar-orbit" aria-hidden="true"></div>
     <button class="nav active" data-page="dashboard"><span class="nav-icon">⌂</span><span>DASHBOARD</span></button>
+    <button class="nav" data-page="top-changes"><span class="nav-icon">⇄</span><span>TOP 10 ÉCHANGES</span></button>
     <button class="nav" data-page="data"><span class="nav-icon">▦</span><span>DONNÉES</span></button>
     <button class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>ANALYSE MODS</span></button>
     <button class="nav" data-page="optimizer"><span class="nav-icon">✦</span><span>OPTIMIZER</span></button>
@@ -70,29 +71,8 @@
         <div class="panel metric kpi-total"><div class="kpi-icon">★</div><div><span>UNITÉS TOTALES</span><strong id="unitsCount">0</strong><small>Roster complet</small></div></div>
       </div>
       <section class="holocron-workflow" aria-label="Parcours de décision Holocron">
-        <div class="holocron-section-heading"><span class="eyebrow">HOLOCRON // CENTRE DE DÉCISION</span><h2>De l’action à l’expertise</h2><p>Trois niveaux pour passer du changement concret à la maîtrise complète de tes mods.</p></div>
+        <div class="holocron-section-heading"><span class="eyebrow">HOLOCRON // CENTRE DE DÉCISION</span><h2>Comprendre et affiner</h2><p>Les explications et les outils détaillés restent accessibles ici. Les propositions de réaffectation disposent désormais de leur propre espace.</p></div>
         <div class="holocron-levels">
-          <article class="holocron-level holocron-priority">
-            <div class="holocron-level-index">01 <span>PRIORITÉ</span></div>
-            <h3>Les 10 changements qui améliorent le plus ton roster</h3>
-            <p class="holocron-level-desc">Identifie les réaffectations de mods à examiner en premier, selon les données réellement disponibles.</p>
-            <div class="holocron-topchanges" id="holocronTopChanges" aria-live="polite">
-              <div class="holocron-topchanges-status"><strong>10 emplacements de décision</strong><span>Les recommandations seront calculées à partir de ton profil chargé. En attendant, aucun changement ni gain fictif n'est affiché.</span></div>
-              <ol class="holocron-change-list">
-                <li><span class="change-rank">01</span><span class="change-content"><strong>Priorité n° 1</strong><small>En attente de l’analyse du roster</small></span><span class="change-state">À CALCULER</span></li>
-                <li><span class="change-rank">02</span><span class="change-content"><strong>Priorité n° 2</strong><small>En attente de l’analyse du roster</small></span><span class="change-state">À CALCULER</span></li>
-                <li><span class="change-rank">03</span><span class="change-content"><strong>Priorité n° 3</strong><small>En attente de l’analyse du roster</small></span><span class="change-state">À CALCULER</span></li>
-                <li><span class="change-rank">04</span><span class="change-content"><strong>Priorité n° 4</strong><small>En attente de l’analyse du roster</small></span><span class="change-state">À CALCULER</span></li>
-                <li><span class="change-rank">05</span><span class="change-content"><strong>Priorité n° 5</strong><small>En attente de l’analyse du roster</small></span><span class="change-state">À CALCULER</span></li>
-                <li><span class="change-rank">06</span><span class="change-content"><strong>Priorité n° 6</strong><small>En attente de l’analyse du roster</small></span><span class="change-state">À CALCULER</span></li>
-                <li><span class="change-rank">07</span><span class="change-content"><strong>Priorité n° 7</strong><small>En attente de l’analyse du roster</small></span><span class="change-state">À CALCULER</span></li>
-                <li><span class="change-rank">08</span><span class="change-content"><strong>Priorité n° 8</strong><small>En attente de l’analyse du roster</small></span><span class="change-state">À CALCULER</span></li>
-                <li><span class="change-rank">09</span><span class="change-content"><strong>Priorité n° 9</strong><small>En attente de l’analyse du roster</small></span><span class="change-state">À CALCULER</span></li>
-                <li><span class="change-rank">10</span><span class="change-content"><strong>Priorité n° 10</strong><small>En attente de l’analyse du roster</small></span><span class="change-state">À CALCULER</span></li>
-              </ol>
-            </div>
-            <button class="primary" type="button" data-page="optimizer" onclick="document.querySelector('[data-page=optimizer]').click()">ACCÉDER À L’OPTIMIZER ↗</button>
-          </article>
           <article class="holocron-level holocron-why">
             <div class="holocron-level-index">02 <span>COMPRENDRE</span></div>
             <h3>Pourquoi ces changements ?</h3>
@@ -118,6 +98,27 @@
 </div>
       <div class="panel v18-dashboard-speed"><div class="panel-title"><span class="section-icon">⚡</span> VENTILATION DES MODS PAR VITESSE — V176</div><div id="v18DashboardSpeed" class="speed-recap-grid"></div><div class="v18-note">Cliquez sur une tranche pour ouvrir le détail complet de l’inventaire des mods.</div></div>
       <div class="panel log"><div class="panel-title"><span class="section-icon">◉</span> DERNIER CHARGEMENT</div><pre id="log">Entrez votre Ally Code pour charger le profil. Pour le chargement automatique, le Worker Cloudflare doit être configuré.</pre></div>
+    </section>
+
+    <section id="top-changes" class="page">
+      <div class="panel topchanges-page-header">
+        <div class="eyebrow">HOLOCRON // CENTRE DE DÉCISION</div>
+        <h2>Les 10 changements qui améliorent le plus ton roster</h2>
+        <p>Le moteur compare les mods des personnages bien équipés avec ceux des personnages au moddage très faible, faible ou incomplet, afin de détecter les échanges qui apportent un gain.</p>
+      </div>
+      <div class="panel topchanges-method">
+        <div class="panel-title">MÉTHODE DE RECHERCHE</div>
+        <div class="topchanges-steps">
+          <article><b>01</b><div><strong>Repérer les bons moddages</strong><span>Les personnages bien modés servent de réservoir potentiel. Leurs mods sont évalués individuellement.</span></div></article>
+          <article><b>02</b><div><strong>Identifier les mods faibles</strong><span>Repérer les mods les moins adaptés au personnage qui les porte, sans se limiter à la vitesse.</span></div></article>
+          <article><b>03</b><div><strong>Comparer les bénéficiaires possibles</strong><span>Rechercher parmi les personnages très faibles, faibles ou incomplets ceux qui pourraient mieux exploiter ces mods.</span></div></article>
+          <article><b>04</b><div><strong>Évaluer l’échange complet</strong><span>Vérifier le gain pour le receveur et la perte éventuelle pour le donneur avant de classer une proposition.</span></div></article>
+        </div>
+      </div>
+      <div class="panel topchanges-results-panel">
+        <div class="panel-title">PROPOSITIONS CLASSÉES</div>
+        <div id="holocronTopChanges" class="topchanges-empty" aria-live="polite"><strong>Analyse des échanges non disponible</strong><span>Charge un profil pour préparer l’analyse. Les résultats ne seront affichés que lorsque les gains et les compromis pourront être calculés à partir des mods réels.</span></div>
+      </div>
     </section>
 
     <section id="optimizer" class="page">
@@ -307,6 +308,6 @@
 </footer>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <script src="optimizer-profiles.js?v=45"></script>
-<script src="app.js?v=65"></script>
+<script src="app.js?v=76"></script>
 </body>
 </html>
