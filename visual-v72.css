@@ -358,3 +358,6 @@ button,input,select{max-width:100%;box-sizing:border-box}
 .topchanges-empty strong{font-size:13px;color:#d9f6ff}
 .topchanges-empty span{font-size:11px;line-height:1.6;color:#9eb8c9}
 @media(max-width:700px){.topchanges-steps{grid-template-columns:1fr}.topchanges-page-header,.topchanges-method,.topchanges-results-panel{padding:15px}}
+
+/* V79 — actions concrètes du TOP 10 */
+.topchange-actions{margin-top:9px;padding:10px 12px;border-left:2px solid #58d8f5;background:rgba(5,20,32,.62);display:grid;gap:5px}.topchange-actions>strong{font-size:11px;color:#8de8fa;letter-spacing:.5px}.topchange-actions ol{margin:0;padding-left:19px;color:#d2e7f1;font-size:11px;line-height:1.7}.topchange-actions small{font-size:10px;line-height:1.5;color:#91aebe}.holocron-priority button{margin-top:6px;align-self:flex-start;padding:9px 12px;border:1px solid rgba(74,207,240,.55);background:rgba(18,89,116,.35);color:#bcefff;font-size:10px;font-weight:800;letter-spacing:.5px;cursor:pointer}
