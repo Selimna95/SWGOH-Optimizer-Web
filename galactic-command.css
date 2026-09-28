@@ -532,3 +532,11 @@ body:after{content:"";position:fixed;inset:-20%;z-index:-6;opacity:.45;backgroun
 
 /* V77 — résultats du moteur Holocron */
 .topchanges-results{display:grid;gap:10px}.topchange-result{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px;border:1px solid rgba(67,199,239,.3);border-radius:12px;background:linear-gradient(100deg,rgba(24,64,86,.48),rgba(7,17,31,.72))}.topchange-rank{font-size:22px;font-weight:800;color:#51d7fa;text-align:center}.topchange-main{min-width:0;display:grid;gap:5px}.topchange-main>strong{font-size:15px;color:#eaf8ff}.topchange-main>strong span{color:#5bd8f7;padding:0 6px}.topchange-main small,.topchange-gain small{font-size:11px;color:#91aebe}.topchange-mods{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:#b9d0dc}.topchange-gain{font-size:19px;font-weight:800;color:#66e0b0;text-align:right;white-space:nowrap}.topchange-gain small{display:block;font-weight:500}@media(max-width:700px){.topchange-result{grid-template-columns:34px minmax(0,1fr);gap:9px}.topchange-gain{grid-column:2;text-align:left}.topchange-mods{display:grid;gap:4px}}
+/* V81 — lecture directe des apports statistiques des échanges */
+.topchange-stat-panel{margin-top:10px;padding:11px 13px;border:1px solid rgba(79,218,174,.28);border-left:3px solid #55d9ae;border-radius:8px;background:linear-gradient(100deg,rgba(12,52,48,.42),rgba(5,19,30,.62));display:grid;gap:8px}
+.topchange-stat-panel>strong{font-size:11px;letter-spacing:.55px;color:#a5f4d6}
+.topchange-stat-grid{display:flex;flex-wrap:wrap;gap:7px}
+.topchange-stat{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:6px;background:rgba(7,17,29,.76);border:1px solid rgba(120,164,183,.2);font-size:11px}
+.topchange-stat b{font-weight:600;color:#c6dce6}.topchange-stat strong{font-size:12px;font-variant-numeric:tabular-nums}.topchange-stat.is-up strong{color:#69e2ad}.topchange-stat.is-down strong{color:#ff9d91}.topchange-stat-panel small{font-size:10px;line-height:1.5;color:#91aebe}.topchange-no-stats{font-size:11px;color:#a9c2d1}
+.topchange-result{align-items:start}.topchange-rank{padding-top:2px}
+@media(max-width:700px){.topchange-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.topchange-stat{justify-content:space-between;min-width:0}}

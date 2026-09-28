@@ -899,13 +899,28 @@ function holocronTopChangeCandidates(){
   out.sort((a,b)=>b.gain-a.gain);
   const seen=new Set();return out.filter(x=>{const k=[characterKey(x.donor),characterKey(x.recipient),x.oldMod.slot].join('|');if(seen.has(k))return false;seen.add(k);return true;}).slice(0,10);
 }
+function topChangeStatDelta(fromMod,toMod){
+ const stats=new Map();
+ for(const m of [fromMod,toMod]) for(let i=1;i<=4;i++){
+  const name=String(m?.[`secondary_${i}_stat`]||'').trim();
+  if(!name)continue;
+  const key=name.toLowerCase();
+  if(!stats.has(key))stats.set(key,{name,from:0,to:0});
+  stats.get(key)[m===fromMod?'from':'to']+=Number(m[`secondary_${i}_value`]||0);
+ }
+ return [...stats.values()].map(x=>({...x,delta:x.to-x.from})).filter(x=>Math.abs(x.delta)>0.00001).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+}
+function topChangeStatValue(value,name){
+ const percent=/%|potency|tenacity|critical|chance|avoidance/i.test(name);
+ return `${num(value,percent?2:1)}${percent&&!String(name).includes('%')?' pt':''}${String(name).includes('%')?'%':''}`;
+}
 function renderHolocronTopChanges(){
  const box=$('holocronTopChanges');if(!box)return;
  if(!Array.isArray(rosterCharacters)||!rosterCharacters.length){box.className='topchanges-empty';box.innerHTML='<strong>Profil requis</strong><span>Charge ton profil SWGOH pour analyser les mods réels.</span>';return;}
  const rows=holocronTopChangeCandidates();
  if(!rows.length){box.className='topchanges-empty';box.innerHTML='<strong>Aucun échange suffisamment pertinent détecté</strong><span>Le moteur n’a trouvé aucun échange répondant aux critères actuels. Vérifie que le profil contient les mods et réessaie après actualisation.</span>';return;}
  box.className='topchanges-results';
- box.innerHTML=rows.map((r,i)=>`<article class="topchange-result"><div class="topchange-rank">${String(i+1).padStart(2,'0')}</div><div class="topchange-main"><strong>PERSONNAGE À FAIRE PROGRESSER : ${esc(r.recipient.name||r.recipient.baseId)}</strong><small>Profil actuel : ${esc(r.status)} · Personnage donneur : ${esc(r.donor.name||r.donor.baseId)}</small><div class="topchange-mods"><span><b>MOD À MODIFIER</b> · ${esc(r.newMod.slot)} (${esc(r.newMod.slot)})<br>Set : ${esc(r.newMod.set_name||'non défini')} · Primaire : ${esc(r.newMod.primary_stat||'non définie')} · ${num(modTotalSpeed(r.newMod),1)} vit.</span><span><b>MOD DE REMPLACEMENT</b> · ${esc(r.oldMod.slot)} (${esc(r.oldMod.slot)})<br>Set : ${esc(r.oldMod.set_name||'non défini')} · Primaire : ${esc(r.oldMod.primary_stat||'non définie')} · ${num(modTotalSpeed(r.oldMod),1)} vit.</span></div><div class="topchange-actions"><strong>Modifications à effectuer</strong><ol><li>Retirer le mod indiqué dans « Mod à modifier » de <b>${esc(r.recipient.name||r.recipient.baseId)}</b> et l’équiper sur <b>${esc(r.donor.name||r.donor.baseId)}</b>.</li><li>Équiper le mod de remplacement du donneur sur <b>${esc(r.recipient.name||r.recipient.baseId)}</b>.</li></ol><small>Le remplacement conserve le même emplacement, le même set et la même statistique primaire. Le gain affiché est un indice comparatif, pas une garantie de résultat en combat.</small></div></div><div class="topchange-gain">+${num(r.gain,1)}<small>indice estimé</small></div></article>`).join('');
+ box.innerHTML=rows.map((r,i)=>{const delta=topChangeStatDelta(r.oldMod,r.newMod);const stats=delta.length?delta.map(x=>`<span class="topchange-stat ${x.delta>0?'is-up':'is-down'}"><b>${esc(x.name)}</b><strong>${x.delta>0?'+':'−'}${topChangeStatValue(Math.abs(x.delta),x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucune secondaire différente détectée.</span>';return `<article class="topchange-result"><div class="topchange-rank">${String(i+1).padStart(2,'0')}</div><div class="topchange-main"><strong>À AMÉLIORER : ${esc(r.recipient.name||r.recipient.baseId)}</strong><small>Mod actuel : ${esc(r.newMod.slot)} · Donneur : ${esc(r.donor.name||r.donor.baseId)}</small><div class="topchange-mods"><span><b>MOD À REMPLACER</b><br>${esc(r.newMod.slot)} · ${esc(r.newMod.set_name||'—')}<br>Primaire : ${esc(r.newMod.primary_stat||'—')} ${num(r.newMod.primary_value,1)} · ${num(modTotalSpeed(r.newMod),1)} vit.</span><span><b>MOD REÇU</b><br>${esc(r.oldMod.slot)} · ${esc(r.oldMod.set_name||'—')}<br>Primaire : ${esc(r.oldMod.primary_stat||'—')} ${num(r.oldMod.primary_value,1)} · ${num(modTotalSpeed(r.oldMod),1)} vit.</span></div><section class="topchange-stat-panel"><strong>APPORT DES STATISTIQUES DU MOD REÇU</strong><div class="topchange-stat-grid">${stats}</div><small>Écart des statistiques secondaires entre les deux mods. Le set, l’emplacement et la primaire restent identiques.</small></section><div class="topchange-actions"><strong>ÉCHANGE À EFFECTUER</strong><ol><li>Transférer le mod reçu du donneur vers <b>${esc(r.recipient.name||r.recipient.baseId)}</b>.</li><li>Transférer le mod remplacé vers <b>${esc(r.donor.name||r.donor.baseId)}</b>.</li></ol><small>Les valeurs affichées sont les écarts des mods eux-mêmes. Elles ne constituent pas une simulation complète des statistiques finales du personnage ou du combat.</small></div></div></article>`}).join('');
 }
 function showPage(page){
   document.body.dataset.page=page;
