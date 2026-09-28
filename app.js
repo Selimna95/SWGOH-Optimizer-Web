@@ -828,11 +828,88 @@ function renderV18SpeedRecap(containerId='v18SpeedRecap'){
     setTimeout(()=>{setAnalysisTab('inventory'); $('analysisSpeedFilter').value=k; renderInventory();},0);
   }));
 }
+function holocronModScore(m){
+  // Score de comparaison indicatif : vitesse prioritaire, puis valeur des secondaires.
+  // Les valeurs sont normalisées pour éviter de comparer directement des unités différentes.
+  const weights={SPEED:1,OFFENSE:0.32,OFFENSEPERCENT:0.42,HEALTH:0.12,HEALTHPERCENT:0.22,PROTECTION:0.10,PROTECTIONPERCENT:0.18,POTENCY:0.24,TENACITY:0.20,CRITICALCHANCE:0.20,CRITICALDAMAGE:0.22,CRITICALAVOIDANCE:0.18};
+  let score=modTotalSpeed(m)*1.8;
+  for(let i=1;i<=4;i++){
+    const key=compactKey(m[`secondary_${i}_stat`]); const val=Number(m[`secondary_${i}_value`]||0);
+    if(!key||!Number.isFinite(val))continue;
+    let v=val;
+    if(key.endsWith('PERCENT')||['POTENCY','TENACITY','CRITICALCHANCE','CRITICALDAMAGE','CRITICALAVOIDANCE'].includes(key))v*=100;
+    score+=v*(weights[key]||0.08);
+  }
+  const level=Number(m.level||0); score+=Math.max(0,level-12)*0.25;
+  return score;
+}
+function holocronKyberFit(mod, character){
+  // Ajuste indicatif selon les préférences Kyber du personnage (sets, primaires et secondaires).
+  // Il ne représente pas une simulation de combat ni des stats adverses observées.
+  const p=profileForCharacter(character); if(!p)return 0;
+  const set=String(mod?.set_name||'').trim().toLowerCase();
+  const primary=String(mod?.primary_stat||'').trim().toLowerCase();
+  const slot=String(mod?.slot||'');
+  let fit=0;
+  const sets=Array.isArray(p.sets)?p.sets:[];
+  const sw=sets.find(x=>String(x.name||'').toLowerCase()===set);
+  if(sw)fit+=Math.min(5,Number(sw.weight||0)*5);
+  const slotData=p.slots?.[slot];
+  const primaries=slotData?.primaries||{};
+  const pw=Object.entries(primaries).find(([k])=>String(k).toLowerCase()===primary)?.[1];
+  if(Number.isFinite(Number(pw)))fit+=Math.min(4,Number(pw)*4);
+  const focus=p.secondary_focus||{};
+  for(let i=1;i<=4;i++){
+    const stat=String(mod?.[`secondary_${i}_stat`]||'').toLowerCase();
+    if(!stat)continue;
+    const entry=Object.entries(focus).find(([k])=>k.toLowerCase().replace(/[^a-z%]/g,'')===stat.replace(/[^a-z%]/g,''));
+    if(entry)fit+=Math.min(1.5,Math.max(0,Number(entry[1]||0)/20));
+  }
+  return fit;
+}
+function holocronModScoreForCharacter(mod, character){return holocronModScore(mod)+holocronKyberFit(mod,character);}
+function holocronTopChangeCandidates(){
+  const donors=[],recipients=[];
+  for(const c of rosterCharacters){
+    const cm=getCharacterMods(c); const st=v176ModStatus(cm);
+    if(st.status==='BONS'&&cm.length===6){
+      const weakest=[...cm].sort((a,b)=>holocronModScoreForCharacter(a,c)-holocronModScoreForCharacter(b,c))[0];
+      if(weakest)donors.push({c,mods:cm,weakest,score:holocronModScoreForCharacter(weakest,c)});
+    }
+    if(['INCOMPLETS','TRÈS FAIBLES','FAIBLES'].includes(st.status))recipients.push({c,mods:cm,status:st.status});
+  }
+  const slotOrder={Square:0,Arrow:1,Diamond:2,Triangle:3,Circle:4,Cross:5}; const out=[];
+  for(const d of donors){
+    for(const r of recipients){
+      if(characterKey(d.c)===characterKey(r.c))continue;
+      // L'échange se fait à emplacement identique. Le mod du bénéficiaire doit
+      // être sensiblement supérieur au mod faible du personnage donneur.
+      const donorMod=d.weakest;
+      for(const candidate of r.mods){
+        if(candidate.slot!==donorMod.slot)continue;
+        const gain=holocronModScoreForCharacter(candidate,r.c)-d.score;
+        if(gain<3)continue;
+        out.push({donor:d.c,recipient:r.c,oldMod:donorMod,newMod:candidate,gain,status:r.status});
+      }
+    }
+  }
+  out.sort((a,b)=>b.gain-a.gain);
+  const seen=new Set();return out.filter(x=>{const k=[characterKey(x.donor),characterKey(x.recipient),x.oldMod.slot].join('|');if(seen.has(k))return false;seen.add(k);return true;}).slice(0,10);
+}
+function renderHolocronTopChanges(){
+ const box=$('holocronTopChanges');if(!box)return;
+ if(!Array.isArray(rosterCharacters)||!rosterCharacters.length){box.className='topchanges-empty';box.innerHTML='<strong>Profil requis</strong><span>Charge ton profil SWGOH pour analyser les mods réels.</span>';return;}
+ const rows=holocronTopChangeCandidates();
+ if(!rows.length){box.className='topchanges-empty';box.innerHTML='<strong>Aucun échange suffisamment pertinent détecté</strong><span>Le moteur n’a trouvé aucun échange répondant aux critères actuels. Vérifie que le profil contient les mods et réessaie après actualisation.</span>';return;}
+ box.className='topchanges-results';
+ box.innerHTML=rows.map((r,i)=>`<article class="topchange-result"><div class="topchange-rank">${String(i+1).padStart(2,'0')}</div><div class="topchange-main"><strong>${esc(r.donor.name||r.donor.baseId)} <span>→</span> ${esc(r.recipient.name||r.recipient.baseId)}</strong><small>Emplacement : ${esc(r.oldMod.slot)} · ${esc(r.oldMod.set_name||'set non défini')} · Profil receveur : ${esc(r.status)}</small><div class="topchange-mods"><span>Mod cédé : ${esc(r.oldMod.set_name||'—')} / ${esc(r.oldMod.primary_stat||'—')} · ${num(modTotalSpeed(r.oldMod),1)} vit.</span><span>Mod récupéré : ${esc(r.newMod.set_name||'—')} / ${esc(r.newMod.primary_stat||'—')} · ${num(modTotalSpeed(r.newMod),1)} vit.</span></div></div><div class="topchange-gain">+${num(r.gain,1)}<small>indice</small></div></article>`).join('');
+}
 function showPage(page){
   document.body.dataset.page=page;
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page));
   if(page==='mods-analysis') renderModsAnalysis();
+  if(page==='top-changes') renderHolocronTopChanges();
 }
 function setAnalysisTab(tab){
   document.querySelectorAll('.analysis-tab').forEach(x=>x.classList.toggle('active',x.dataset.analysisTab===tab));
