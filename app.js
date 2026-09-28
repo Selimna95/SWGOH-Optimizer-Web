@@ -871,33 +871,52 @@ function holocronModScoreForCharacter(mod, character){return holocronModScore(mo
 function holocronTopChangeCandidates(){
   const donors=[],recipients=[];
   for(const c of rosterCharacters){
+    if(rosterUnitType(c)==='ship')continue;
     const cm=getCharacterMods(c); const st=v176ModStatus(cm);
-    if(st.status==='BONS'&&cm.length===6){
-      const weakest=[...cm].sort((a,b)=>holocronModScoreForCharacter(a,c)-holocronModScoreForCharacter(b,c))[0];
-      if(weakest)donors.push({c,mods:cm,weakest,score:holocronModScoreForCharacter(weakest,c)});
+    // Les donneurs sont les personnages les moins aboutis : leurs mods servent
+    // à terminer l'équipement des personnages déjà bien modés.
+    if(['INCOMPLETS','TRÈS FAIBLES','FAIBLES'].includes(st.status) && cm.length){
+      donors.push({c,mods:cm,status:st.status,totalSpeed:st.totalSpeed});
     }
-    if(['INCOMPLETS','TRÈS FAIBLES','FAIBLES'].includes(st.status))recipients.push({c,mods:cm,status:st.status});
+    // On cible les personnages déjà solides, dont l'équipement peut être
+    // finalisé avec un mod mieux adapté aux objectifs Kyber.
+    if(['MOYENS','BONS'].includes(st.status) && cm.length===6){
+      recipients.push({c,mods:cm,status:st.status,totalSpeed:st.totalSpeed});
+    }
   }
-  const slotOrder={Square:0,Arrow:1,Diamond:2,Triangle:3,Circle:4,Cross:5}; const out=[];
-  for(const d of donors){
-    for(const r of recipients){
-      if(characterKey(d.c)===characterKey(r.c))continue;
-      // L'échange se fait à emplacement identique. Le mod du bénéficiaire doit
-      // être sensiblement supérieur au mod faible du personnage donneur.
-      const donorMod=d.weakest;
-      for(const candidate of r.mods){
-        if(candidate.slot!==donorMod.slot)continue;
-        // Le remplacement conserve impérativement le set et la primaire du mod ciblé.
-        if(String(candidate.set_name||'').trim().toLowerCase()!==String(donorMod.set_name||'').trim().toLowerCase())continue;
-        if(String(candidate.primary_stat||'').trim().toLowerCase()!==String(donorMod.primary_stat||'').trim().toLowerCase())continue;
-        const gain=holocronModScoreForCharacter(candidate,r.c)-d.score;
-        if(gain<3)continue;
-        out.push({donor:d.c,recipient:r.c,oldMod:donorMod,newMod:candidate,gain,status:r.status});
+  const donorPriority={'INCOMPLETS':3,'TRÈS FAIBLES':2,'FAIBLES':1};
+  const recipientPriority={'BONS':2,'MOYENS':1};
+  const out=[];
+  for(const r of recipients){
+    for(const currentMod of r.mods){
+      const before=holocronModScoreForCharacter(currentMod,r.c);
+      const kyberBefore=holocronKyberFit(currentMod,r.c);
+      for(const d of donors){
+        if(characterKey(d.c)===characterKey(r.c))continue;
+        for(const donorMod of d.mods){
+          // Compatibilité stricte : emplacement, set et primaire identiques.
+          if(donorMod.slot!==currentMod.slot ||
+             compactKey(donorMod.set_name)!==compactKey(currentMod.set_name) ||
+             compactKey(donorMod.primary_stat)!==compactKey(currentMod.primary_stat))continue;
+          const after=holocronModScoreForCharacter(donorMod,r.c);
+          const gain=after-before;
+          const kyberGain=holocronKyberFit(donorMod,r.c)-kyberBefore;
+          // Le mod doit apporter un gain tangible au personnage prioritaire.
+          if(gain<3 && kyberGain<1)continue;
+          // Éviter de prendre un mod qui constitue l'un des meilleurs du donneur.
+          const donorBest=Math.max(...d.mods.map(m=>holocronModScoreForCharacter(m,d.c)));
+          const donorScore=holocronModScoreForCharacter(donorMod,d.c);
+          const donorLoss=Math.max(0,donorBest-donorScore);
+          if(donorLoss<1.5 && d.status!=='INCOMPLETS')continue;
+          const priority=(recipientPriority[r.status]||0)*100 +
+            (donorPriority[d.status]||0)*25 + Math.max(0,gain)*2 + Math.max(0,kyberGain)*12 - donorScore*0.03;
+          out.push({donor:d.c,recipient:r.c,oldMod:currentMod,newMod:donorMod,gain,donorLoss,status:d.status,priority,recipientStatus:r.status,kyberGain});
+        }
       }
     }
   }
-  out.sort((a,b)=>b.gain-a.gain);
-  const seen=new Set();return out.filter(x=>{const k=[characterKey(x.donor),characterKey(x.recipient),x.oldMod.slot].join('|');if(seen.has(k))return false;seen.add(k);return true;}).slice(0,10);
+  out.sort((a,b)=>b.priority-a.priority||b.kyberGain-a.kyberGain||b.gain-a.gain);
+  const seen=new Set();return out.filter(x=>{const k=[characterKey(x.recipient),x.oldMod.slot].join('|');if(seen.has(k))return false;seen.add(k);return true;}).slice(0,10);
 }
 function topChangeStatDelta(fromMod,toMod){
  const stats=new Map();
@@ -920,7 +939,7 @@ function renderHolocronTopChanges(){
  const rows=holocronTopChangeCandidates();
  if(!rows.length){box.className='topchanges-empty';box.innerHTML='<strong>Aucun échange suffisamment pertinent détecté</strong><span>Le moteur n’a trouvé aucun échange répondant aux critères actuels. Vérifie que le profil contient les mods et réessaie après actualisation.</span>';return;}
  box.className='topchanges-results';
- box.innerHTML=rows.map((r,i)=>{const delta=topChangeStatDelta(r.oldMod,r.newMod);const stats=delta.length?delta.map(x=>`<span class="topchange-stat ${x.delta>0?'is-up':'is-down'}"><b>${esc(x.name)}</b><strong>${x.delta>0?'+':'−'}${topChangeStatValue(Math.abs(x.delta),x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucune secondaire différente détectée.</span>';return `<article class="topchange-result"><div class="topchange-rank">${String(i+1).padStart(2,'0')}</div><div class="topchange-main"><strong>À AMÉLIORER : ${esc(r.recipient.name||r.recipient.baseId)}</strong><small>Mod actuel : ${esc(r.newMod.slot)} · Donneur : ${esc(r.donor.name||r.donor.baseId)}</small><div class="topchange-mods"><span><b>MOD À REMPLACER</b><br>${esc(r.newMod.slot)} · ${esc(r.newMod.set_name||'—')}<br>Primaire : ${esc(r.newMod.primary_stat||'—')} ${num(r.newMod.primary_value,1)} · ${num(modTotalSpeed(r.newMod),1)} vit.</span><span><b>MOD REÇU</b><br>${esc(r.oldMod.slot)} · ${esc(r.oldMod.set_name||'—')}<br>Primaire : ${esc(r.oldMod.primary_stat||'—')} ${num(r.oldMod.primary_value,1)} · ${num(modTotalSpeed(r.oldMod),1)} vit.</span></div><section class="topchange-stat-panel"><strong>APPORT DES STATISTIQUES DU MOD REÇU</strong><div class="topchange-stat-grid">${stats}</div><small>Écart des statistiques secondaires entre les deux mods. Le set, l’emplacement et la primaire restent identiques.</small></section><div class="topchange-actions"><strong>ÉCHANGE À EFFECTUER</strong><ol><li>Transférer le mod reçu du donneur vers <b>${esc(r.recipient.name||r.recipient.baseId)}</b>.</li><li>Transférer le mod remplacé vers <b>${esc(r.donor.name||r.donor.baseId)}</b>.</li></ol><small>Les valeurs affichées sont les écarts des mods eux-mêmes. Elles ne constituent pas une simulation complète des statistiques finales du personnage ou du combat.</small></div></div></article>`}).join('');
+ box.innerHTML=rows.map((r,i)=>{const delta=topChangeStatDelta(r.oldMod,r.newMod);const stats=delta.length?delta.map(x=>`<span class="topchange-stat ${x.delta>0?'is-up':'is-down'}"><b>${esc(x.name)}</b><strong>${x.delta>0?'+':'−'}${topChangeStatValue(Math.abs(x.delta),x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucune secondaire différente détectée.</span>';return `<article class="topchange-result"><div class="topchange-rank">${String(i+1).padStart(2,'0')}</div><div class="topchange-main"><strong>À AMÉLIORER : ${esc(r.recipient.name||r.recipient.baseId)}</strong><small>Mod actuel : ${esc(r.oldMod.slot)} · Donneur : ${esc(r.donor.name||r.donor.baseId)}</small><div class="topchange-mods"><span><b>MOD À REMPLACER</b><br>${esc(r.oldMod.slot)} · ${esc(r.oldMod.set_name||'—')}<br>Primaire : ${esc(r.oldMod.primary_stat||'—')} ${num(r.oldMod.primary_value,1)} · ${num(modTotalSpeed(r.oldMod),1)} vit.</span><span><b>MOD REÇU</b><br>${esc(r.newMod.slot)} · ${esc(r.newMod.set_name||'—')}<br>Primaire : ${esc(r.newMod.primary_stat||'—')} ${num(r.newMod.primary_value,1)} · ${num(modTotalSpeed(r.newMod),1)} vit.</span></div><section class="topchange-stat-panel"><strong>APPORT DES STATISTIQUES DU MOD REÇU</strong><div class="topchange-stat-grid">${stats}</div><small>Écart des statistiques secondaires entre les deux mods. Le set, l’emplacement et la primaire restent identiques.</small></section><div class="topchange-actions"><strong>ÉCHANGE À EFFECTUER</strong><ol><li>Transférer le mod du donneur vers <b>${esc(r.recipient.name||r.recipient.baseId)}</b>.</li><li>Transférer le mod remplacé vers <b>${esc(r.donor.name||r.donor.baseId)}</b>.</li></ol><small>Les valeurs affichées sont les écarts des mods eux-mêmes. Elles ne constituent pas une simulation complète des statistiques finales du personnage ou du combat.</small></div></div></article>`}).join('');
 }
 function showPage(page){
   document.body.dataset.page=page;
