@@ -341,3 +341,52 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 @media(max-width:800px){.gate-login{width:min(320px,76vw);top:70%}.gate-step{display:none}.gate-brand strong{font-size:16px}.gate-footer{bottom:12px;font-size:6px}.gate-footer span:last-child{display:none}}
 @media(max-width:520px){.gate-login{top:68%;width:min(300px,82vw)}.gate-holocron-image{width:177.7778vh;max-width:none;height:100vh;object-fit:cover}.gate-brand{top:16px;left:18px}.gate-brand span{font-size:7px}.gate-brand strong{font-size:14px}.gate-login>label{font-size:8px}.gate-input-wrap{height:43px}.gate-login button{height:42px}}
 @media(prefers-reduced-motion:reduce){.holocron-gate *{animation:none!important;transition:none!important}}
+
+/* V92.1 FIX — photo Holocron must remain visible and the Ally field sits at its base. */
+.holocron-gate .gate-backdrop{
+  position:absolute; inset:0; z-index:0;
+  background:#000;
+  filter:none;
+  transform:none;
+}
+.holocron-gate .gate-visual{
+  position:absolute; inset:0; z-index:1;
+  display:block; pointer-events:none; overflow:hidden;
+}
+.holocron-gate .gate-holocron-image{
+  position:absolute; inset:0;
+  display:block;
+  width:100vw !important;
+  height:100vh !important;
+  max-width:none !important;
+  max-height:none !important;
+  object-fit:contain !important;
+  object-position:center center;
+  opacity:1 !important;
+  visibility:visible !important;
+  filter:brightness(.92) contrast(1.08) saturate(1.08);
+  transform:none;
+  transition:transform .8s cubic-bezier(.2,.75,.2,1),filter .7s ease,opacity .8s ease;
+}
+.holocron-gate .gate-energy-lines,
+.holocron-gate .gate-energy-core{z-index:2}
+.holocron-gate .gate-login{
+  position:absolute;
+  z-index:5;
+  left:50%;
+  top:70%;
+  width:min(390px,36vw);
+  transform:translate(-50%,-50%);
+  align-self:auto;
+}
+.holocron-gate .gate-login>label{text-align:center;text-shadow:0 2px 12px #000}
+.holocron-gate .gate-input-wrap{background:rgba(7,7,9,.86);backdrop-filter:blur(3px);box-shadow:0 0 28px rgba(0,0,0,.55),0 0 18px rgba(255,25,43,.08),inset 0 0 16px rgba(255,255,255,.025)}
+.holocron-gate .gate-login button{background:linear-gradient(180deg,rgba(104,9,17,.68),rgba(20,2,6,.88));}
+.holocron-gate .gate-brand,.holocron-gate .gate-footer,.holocron-gate .gate-step{z-index:6}
+@media(max-width:800px){
+  .holocron-gate .gate-login{top:72%;width:min(350px,76vw)}
+}
+@media(max-width:520px){
+  .holocron-gate .gate-login{top:73%;width:min(310px,82vw)}
+  .holocron-gate .gate-holocron-image{width:100vw !important;height:100vh !important;object-fit:contain !important}
+}
