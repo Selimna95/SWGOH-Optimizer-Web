@@ -1,5 +1,10 @@
-# Selimna's Holocron V92.5 — Activation Stable 2
+# Selimna's Holocron V93.0 — MODS PIPELINE
 
-Correctif de l'écran d'entrée : le bouton « ACTIVER L’HOLOCRON » ne dépend plus d'un ancien bouton `loadPlayer` qui n'existe plus sur l'écran d'accueil. Les références sont désormais optionnelles, ce qui permet à la synchronisation du code Ally de poursuivre normalement.
+Correctif ciblé du pipeline de récupération des mods.
 
-Le Centre de Décision V92.5 et les données/flux existants sont conservés.
+- lecture explicite de `rosterUnit[].equippedStatMod[]` / `mods[]`
+- prise en charge des réponses API enveloppées sous `result`
+- extraction des mods compacts sans statistiques développées
+- parsing HTML SWGOH.GG élargi aux cartes avec `data-id`
+- conservation des mods API même sans stats complètes
+- diagnostic dans le journal de synchronisation
