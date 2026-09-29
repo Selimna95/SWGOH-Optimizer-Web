@@ -435,11 +435,11 @@ async function fetchJSON(url){const r=await fetch(url,{headers:{'Accept':'applic
 
 function setGateMessage(message,state=''){const box=$('gateMessage');const step=$('gateStep');const gate=$('holocronGate');if(box){box.textContent=message;box.className=`gate-message ${state}`;}if(gate)gate.classList.toggle('is-loading',state==='loading');if(step&&state==='loading')step.textContent='SYNCHRONISATION EN COURS';if(step&&state==='error')step.textContent='SYNCHRONISATION INTERROMPUE';if(step&&state==='success')step.textContent='ROSTER SYNCHRONISÉ';}
 function finishHolocronGate(){const gate=$('holocronGate'),shell=$('appShell');if(!gate||!shell)return;setGateMessage('ROSTER SYNCHRONISÉ · OUVERTURE DE L’HOLOCRON','success');const step=$('gateStep');if(step)step.textContent='ROSTER SYNCHRONISÉ';gate.classList.remove('is-loading');gate.classList.add('is-success');setTimeout(()=>{shell.hidden=false;document.body.classList.add('holocron-unlocked');gate.remove();window.scrollTo(0,0);},2050);}
-function submitGateCode(){const raw=cleanAllyCode($('gateAllyCode')?.value||'');if(raw.length!==9){setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');$('gateAllyCode')?.focus();return;}const target=$('allyCode');if(target)target.value=raw;setGateMessage('IDENTIFICATION DU ROSTER · CHARGEMENT DES DONNÉES','loading');$('gateActivate').disabled=true;loadRemotePlayer().finally(()=>{if($('gateActivate'))$('gateActivate').disabled=false;});}
+function submitGateCode(){const button=$('gateActivate');if(button?.disabled)return;const raw=cleanAllyCode($('gateAllyCode')?.value||'');if(raw.length!==9){setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');$('gateAllyCode')?.focus();return;}const target=$('allyCode');if(target)target.value=raw;setGateMessage('IDENTIFICATION DU ROSTER · CHARGEMENT DES DONNÉES','loading');if(button)button.disabled=true;loadRemotePlayer().catch(e=>{log(`Échec du chargement : ${e?.message||e}`);setGateMessage(`ÉCHEC DE SYNCHRONISATION · ${e?.message||'ERREUR INCONNUE'}`,'error');}).finally(()=>{if(button)button.disabled=false;});}
 
 async function loadRemotePlayer(){
   const allyCode=cleanAllyCode($('allyCode')?.value || $('gateAllyCode')?.value || '');if(allyCode.length!==9){log('Ally Code invalide : 9 chiffres attendus.');setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');return;}
-  $('loadPlayer').disabled=true;$('loadPlayer').textContent='CHARGEMENT…';$('log').textContent='';const fmt=formatAlly(allyCode);log(`Recherche du joueur ${fmt}…`);
+  const loadButton=$('loadPlayer');if(loadButton){loadButton.disabled=true;loadButton.textContent='CHARGEMENT…';}if($('log'))$('log').textContent='';const fmt=formatAlly(allyCode);log(`Recherche du joueur ${fmt}…`);
   try{
     if(workerUrl())log('Relais Cloudflare actif : récupération via relais sécurisé.');else log('Aucun relais configuré : tentative directe depuis le navigateur.');
     const base=`https://swgoh.gg/p/${allyCode}`,relay=workerUrl();let apiChars=[],apiMods=[];
@@ -481,7 +481,7 @@ async function loadRemotePlayer(){
     $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nUnités totales: ${chars.length+ships.length}\nMods: ${mods.length}\nProfils Kyber disponibles dans cette version: ${Object.keys(profiles).length}`;
     log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${mods.length} mods exploitables.`);if(!mods.length)log('Aucun mod lisible.');showPage('dashboard');if($('holocronGate'))finishHolocronGate();
   }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, utilise l’import JSON.');if($('holocronGate'))setGateMessage(`ÉCHEC DE SYNCHRONISATION · ${e.message||'ERREUR INCONNUE'}`,'error');}
-  finally{$('loadPlayer').disabled=false;$('loadPlayer').textContent='CHARGER MON PROFIL';}
+  finally{if(loadButton){loadButton.disabled=false;loadButton.textContent='CHARGER MON PROFIL';}}
 }
 function updateAccountSummary(title,fmt){if($('playerName'))$('playerName').textContent=title||'Profil';if($('playerAlly'))$('playerAlly').textContent=fmt||'—';if($('heroPlayerName'))$('heroPlayerName').textContent=title||'Profil';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent=fmt||'—';setText('topAccountName',title||'—');setText('topProfileState','CONNECTÉ');setText('heroProfileState','CONNECTÉ');}
 function modSetLabel(value){
