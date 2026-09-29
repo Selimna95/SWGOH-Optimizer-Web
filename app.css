@@ -259,7 +259,7 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 /* =====================================================================
-   V92.3 — HOLOCRON GATE / SINGLE VISUAL LAYER
+   V92.5 — HOLOCRON GATE / SINGLE VISUAL LAYER
    The supplied Holocron photograph is the only base visual. The opening
    effect is created with one energy overlay and one central light burst.
    ===================================================================== */
@@ -382,3 +382,102 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 @keyframes decisionGlow{from{opacity:.65;transform:scale(.94)}to{opacity:1;transform:scale(1.08)}}
 @media(max-width:1100px){.decision-stage{min-width:0;width:100%;height:auto;min-height:calc(100vh - 100px);padding:0 16px 120px}.decision-card{width:36%;min-width:0}.unit-card{left:2%;top:8%}.gp-card{right:2%;top:8%}.mod-card{width:42%;min-width:0;bottom:7%}.decision-holocron-wrap{width:min(54vw,560px);height:min(55vh,560px);top:46%}.decision-flow{opacity:.6}}
 @media(max-width:760px){.decision-page{overflow:auto}.decision-header{padding:18px 14px 0;display:block}.decision-brand h1{font-size:20px}.decision-status{margin-top:10px}.decision-stage{display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 12px 80px;min-height:auto;height:auto}.decision-holocron-wrap{position:relative;left:auto;top:auto;transform:none;width:min(92vw,500px);height:min(95vw,500px);order:1}.unit-card,.gp-card,.mod-card{position:relative;left:auto;right:auto;bottom:auto;top:auto;transform:none;width:min(92vw,500px);order:2}.gp-card{order:3}.mod-card{order:4}.decision-flow{display:none}.decision-bottom-status{position:relative;left:auto;bottom:auto;order:5;align-self:flex-start;margin-left:4%}.decision-slogan{position:relative;right:auto;bottom:auto;order:6;align-self:flex-end}.decision-holocron{width:82%;height:82%}.face-expert{top:16%}.face-essential{left:15%;bottom:23%}.face-understand{right:11%;bottom:23%}}
+
+/* V92.5 — visual cleanup / airy decision center */
+.decision-holocron-image{
+  width:92%;
+  height:92%;
+  object-fit:contain;
+  filter:drop-shadow(0 0 24px rgba(255,25,38,.42)) brightness(1.02) contrast(1.08);
+  mix-blend-mode:normal;
+  opacity:1;
+  background:transparent;
+  border:0;
+}
+.decision-holocron{width:88%;height:88%}
+.decision-holocron-wrap{width:min(46vw,650px);height:min(60vh,650px)}
+.decision-holocron-glow{width:66%;height:66%;opacity:.7}
+.decision-card{
+  padding:20px 21px 18px;
+  min-height:148px;
+  background:linear-gradient(145deg,rgba(8,11,16,.88),rgba(9,12,17,.68));
+  backdrop-filter:blur(12px);
+}
+.unit-card,.gp-card{top:9%;width:32%}
+.mod-card{width:36%;min-width:400px;bottom:6%}
+.decision-bars{height:13px;margin-top:2px}
+.decision-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-top:12px;font-size:9px}
+.decision-legend span{white-space:nowrap}
+.decision-legend b{color:#fff;font-weight:600}
+.decision-legend small{color:#777d88;font-size:8px}
+.decision-detail-list{gap:11px}
+.decision-detail-list div{grid-template-columns:1fr auto 44px}
+.decision-detail-list span{font-size:10px}
+.decision-detail-list strong{font-size:14px}
+.decision-gp-track{height:8px;margin-top:13px}
+.character-title-line{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.character-title-line h2{margin:0}
+.character-db-link{
+  color:#ff5965;
+  font:600 8px Inter,sans-serif;
+  letter-spacing:.14em;
+  text-decoration:none;
+  border:1px solid rgba(255,70,82,.34);
+  padding:6px 9px;
+  border-radius:4px;
+  transition:.18s ease;
+}
+.character-db-link:hover{color:#fff;border-color:#ff5965;background:rgba(255,45,58,.12)}
+.mod-detail-card small{color:#8e949f}
+.mod-secondaries{line-height:1.55;color:#c8cbd1}
+.topchanges-page-header{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:28px;
+  padding:24px 28px;
+}
+.topchanges-page-header h2{margin:7px 0 5px}
+.topchanges-page-header p{max-width:680px;margin:0;color:#858b96;line-height:1.6}
+.topchanges-kpis{display:flex;gap:10px;flex:none}
+.topchanges-kpis>div{min-width:145px;padding:12px 14px;border:1px solid rgba(255,60,72,.24);background:rgba(255,255,255,.02);clip-path:polygon(0 10%,4% 0,100% 0,100% 88%,96% 100%,0 100%);text-align:right}
+.topchanges-kpis span{display:block;color:#777d88;font-size:7px;letter-spacing:.18em}
+.topchanges-kpis strong{display:block;margin-top:5px;color:#fff;font-size:13px;letter-spacing:.06em}
+.topchanges-toolbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 28px 16px}
+.topchanges-legend{display:flex;gap:18px;flex-wrap:wrap;color:#969ba5;font-size:9px}
+.topchanges-legend i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff4c59;margin-right:6px;box-shadow:0 0 8px rgba(255,40,52,.6)}
+.topchanges-gac-note{color:#6e747e;font-size:8px;letter-spacing:.1em}
+.topchanges-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.topchange-card{
+  position:relative;display:grid;grid-template-columns:42px 1fr;min-height:185px;
+  border:1px solid rgba(255,57,69,.22);background:linear-gradient(145deg,rgba(10,14,19,.82),rgba(8,11,16,.6));
+  clip-path:polygon(0 8px,8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+}
+.topchange-number{display:grid;place-items:start center;padding-top:18px;color:#ff4d5b;font:500 12px Inter,sans-serif;letter-spacing:.12em}
+.topchange-body{padding:16px 18px 15px 0}
+.topchange-route{display:grid;grid-template-columns:1fr 30px 1fr;align-items:center;gap:10px}
+.topchange-character{display:flex;flex-direction:column;min-width:0}
+.topchange-label{font-size:7px;letter-spacing:.18em;color:#737985;margin-bottom:4px}
+.topchange-character .character-db-link{width:max-content;max-width:100%;padding:0;border:0;background:none;font-size:11px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topchange-character .character-db-link:hover{background:none}
+.topchange-character small{margin-top:4px;color:#858b95;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topchange-arrow{color:#ff4e5b;text-align:center;font-size:17px}
+.topchange-meta{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0}
+.topchange-meta span{padding:6px 8px;background:rgba(255,255,255,.035);color:#818792;font-size:8px;border:1px solid rgba(255,255,255,.06)}
+.topchange-meta b{color:#e8e9ec;font-weight:500}
+.topchange-action{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,.07);padding-top:10px}
+.topchange-action span{color:#ff5662;font-size:7px;letter-spacing:.16em}
+.topchange-action strong{color:#dfe1e5;font-size:9px;font-weight:500;text-align:right}
+.topchange-meta .up{color:#42d5b0}.topchange-meta .down{color:#e78a91}
+.topchanges-empty{grid-column:1/-1;padding:55px;text-align:center;border:1px dashed rgba(255,255,255,.1);color:#7f858f}
+.topchanges-empty strong{display:block;color:#ddd;font-size:14px;margin-bottom:7px}.topchanges-empty span{font-size:10px}
+@media(max-width:1100px){
+ .decision-card{min-height:136px}.decision-legend{font-size:8px}.mod-card{min-width:0;width:38%}
+ .topchanges-results{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+ .decision-holocron-wrap{width:min(92vw,500px);height:min(95vw,500px)}
+ .decision-holocron{width:88%;height:88%}
+ .unit-card,.gp-card,.mod-card{min-height:0}
+ .topchanges-page-header{display:block}.topchanges-kpis{margin-top:15px}
+ .topchanges-toolbar{display:block}.topchanges-gac-note{margin-top:10px}
+ .topchanges-results{grid-template-columns:1fr}
+ .topchange-route{grid-template-columns:1fr 24px 1fr}
+}

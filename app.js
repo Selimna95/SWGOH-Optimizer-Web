@@ -379,7 +379,13 @@ async function fetchText(url) {
   const candidates=[], relay=workerUrl();
   if(relay){const m=url.match(/\/p\/(\d{9})\/(characters|mods)?\/?(?:\?page=(\d+))?/);if(m){const ally=m[1],path=m[2]||'profile',page=m[3]||'1';candidates.push(`${relay}/?ally=${ally}&path=${path}&page=${page}`);}}
   candidates.push(url); let last='';
-  for(const u of candidates){try{const r=await fetch(u,{headers:{'Accept':'text/html,application/xhtml+xml,application/json'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);const text=await r.text();if(text&&text.length>200)return text;last=`Réponse vide via ${u}`;}catch(e){last=e.message||String(e);}}
+  for(const u of candidates){
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),12000);
+    try{const r=await fetch(u,{headers:{'Accept':'text/html,application/xhtml+xml,application/json'},signal:controller.signal});if(!r.ok)throw new Error(`HTTP ${r.status}`);const text=await r.text();if(text&&text.length>200)return text;last=`Réponse vide via ${u}`;}
+    catch(e){last=e.name==='AbortError'?'Délai de réponse dépassé (12 s)':(e.message||String(e));}
+    finally{clearTimeout(timeout);}
+  }
   throw new Error(last||'Impossible de lire la page SWGOH.GG.');
 }
 function parseHTML(text){return new DOMParser().parseFromString(text,'text/html');}
@@ -431,15 +437,15 @@ function extractApiMods(json){
 }
 function unitToCharacter(u,index=0){const o=u?.data&&typeof u.data==='object'?u.data:u;if(!o||typeof o!=='object')return null;const baseId=o.base_id??o.baseId??o.definitionId;const name=o.name??o.character??o.characterName??o.unitName;const hasRosterFields=baseId&&Number.isFinite(Number(o.level))&&Number.isFinite(Number(o.rarity))&&(Object.prototype.hasOwnProperty.call(o,'gear_level')||Object.prototype.hasOwnProperty.call(o,'gearLevel')||Object.prototype.hasOwnProperty.call(o,'gear')||Object.prototype.hasOwnProperty.call(o,'power')||Object.prototype.hasOwnProperty.call(o,'combat_type'));if(!hasRosterFields)return null;const relicTierRaw=o.relic_tier??o.relicTier??o.relic_level??o.relicLevel??o.relic?.tier??o.relic?.relicTier??0;return{name:name||baseId,baseId,level:Number(o.level||0),gear:Number(o.gear_level??o.gearLevel??o.gear??0),stars:Number(o.rarity??o.starLevel??o.stars??0),power:Number(o.power||0),combatType:Number(o.combat_type??o.combatType??1),relic_tier:Number(relicTierRaw)||0,raw:u};}
 function extractApiCharacters(json){const direct=Array.isArray(json?.units)?json.units:[];let out=direct.map(unitToCharacter).filter(Boolean);if(!out.length){const candidates=[];walkObjects(json,o=>{const unit=unitToCharacter(o);if(unit)candidates.push(unit);});out=candidates;}const seen=new Set();return out.filter(x=>{const key=`${x.baseId||''}|${x.name||''}`;if(seen.has(key))return false;seen.add(key);return true;});}
-async function fetchJSON(url){const r=await fetch(url,{headers:{'Accept':'application/json,text/plain,*/*'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);return JSON.parse(await r.text());}
+async function fetchJSON(url){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12000);try{const r=await fetch(url,{headers:{'Accept':'application/json,text/plain,*/*'},signal:controller.signal});if(!r.ok)throw new Error(`HTTP ${r.status}`);return JSON.parse(await r.text());}catch(e){if(e.name==='AbortError')throw new Error('Délai API dépassé (12 s)');throw e;}finally{clearTimeout(timeout);}}
 
 function setGateMessage(message,state=''){const box=$('gateMessage');const step=$('gateStep');const gate=$('holocronGate');if(box){box.textContent=message;box.className=`gate-message ${state}`;}if(gate)gate.classList.toggle('is-loading',state==='loading');if(step&&state==='loading')step.textContent='SYNCHRONISATION EN COURS';if(step&&state==='error')step.textContent='SYNCHRONISATION INTERROMPUE';if(step&&state==='success')step.textContent='ROSTER SYNCHRONISÉ';}
 function finishHolocronGate(){const gate=$('holocronGate'),shell=$('appShell');if(!gate||!shell)return;setGateMessage('ROSTER SYNCHRONISÉ · OUVERTURE DE L’HOLOCRON','success');const step=$('gateStep');if(step)step.textContent='ROSTER SYNCHRONISÉ';gate.classList.remove('is-loading');gate.classList.add('is-success');setTimeout(()=>{shell.hidden=false;document.body.classList.add('holocron-unlocked');gate.remove();window.scrollTo(0,0);},2050);}
-function submitGateCode(){const button=$('gateActivate');if(button?.disabled)return;const raw=cleanAllyCode($('gateAllyCode')?.value||'');if(raw.length!==9){setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');$('gateAllyCode')?.focus();return;}const target=$('allyCode');if(target)target.value=raw;setGateMessage('IDENTIFICATION DU ROSTER · CHARGEMENT DES DONNÉES','loading');if(button)button.disabled=true;loadRemotePlayer().catch(e=>{log(`Échec du chargement : ${e?.message||e}`);setGateMessage(`ÉCHEC DE SYNCHRONISATION · ${e?.message||'ERREUR INCONNUE'}`,'error');}).finally(()=>{if(button)button.disabled=false;});}
+function submitGateCode(){const raw=cleanAllyCode($('gateAllyCode')?.value||'');if(raw.length!==9){setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');$('gateAllyCode')?.focus();return;}const target=$('allyCode');if(target)target.value=raw;setGateMessage('IDENTIFICATION DU ROSTER · CHARGEMENT DES DONNÉES','loading');$('gateActivate').disabled=true;loadRemotePlayer().finally(()=>{if($('gateActivate'))$('gateActivate').disabled=false;});}
 
 async function loadRemotePlayer(){
   const allyCode=cleanAllyCode($('allyCode')?.value || $('gateAllyCode')?.value || '');if(allyCode.length!==9){log('Ally Code invalide : 9 chiffres attendus.');setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');return;}
-  const loadButton=$('loadPlayer');if(loadButton){loadButton.disabled=true;loadButton.textContent='CHARGEMENT…';}if($('log'))$('log').textContent='';const fmt=formatAlly(allyCode);log(`Recherche du joueur ${fmt}…`);
+  $('loadPlayer').disabled=true;$('loadPlayer').textContent='CHARGEMENT…';$('log').textContent='';const fmt=formatAlly(allyCode);log(`Recherche du joueur ${fmt}…`);
   try{
     if(workerUrl())log('Relais Cloudflare actif : récupération via relais sécurisé.');else log('Aucun relais configuré : tentative directe depuis le navigateur.');
     const base=`https://swgoh.gg/p/${allyCode}`,relay=workerUrl();let apiChars=[],apiMods=[];
@@ -452,12 +458,20 @@ async function loadRemotePlayer(){
     rosterCharacters=chars;rosterShips=ships;log(`${chars.length} personnages récupérés (${apiChars.length} unités candidates API, filtrées sur les unités possédées).`);
     log('Lecture des mods publics pour décoder les statistiques affichées…');
     const htmlMods=[];
-    for(let page=1;page<=100;page++){
+    const seenModPages=new Set();
+    // Certains relais/pages renvoient toujours le même contenu quelle que soit la pagination.
+    // On détecte ces répétitions pour éviter de laisser l'activation tourner indéfiniment.
+    const maxModPages=40;
+    for(let page=1;page<=maxModPages;page++){
       const pageMods=parseModsPage(parseHTML(await fetchText(`${base}/mods/?page=${page}`)),page);
-      if(!pageMods.length)break;
+      if(!pageMods.length){log(`Fin de pagination des mods à la page ${page}.`);break;}
+      const signature=JSON.stringify(pageMods.map(m=>[m.slot,m.set_name,m.rarity,m.level,m.primary_stat,m.primary_value,m.character,(m.secondary_stats||[]).map(x=>[x.stat,x.value])]));
+      if(seenModPages.has(signature)){log(`Pagination interrompue : la page ${page} répète une page précédente.`);break;}
+      seenModPages.add(signature);
       htmlMods.push(...pageMods);
       log(`Page mods ${page}: ${pageMods.length} mods.`);
       if(pageMods.length<30)break;
+      if(page===maxModPages)log(`Limite de sécurité atteinte (${maxModPages} pages HTML). Les données API disponibles sont conservées.`);
     }
     // Les pages publiques donnent les valeurs réellement affichées (ex. 8 Speed, 5.88%).
     // L'API reste un filet de sécurité pour les éventuels mods non présents dans les pages.
@@ -481,7 +495,7 @@ async function loadRemotePlayer(){
     $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nUnités totales: ${chars.length+ships.length}\nMods: ${mods.length}\nProfils Kyber disponibles dans cette version: ${Object.keys(profiles).length}`;
     log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${mods.length} mods exploitables.`);if(!mods.length)log('Aucun mod lisible.');showPage('dashboard');if($('holocronGate'))finishHolocronGate();
   }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, utilise l’import JSON.');if($('holocronGate'))setGateMessage(`ÉCHEC DE SYNCHRONISATION · ${e.message||'ERREUR INCONNUE'}`,'error');}
-  finally{if(loadButton){loadButton.disabled=false;loadButton.textContent='CHARGER MON PROFIL';}}
+  finally{$('loadPlayer').disabled=false;$('loadPlayer').textContent='CHARGER MON PROFIL';}
 }
 function updateAccountSummary(title,fmt){if($('playerName'))$('playerName').textContent=title||'Profil';if($('playerAlly'))$('playerAlly').textContent=fmt||'—';if($('heroPlayerName'))$('heroPlayerName').textContent=title||'Profil';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent=fmt||'—';setText('topAccountName',title||'—');setText('topProfileState','CONNECTÉ');setText('heroProfileState','CONNECTÉ');}
 function modSetLabel(value){
@@ -983,14 +997,53 @@ function topChangeStatValue(value,name){
  return `${num(value,percent?2:1)}${percent&&!String(name).includes('%')?' pt':''}${String(name).includes('%')?'%':''}`;
 }
 function renderHolocronTopChanges(){
- const box=$('holocronTopChanges');if(!box)return;
- if(!Array.isArray(rosterCharacters)||!rosterCharacters.length){box.className='topchanges-empty';box.innerHTML='<strong>Profil requis</strong><span>Charge ton profil SWGOH pour analyser les mods réels.</span>';return;}
+ const box=$('holocronTopChanges'),count=$('topchangesCount'),note=$('topchangesSeasonNote');
+ if(!box)return;
+ if(!Array.isArray(rosterCharacters)||!rosterCharacters.length){
+   if(count)count.textContent='—';
+   box.innerHTML='<div class="topchanges-empty"><strong>Profil requis</strong><span>Charge ton profil SWGOH pour préparer les décisions.</span></div>';
+   return;
+ }
  const rows=holocronTopChangeCandidates();
- if(!rows.length){box.className='topchanges-empty';box.innerHTML='<strong>Aucun échange suffisamment pertinent détecté</strong><span>Le moteur n’a trouvé aucun échange répondant aux critères actuels. Vérifie que le profil contient les mods et réessaie après actualisation.</span>';return;}
- box.className='topchanges-results';
+ if(count)count.textContent=num(rows.length);
  const gacSeason=holocronLatestGacSeason();
- const seasonNote=gacSeason?`<div class=\"topchanges-gac-note\">Priorité GAC : saison ${esc(gacSeason.season)} · GL prioritaires · utilisations de la saison de référence.</div>`:'<div class=\"topchanges-gac-note\">Priorité GL activée. Statistiques GAC : aucune saison avec données intégrées ; le classement d’utilisation est en attente.</div>';
- box.innerHTML=seasonNote+rows.map((r,i)=>{const delta=topChangeStatDelta(r.oldMod,r.newMod);const stats=delta.length?delta.map(x=>`<span class="topchange-stat ${x.delta>0?'is-up':'is-down'}"><b>${esc(x.name)}</b><strong>${x.delta>0?'+':'−'}${topChangeStatValue(Math.abs(x.delta),x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucune secondaire différente détectée.</span>';return `<article class="topchange-result"><div class="topchange-rank">${String(i+1).padStart(2,'0')}</div><div class="topchange-main"><strong>À AMÉLIORER : ${esc(r.recipient.name||r.recipient.baseId)}</strong><small>Mod actuel : ${esc(r.oldMod.slot)} · Donneur : ${esc(r.donor.name||r.donor.baseId)}</small><div class="topchange-mods"><span><b>MOD À REMPLACER</b><br>${esc(r.oldMod.slot)} · ${esc(r.oldMod.set_name||'—')}<br>Primaire : ${esc(r.oldMod.primary_stat||'—')} ${num(r.oldMod.primary_value,1)} · ${num(modTotalSpeed(r.oldMod),1)} vit.</span><span><b>MOD REÇU</b><br>${esc(r.newMod.slot)} · ${esc(r.newMod.set_name||'—')}<br>Primaire : ${esc(r.newMod.primary_stat||'—')} ${num(r.newMod.primary_value,1)} · ${num(modTotalSpeed(r.newMod),1)} vit.</span></div><section class="topchange-stat-panel"><strong>APPORT DES STATISTIQUES DU MOD REÇU</strong><div class="topchange-stat-grid">${stats}</div><small>Écart des statistiques secondaires entre les deux mods. Le set, l’emplacement et la primaire restent identiques.</small></section><div class="topchange-actions"><strong>ÉCHANGE À EFFECTUER</strong><ol><li>Transférer le mod du donneur vers <b>${esc(r.recipient.name||r.recipient.baseId)}</b>.</li><li>Transférer le mod remplacé vers <b>${esc(r.donor.name||r.donor.baseId)}</b>.</li></ol><small>Les valeurs affichées sont les écarts des mods eux-mêmes. Elles ne constituent pas une simulation complète des statistiques finales du personnage ou du combat.</small></div></div></article>`}).join('');
+ if(note)note.textContent=gacSeason?`Référence GAC · saison ${esc(gacSeason.season)}`:'Analyse roster · données du profil';
+ if(!rows.length){
+   box.innerHTML='<div class="topchanges-empty"><strong>Aucun échange pertinent détecté</strong><span>Le moteur attend suffisamment de mods équipés pour calculer des transferts.</span></div>';
+   return;
+ }
+ box.innerHTML=rows.map((r,i)=>{
+   const delta=topChangeStatDelta(r.oldMod,r.newMod);
+   const statPreview=delta.slice(0,3).map(x=>`<span class="${x.delta>0?'up':'down'}">${esc(x.name)} ${x.delta>0?'+':'−'}${topChangeStatValue(Math.abs(x.delta),x.name)}</span>`).join('');
+   const recipientName=String(r.recipient?.name||r.recipient?.baseId||'Personnage cible');
+   const donorName=String(r.donor?.name||r.donor?.baseId||'Donneur');
+   const recipientHref=`https://swgoh.gg/units/${slug(recipientName)}/`;
+   const donorHref=`https://swgoh.gg/units/${slug(donorName)}/`;
+   return `<article class="topchange-card">
+      <div class="topchange-number">${String(i+1).padStart(2,'0')}</div>
+      <div class="topchange-body">
+        <div class="topchange-route">
+          <div class="topchange-character">
+            <span class="topchange-label">À AMÉLIORER</span>
+            <a href="${recipientHref}" target="_blank" rel="noopener" class="character-db-link">${esc(recipientName)} ↗</a>
+            <small>Mod actuel · ${esc(r.oldMod.slot)} · ${esc(r.oldMod.set_name||'—')}</small>
+          </div>
+          <span class="topchange-arrow">→</span>
+          <div class="topchange-character">
+            <span class="topchange-label">MOD DISPONIBLE</span>
+            <a href="${donorHref}" target="_blank" rel="noopener" class="character-db-link">${esc(donorName)} ↗</a>
+            <small>${esc(r.newMod.slot)} · ${esc(r.newMod.set_name||'—')} · ${num(modTotalSpeed(r.newMod),1)} vit.</small>
+          </div>
+        </div>
+        <div class="topchange-meta">
+          <span>Primaire <b>${esc(r.newMod.primary_stat||'—')}</b> ${num(r.newMod.primary_value,1)}</span>
+          <span>Speed <b>${num(modTotalSpeed(r.newMod),1)}</b></span>
+          <span>Écart <b>${statPreview||'—'}</b></span>
+        </div>
+        <div class="topchange-action"><span>TRANSFERT RECOMMANDÉ</span><strong>${esc(r.newMod.slot)} → ${esc(recipientName)}</strong></div>
+      </div>
+   </article>`;
+ }).join('');
 }
 function showPage(page){
   document.body.dataset.page=page;
@@ -1176,7 +1229,7 @@ function renderCharacterDetail(){
   if(!c){box.innerHTML='<div class="empty">Sélectionnez un personnage.</div>';return;}
   const cm=getCharacterMods(c), s=v176ModStatus(cm);
   const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0), primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
-  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">PERSONNAGE</span><h2>${esc(c.name||c.baseId)}</h2><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${relicLevelFromTier(c.relic_tier??c.relicTier??0)?'R'+num(relicLevelFromTier(c.relic_tier??c.relicTier)):'Sans Relic'} · ${num(c.stars)}★ · Puissance ${num(c.power)}</p>${factionBadgesHtml(factionMap[characterKey(c)]||[])}</div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods équipés</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
+  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">PERSONNAGE</span><div class="character-title-line"><h2>${esc(c.name||c.baseId)}</h2><a class="character-db-link" href="https://swgoh.gg/units/${slug(c.name||c.baseId)}/" target="_blank" rel="noopener">BASE PERSONNAGE ↗</a></div><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${relicLevelFromTier(c.relic_tier??c.relicTier??0)?'R'+num(relicLevelFromTier(c.relic_tier??c.relicTier)):'Sans Relic'} · ${num(c.stars)}★ · Puissance ${num(c.power)}</p>${factionBadgesHtml(factionMap[characterKey(c)]||[])}</div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods équipés</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
   <div class="character-detail-actions"><strong>DÉTAIL DES 6 MODS ÉQUIPÉS</strong><button type="button" class="detail-mods-btn" id="openCharacterInventory">OUVRIR DANS L’INVENTAIRE</button></div>
   <div class="mod-detail-grid">${[...cm,...Array(Math.max(0,6-cm.length)).fill(null)].slice(0,6).map((m,i)=>m?renderModCard(m):`<div class="mod-card empty-slot"><strong>${['Square','Arrow','Diamond','Triangle','Circle','Cross'][i]}</strong><span>MOD MANQUANT</span></div>`).join('')}</div>`;
   $('openCharacterInventory')?.addEventListener('click',()=>openCharacterInventory(c));

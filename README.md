@@ -30,3 +30,11 @@ Le dashboard d'accueil a été refondu autour d'un centre de décision visuel :
 - Carte Puissance galactique avec détail personnages / vaisseaux et proportions.
 - Carte Mods avec ventilation par tranches de vitesse.
 - Les identifiants DOM utilisés par le moteur existant sont conservés pour ne pas casser la synchronisation, l'analyse et l'Optimizer.
+
+
+## V92.5 — Decision Center visual cleanup
+- Holocron image isolated from its black photo background.
+- Decision center cards made more readable and airy.
+- Roster and mod ventilation enlarged.
+- Character database links restored in mod detail and decision recommendations.
+- Essential view redesigned as compact visual decision cards instead of long text blocks.
