@@ -85,9 +85,19 @@
 
   function showApp(){
     const gate=el('holocronGate'), shell=el('appShell');
-    if(gate) gate.classList.add('gate-complete');
     if(shell) shell.hidden=false;
     renderDecision();
+    if(gate){
+      // The visual gate CSS listens to is-success. V100 previously added
+      // gate-complete, a class that has no exit animation, so the gate stayed
+      // permanently above the dashboard after a successful sync.
+      gate.classList.remove('gate-complete');
+      gate.classList.add('is-success');
+      window.setTimeout(()=>{
+        gate.hidden=true;
+        gate.classList.remove('is-success');
+      },2150);
+    }
   }
 
   function setGate(msg,kind){
