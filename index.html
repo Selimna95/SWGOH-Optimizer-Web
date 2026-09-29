@@ -21,6 +21,42 @@
 </head>
 <body>
 
+<div id="holocronGate" class="holocron-gate" aria-label="Connexion à l'Holocron">
+  <div class="gate-backdrop" aria-hidden="true"></div>
+  <div class="gate-vignette" aria-hidden="true"></div>
+  <div class="gate-brand">
+    <div class="gate-brand-mark">◆</div>
+    <div><span>SELIMNA’S</span><strong>HOLOCRON</strong><small>ROSTER INTELLIGENCE FOR SWGOH</small></div>
+  </div>
+  <div class="gate-content">
+    <section class="gate-copy">
+      <div class="gate-eyebrow">SELIMNA’S // HOLOCRON</div>
+      <h1>UNLOCK THE<br><strong>KNOWLEDGE</strong></h1>
+      <p>Entrez votre code allié pour synchroniser<br>votre roster et révéler le savoir des Sith.</p>
+    </section>
+    <section class="gate-chamber">
+      <div class="gate-energy energy-a"></div><div class="gate-energy energy-b"></div><div class="gate-energy energy-c"></div>
+      <div class="holocron-pedestal">
+        <div class="pedestal-top"></div><div class="pedestal-glow"></div>
+        <div class="holocron-core" aria-hidden="true">
+          <span class="core-face face-1"></span><span class="core-face face-2"></span><span class="core-face face-3"></span><span class="core-face face-4"></span>
+          <span class="core-inner"></span><span class="core-beam"></span>
+        </div>
+        <div class="energy-ring ring-1"></div><div class="energy-ring ring-2"></div><div class="energy-ring ring-3"></div>
+      </div>
+      <div class="gate-status"><span></span><b id="gateStep">IDENTIFICATION DU ROSTER</b><small>PRÊT POUR SYNCHRONISATION</small></div>
+    </section>
+    <section class="gate-login">
+      <label for="gateAllyCode">CODE ALLIÉ</label>
+      <div class="gate-input-wrap"><span>♙</span><input id="gateAllyCode" inputmode="numeric" maxlength="11" placeholder="123456789" autocomplete="off"><i>✓</i></div>
+      <button id="gateActivate" type="button"><span class="button-spinner"></span>ACTIVER L’HOLOCRON</button>
+      <div id="gateMessage" class="gate-message" aria-live="polite">Le savoir attend votre code.</div>
+    </section>
+  </div>
+  <div class="gate-footer"><span>HOLOCRON V1.0.0</span><span>LE SAVOIR EST UNE ARME</span></div>
+</div>
+
+<div id="appShell" class="app-shell" hidden>
 <header class="topbar">
   <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V91</span></div>
   <div class="top-status-group">
@@ -309,6 +345,7 @@
     <span class="creator-arrow" aria-hidden="true">↗</span>
   </a>
 </footer>
+</div>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <script src="optimizer-profiles.js?v=45"></script>
 <!-- V87 : retour au point d’entrée complet pour sécuriser le chargement du profil. -->
