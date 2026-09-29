@@ -868,20 +868,45 @@ function holocronKyberFit(mod, character){
   return fit;
 }
 function holocronModScoreForCharacter(mod, character){return holocronModScore(mod)+holocronKyberFit(mod,character);}
+// Priorités GAC : la dernière saison comportant des données est la référence.
+// Le jeu de données est volontairement séparé du profil joueur (gac-usage.js).
+const HOLOCRON_GALACTIC_LEGENDS = new Set([
+  'GRANDMASTERYODA','JEDIMASTERKENOBI','JEDIMASTERLUKE','SITHPALPATINE',
+  'JABBA','JABBATHEHUTT','LORDVADER','EXECUTOR','SUPREMELEADERKYLOREN',
+  'REY','STARKILLER','LEIAORGANA','GLLEIA','GLAHSOKA','AHSOKATANOGL',
+  'JEDIKNIGHTLUKE','JML','SLKR','SEE','JMK','LV','JABBA'
+]);
+function holocronIsGalacticLegend(c){
+  const key=characterKey(c);
+  return c?.isGalacticLegend===true || c?.is_galactic_legend===true || HOLOCRON_GALACTIC_LEGENDS.has(key);
+}
+function holocronLatestGacSeason(){
+  const seasons=window.__SWGOH_GAC_USAGE__?.seasons;
+  if(!Array.isArray(seasons))return null;
+  return seasons.filter(s=>s && s.season!=null && s.characters && Object.keys(s.characters).length)
+    .sort((a,b)=>Number(b.season)-Number(a.season))[0]||null;
+}
+function holocronGacUsage(c, season=holocronLatestGacSeason()){
+  if(!season)return null;
+  const key=characterKey(c); const record=season.characters?.[key];
+  if(!record)return 0;
+  return Math.max(0,Number(record.uses ?? record.usage ?? 0)||0);
+}
 function holocronTopChangeCandidates(){
   const donors=[],recipients=[];
+  const gacSeason=holocronLatestGacSeason();
   for(const c of rosterCharacters){
     if(rosterUnitType(c)==='ship')continue;
     const cm=getCharacterMods(c); const st=v176ModStatus(cm);
     // Les donneurs sont les personnages les moins aboutis : leurs mods servent
     // à terminer l'équipement des personnages déjà bien modés.
-    if(['INCOMPLETS','TRÈS FAIBLES','FAIBLES'].includes(st.status) && cm.length){
+    if(!holocronIsGalacticLegend(c) && ['INCOMPLETS','TRÈS FAIBLES','FAIBLES'].includes(st.status) && cm.length){
       donors.push({c,mods:cm,status:st.status,totalSpeed:st.totalSpeed});
     }
     // On cible les personnages déjà solides, dont l'équipement peut être
     // finalisé avec un mod mieux adapté aux objectifs Kyber.
-    if(['MOYENS','BONS'].includes(st.status) && cm.length===6){
-      recipients.push({c,mods:cm,status:st.status,totalSpeed:st.totalSpeed});
+    if((holocronIsGalacticLegend(c) || ['MOYENS','BONS'].includes(st.status)) && cm.length===6){
+      recipients.push({c,mods:cm,status:st.status,totalSpeed:st.totalSpeed,isGL:holocronIsGalacticLegend(c),gacUses:holocronGacUsage(c,gacSeason)});
     }
   }
   const donorPriority={'INCOMPLETS':3,'TRÈS FAIBLES':2,'FAIBLES':1};
@@ -908,9 +933,10 @@ function holocronTopChangeCandidates(){
           const donorScore=holocronModScoreForCharacter(donorMod,d.c);
           const donorLoss=Math.max(0,donorBest-donorScore);
           if(donorLoss<1.5 && d.status!=='INCOMPLETS')continue;
-          const priority=(recipientPriority[r.status]||0)*100 +
+          const usagePriority=r.isGL?1000000000:(r.gacUses==null?0:r.gacUses*1000);
+          const priority=usagePriority + (r.isGL?0:(recipientPriority[r.status]||0)*100) +
             (donorPriority[d.status]||0)*25 + Math.max(0,gain)*2 + Math.max(0,kyberGain)*12 - donorScore*0.03;
-          out.push({donor:d.c,recipient:r.c,oldMod:currentMod,newMod:donorMod,gain,donorLoss,status:d.status,priority,recipientStatus:r.status,kyberGain});
+          out.push({donor:d.c,recipient:r.c,oldMod:currentMod,newMod:donorMod,gain,donorLoss,status:d.status,priority,recipientStatus:r.status,kyberGain,isGL:r.isGL,gacUses:r.gacUses,gacSeason:gacSeason?.season??null});
         }
       }
     }
@@ -929,12 +955,6 @@ function topChangeStatDelta(fromMod,toMod){
  }
  return [...stats.values()].map(x=>({...x,delta:x.to-x.from})).filter(x=>Math.abs(x.delta)>0.00001).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
 }
-function topChangeGradeHtml(m){
- const dots=modDots(m),tier=modIconTier(m);
- const dotsColor=dots===6?'gold':'white';
- const tierClass={A:'tier-a',B:'tier-b',C:'tier-c',D:'tier-d',E:'tier-e'}[tier]||'tier-e';
- return `<span class="topchange-grade" title="Mod ${dots}${tier}"><b class="mod-visual-dots-number dots-${dotsColor}">${dots}</b><b class="mod-visual-tier ${tierClass}">${esc(tier)}</b></span>`;
-}
 function topChangeStatValue(value,name){
  const percent=/%|potency|tenacity|critical|chance|avoidance/i.test(name);
  return `${num(value,percent?2:1)}${percent&&!String(name).includes('%')?' pt':''}${String(name).includes('%')?'%':''}`;
@@ -945,7 +965,9 @@ function renderHolocronTopChanges(){
  const rows=holocronTopChangeCandidates();
  if(!rows.length){box.className='topchanges-empty';box.innerHTML='<strong>Aucun échange suffisamment pertinent détecté</strong><span>Le moteur n’a trouvé aucun échange répondant aux critères actuels. Vérifie que le profil contient les mods et réessaie après actualisation.</span>';return;}
  box.className='topchanges-results';
- box.innerHTML=rows.map((r,i)=>{const delta=topChangeStatDelta(r.oldMod,r.newMod);const stats=delta.length?delta.map(x=>`<span class="topchange-stat ${x.delta>0?'is-up':'is-down'}"><b>${esc(x.name)}</b><strong>${x.delta>0?'+':'−'}${topChangeStatValue(Math.abs(x.delta),x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucune secondaire différente détectée.</span>';return `<article class="topchange-result"><div class="topchange-rank">${String(i+1).padStart(2,'0')}</div><div class="topchange-main"><strong>À AMÉLIORER : ${esc(r.recipient.name||r.recipient.baseId)}</strong><small>Mod actuel : ${esc(r.oldMod.slot)} · Donneur : ${esc(r.donor.name||r.donor.baseId)}</small><div class="topchange-mods"><span class="topchange-mod-card"><b>MOD À REMPLACER</b><span class="topchange-mod-identity">${topChangeGradeHtml(r.oldMod)}<strong>${esc(r.oldMod.slot)} · ${esc(r.oldMod.set_name||'—')}</strong></span><br>Primaire : ${esc(r.oldMod.primary_stat||'—')} ${num(r.oldMod.primary_value,1)} · ${num(modTotalSpeed(r.oldMod),1)} vit.</span><span class="topchange-mod-card"><b>MOD REÇU</b><span class="topchange-mod-identity">${topChangeGradeHtml(r.newMod)}<strong>${esc(r.newMod.slot)} · ${esc(r.newMod.set_name||'—')}</strong></span><br>Primaire : ${esc(r.newMod.primary_stat||'—')} ${num(r.newMod.primary_value,1)} · ${num(modTotalSpeed(r.newMod),1)} vit.</span></div><section class="topchange-stat-panel"><strong>APPORT DES STATISTIQUES DU MOD REÇU</strong><div class="topchange-stat-grid">${stats}</div><small>Écart des statistiques secondaires entre les deux mods. Le set, l’emplacement et la primaire restent identiques.</small></section><div class="topchange-actions"><strong>ÉCHANGE À EFFECTUER</strong><ol><li>Transférer le mod du donneur vers <b>${esc(r.recipient.name||r.recipient.baseId)}</b>.</li><li>Transférer le mod remplacé vers <b>${esc(r.donor.name||r.donor.baseId)}</b>.</li></ol><small>Les valeurs affichées sont les écarts des mods eux-mêmes. Elles ne constituent pas une simulation complète des statistiques finales du personnage ou du combat.</small></div></div></article>`}).join('');
+ const gacSeason=holocronLatestGacSeason();
+ const seasonNote=gacSeason?`<div class=\"topchanges-gac-note\">Priorité GAC : saison ${esc(gacSeason.season)} · GL prioritaires · utilisations de la saison de référence.</div>`:'<div class=\"topchanges-gac-note\">Priorité GL activée. Statistiques GAC : aucune saison avec données intégrées ; le classement d’utilisation est en attente.</div>';
+ box.innerHTML=seasonNote+rows.map((r,i)=>{const delta=topChangeStatDelta(r.oldMod,r.newMod);const stats=delta.length?delta.map(x=>`<span class="topchange-stat ${x.delta>0?'is-up':'is-down'}"><b>${esc(x.name)}</b><strong>${x.delta>0?'+':'−'}${topChangeStatValue(Math.abs(x.delta),x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucune secondaire différente détectée.</span>';return `<article class="topchange-result"><div class="topchange-rank">${String(i+1).padStart(2,'0')}</div><div class="topchange-main"><strong>À AMÉLIORER : ${esc(r.recipient.name||r.recipient.baseId)}</strong><small>Mod actuel : ${esc(r.oldMod.slot)} · Donneur : ${esc(r.donor.name||r.donor.baseId)}</small><div class="topchange-mods"><span><b>MOD À REMPLACER</b><br>${esc(r.oldMod.slot)} · ${esc(r.oldMod.set_name||'—')}<br>Primaire : ${esc(r.oldMod.primary_stat||'—')} ${num(r.oldMod.primary_value,1)} · ${num(modTotalSpeed(r.oldMod),1)} vit.</span><span><b>MOD REÇU</b><br>${esc(r.newMod.slot)} · ${esc(r.newMod.set_name||'—')}<br>Primaire : ${esc(r.newMod.primary_stat||'—')} ${num(r.newMod.primary_value,1)} · ${num(modTotalSpeed(r.newMod),1)} vit.</span></div><section class="topchange-stat-panel"><strong>APPORT DES STATISTIQUES DU MOD REÇU</strong><div class="topchange-stat-grid">${stats}</div><small>Écart des statistiques secondaires entre les deux mods. Le set, l’emplacement et la primaire restent identiques.</small></section><div class="topchange-actions"><strong>ÉCHANGE À EFFECTUER</strong><ol><li>Transférer le mod du donneur vers <b>${esc(r.recipient.name||r.recipient.baseId)}</b>.</li><li>Transférer le mod remplacé vers <b>${esc(r.donor.name||r.donor.baseId)}</b>.</li></ol><small>Les valeurs affichées sont les écarts des mods eux-mêmes. Elles ne constituent pas une simulation complète des statistiques finales du personnage ou du combat.</small></div></div></article>`}).join('');
 }
 function showPage(page){
   document.body.dataset.page=page;

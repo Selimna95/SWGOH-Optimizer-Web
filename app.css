@@ -2933,11 +2933,4 @@ button,input,select{max-width:100%;box-sizing:border-box}
 /* V79 — actions concrètes du TOP 10 */
 .topchange-actions{margin-top:9px;padding:10px 12px;border-left:2px solid #58d8f5;background:rgba(5,20,32,.62);display:grid;gap:5px}.topchange-actions>strong{font-size:11px;color:#8de8fa;letter-spacing:.5px}.topchange-actions ol{margin:0;padding-left:19px;color:#d2e7f1;font-size:11px;line-height:1.7}.topchange-actions small{font-size:10px;line-height:1.5;color:#91aebe}.holocron-priority button{margin-top:6px;align-self:flex-start;padding:9px 12px;border:1px solid rgba(74,207,240,.55);background:rgba(18,89,116,.35);color:#bcefff;font-size:10px;font-weight:800;letter-spacing:.5px;cursor:pointer}
 
-/* V88 — code couleur des mods dans les propositions TOP 10 */
-.topchange-mod-card{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:9px 11px;border:1px solid rgba(85,210,245,.22);border-radius:9px;background:rgba(3,15,27,.48);min-width:220px}
-.topchange-mod-card> b{font-size:10px;letter-spacing:.55px;color:#8de8fa}
-.topchange-mod-identity{display:flex;align-items:center;gap:9px;min-height:27px}
-.topchange-mod-identity strong{font-size:12px;color:#e5f5fc}
-.topchange-grade{display:inline-flex;align-items:center;justify-content:center;gap:1px;min-width:35px;padding:2px 6px;border:1px solid rgba(119,201,226,.32);border-radius:6px;background:rgba(7,25,39,.88);font-size:20px;font-weight:900;line-height:1.05}
-.topchange-mod-card br{display:none}
-@media(max-width:700px){.topchange-mod-card{min-width:0;width:100%}}
+.topchanges-gac-note{margin:0 0 14px;padding:10px 13px;border:1px solid rgba(35,190,230,.35);border-radius:9px;background:rgba(13,91,119,.16);color:#9bdff1;font-size:.82rem;letter-spacing:.02em}
