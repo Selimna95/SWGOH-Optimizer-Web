@@ -9,9 +9,6 @@ let reallocationSelectedModIndex = null;
 let reallocationMediumUnlocked = false;
 let currentData = null;
 let mods = [];
-let modSummaryCount = 0;
-let modSummarySpeed = {total:0, no_speed:0, _1_10:0, _11_15:0, _16_21:0, gt_21:0};
-const unitModLoadCache = new Map();
 let profiles = {};
 let optimizerProfiles = {};
 let currentDataset = 'characters';
@@ -30,16 +27,6 @@ let analysisAuditSort = 'priority';
 let accountGalacticPower = {total:0, characters:0, ships:0};
 
 const $ = (id) => document.getElementById(id);
-function walkObjects(value, visitor, seen=new WeakSet()) {
-  if(value==null) return;
-  if(typeof value==='object') {
-    if(seen.has(value)) return;
-    seen.add(value);
-    visitor(value);
-    if(Array.isArray(value)) { for(const item of value) walkObjects(item,visitor,seen); }
-    else { for(const key of Object.keys(value)) walkObjects(value[key],visitor,seen); }
-  }
-}
 function log(msg) { $('log').textContent += `\n${msg}`; $('log').scrollTop = $('log').scrollHeight; }
 function setRuntime(text, ok=false) { $('runtime').textContent = text; $('runtime').classList.toggle('ok', ok); }
 function cleanAllyCode(value) { return String(value || '').replace(/\D/g, '').slice(0, 9); }
@@ -49,7 +36,7 @@ function esc(value) { return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':
 function num(value, digits=0) { const n=Number(value); return Number.isFinite(n) ? n.toLocaleString('fr-FR',{maximumFractionDigits:digits}) : '0'; }
 function parseLabeledNumber(text,label){const escaped=String(label).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const m=String(text||'').match(new RegExp(escaped+'\\s*([0-9][0-9,]*)','i'));return m?Number(String(m[1]).replace(/,/g,'')):0;}
 function extractGalacticPowerFromProfile(text){const body=String(text||'');let total=parseLabeledNumber(body,'Galactic Power');const characters=parseLabeledNumber(body,'Galactic Power (Characters)');const ships=parseLabeledNumber(body,'Galactic Power (Ships)');if(!total)total=characters+ships;return {total,characters,ships};}
-function renderGalacticPower(){const gp=accountGalacticPower||{total:0,characters:0,ships:0};setText('gpTotal',gp.total?num(gp.total):'0');setText('gpCharacters',gp.characters?num(gp.characters):'0');setText('gpShips',gp.ships?num(gp.ships):'0');setText('gpBreakdown',gp.total?`${num(gp.characters)} terrestre · ${num(gp.ships)} spatial`:'En attente de synchronisation');renderDecisionCenter();}
+function renderGalacticPower(){const gp=accountGalacticPower||{total:0,characters:0,ships:0};setText('gpTotal',gp.total?num(gp.total):'0');setText('gpCharacters',gp.characters?num(gp.characters):'0');setText('gpShips',gp.ships?num(gp.ships):'0');setText('gpBreakdown',gp.total?`${num(gp.characters)} terrestre · ${num(gp.ships)} spatial`:'En attente de synchronisation');}
 
 function statNameFromAny(value) {
   const rawNames = {1:'Health',5:'Speed',17:'Potency',18:'Tenacity',28:'Protection',41:'Offense',42:'Defense',45:'Critical Chance',48:'Offense',49:'Defense',53:'Critical Chance',55:'Health',56:'Protection',57:'Speed'};
@@ -96,135 +83,38 @@ function statObjectFromAny(value) {
   }
   return {stat:String(value).trim(), value:0, display_value:''};
 }
-function modOwnerValue(value){
-  if(value==null)return '';
-  if(typeof value==='string'||typeof value==='number')return String(value);
-  if(typeof value==='object')return String(value.baseId??value.base_id??value.characterId??value.character_id??value.unitId??value.unit_id??value.id??value.name??value.characterName??value.unitName??value.definitionId??'');
-  return '';
-}
-function parseModDefinitionId(definitionId){
-  const raw=String(definitionId??'');
-  const nums=raw.match(/\d+/g)?.map(Number)||[];
-  if(nums.length<3)return {};
-  const setId=nums[0], rarity=nums[1], slotIndex=nums[2];
-  return {setId,rarity,slot:(slotIndex>=0&&slotIndex<=5)?slotIndex+1:slotIndex};
-}
 function normalizeMod(m, index=0) {
   if (!m || typeof m !== 'object') return null;
-  const nested=(m.data&&typeof m.data==='object')?m.data:null;
-  const out = nested ? {...m,...nested} : {...m};
-  const def=out.definitionId??out.definition_id??out.modDefinitionId??out.mod_definition_id;
-  const meta=parseModDefinitionId(def);
+  const out = {...m};
   out.game_id = out.game_id ?? out.id ?? out.modId ?? out.uid ?? `web-${index}`;
-  out.slot = out.slot ?? out.slot_id ?? out.slotId ?? out.mod_slot ?? out.modSlot ?? out.shape ?? out.slotIndex ?? out.slot_index ?? meta.slot;
-  out.set_name = out.set_name ?? out.set ?? out.setName ?? out.set_id ?? out.setId ?? out.modSetId ?? out.mod_set_id ?? out.modSet ?? out.bonusSet ?? out.bonus_set ?? meta.setId;
-  out.pips = Number(out.pips ?? out.dotCount ?? out.dot_count ?? out.rarity ?? meta.rarity ?? 0) || 0;
-  out.rarity = Number(out.rarity ?? out.pips ?? meta.rarity ?? 0) || 0;
+  out.slot = out.slot ?? out.slot_id ?? out.slotId ?? out.mod_slot ?? out.modSlot ?? out.shape;
+  out.set_name = out.set_name ?? out.set ?? out.setName ?? out.setId ?? out.modSetId ?? out.mod_set_id;
   if (out.set_name && typeof out.set_name === 'object') out.set_name = out.set_name.name ?? out.set_name.id ?? out.set_name.setId ?? out.set_name.modSetId;
-  const primaryRaw = out.primary_stat ?? out.primaryStat ?? out.primary_statistic ?? out.primary ?? out.primaryStatValue;
+
+  const primaryRaw = out.primary_stat ?? out.primaryStat ?? out.primary ?? out.primaryStatValue;
   const primary = statObjectFromAny(primaryRaw);
   out.primary_stat = primary.stat || (typeof out.primary_stat === 'string' ? out.primary_stat : '');
-  out.primary_value = primary.display_value ? primary.value : statValueFromAny(out.primary_value ?? out.primaryValue ?? primaryRaw?.value ?? primaryRaw?.amount ?? primaryRaw?.stat?.unscaledDecimalValue ?? 0);
-  const secs = out.secondary_stats ?? out.secondaryStats ?? out.secondaryStat ?? out.secondary_stat ?? out.secondary ?? [];
+  out.primary_value = primary.display_value ? primary.value : statValueFromAny(out.primary_value ?? out.primaryValue ?? primaryRaw?.value ?? primaryRaw?.amount ?? 0);
+
+  const secs = out.secondary_stats ?? out.secondaryStats ?? out.secondaryStat ?? out.secondary ?? [];
   if (Array.isArray(secs)) secs.slice(0,4).forEach((raw,i)=>{
-    const ss=statObjectFromAny(raw);
-    out[`secondary_${i+1}_stat`] = ss.stat;
-    out[`secondary_${i+1}_value`] = ss.display_value ? ss.value : statValueFromAny(raw?.value ?? raw?.amount ?? raw?.unscaledDecimalValue ?? raw?.unscaled_decimal_value ?? raw?.stat?.unscaledDecimalValue ?? ss.value);
+    const s=statObjectFromAny(raw);
+    out[`secondary_${i+1}_stat`] = s.stat;
+    out[`secondary_${i+1}_value`] = s.display_value ? s.value : statValueFromAny(raw?.value ?? raw?.amount ?? raw?.unscaledDecimalValue ?? raw?.unscaled_decimal_value ?? s.value);
   });
+
   out.level = Number(out.level ?? 0);
-  out.tier = out.tier ?? out.quality ?? out.grade ?? out.modTier ?? out.mod_tier ?? out.rarityTier ?? out.rarity_tier ?? out.mod_tier_value ?? '';
-  const owner=modOwnerValue(out.character ?? out.characterName ?? out.equippedTo ?? out.equipped_to ?? out.unit_equiped ?? out.unitEquiped ?? out.location ?? out.usingIn ?? out.characterId ?? out.character_id ?? out.unitId ?? out.unit_id ?? out.equippedUnitId ?? out.equipped_unit_id);
-  out.character = owner;
-  out.characterId = out.characterId ?? out.character_id ?? out.unitId ?? out.unit_id ?? out.equippedUnitId ?? out.equipped_unit_id ?? owner;
+  // Keep the real tier supplied by the player API. It is independent from dots and level.
+  out.tier = out.tier ?? out.quality ?? out.grade ?? out.modTier ?? out.mod_tier ?? out.rarityTier ?? out.rarity_tier ?? '';
+  out.pips = Number(out.pips ?? out.dotCount ?? out.dot_count ?? 0) || 0;
+  out.rarity = Number(out.rarity ?? out.pips ?? 0);
+  out.character = out.character ?? out.characterName ?? out.equippedTo ?? out.equipped_to ?? out.unit_equiped ?? out.unitEquiped ?? out.location ?? out.usingIn ?? '';
   return out;
 }
 function extractMods(data) {
   if (Array.isArray(data)) return data.map(normalizeMod).filter(Boolean);
   if (Array.isArray(data?.mods)) return data.mods.map(normalizeMod).filter(Boolean);
   return [];
-}
-function extractRosterEquippedMods(json){
-  const out=[]; let i=0; const seen=new Set();
-  const visit=(unit)=>{
-    if(!unit||typeof unit!=='object')return;
-    const data=unit.data&&typeof unit.data==='object'?unit.data:unit;
-    const list=data.equippedStatMod??data.equipped_stat_mod??data.equippedStatMods??data.mods;
-    if(!Array.isArray(list)||!list.length)return;
-    let owner=modOwnerValue(data.baseId??data.base_id??data.characterId??data.character_id??data.name??data.characterName??data.unitName??data.definitionId??unit.baseId??unit.base_id??unit.definitionId);
-    if(owner.includes(':'))owner=owner.split(':')[0];
-    const ownerId=data.id??unit.id??data.unitId??data.unit_id??data.characterId??data.character_id??owner;
-    for(const raw0 of list){
-      if(!raw0||typeof raw0!=='object')continue;
-      const raw=raw0.data&&typeof raw0.data==='object'?{...raw0,...raw0.data}:raw0;
-      const mod=normalizeMod({...raw,character:owner,characterId:ownerId,game_id:raw.game_id??raw.id??raw.modId??raw.mod_id??raw.uid??`roster-${i}`},i++);
-      if(mod&&!seen.has(String(mod.game_id))){seen.add(String(mod.game_id));out.push(mod);}
-    }
-  };
-  walkObjects(json,o=>{
-    if(!o||typeof o!=='object')return;
-    const data=o.data&&typeof o.data==='object'?o.data:o;
-    if(Array.isArray(data.equippedStatMod)||Array.isArray(data.equipped_stat_mod)||Array.isArray(data.equippedStatMods)||Array.isArray(data.mods))visit(o);
-  });
-  return out;
-}
-
-function extractExplicitRosterMods(json){
-  const out=[]; let i=0; const seen=new Set(); const roots=[];
-  if(Array.isArray(json?.rosterUnit)) roots.push(...json.rosterUnit);
-  if(Array.isArray(json?.rosterUnits)) roots.push(...json.rosterUnits);
-  if(Array.isArray(json?.roster)) roots.push(...json.roster);
-  if(Array.isArray(json?.units)) roots.push(...json.units);
-  if(Array.isArray(json?.result)) for(const r of json.result){
-    if(Array.isArray(r?.rosterUnit)) roots.push(...r.rosterUnit);
-    if(Array.isArray(r?.rosterUnits)) roots.push(...r.rosterUnits);
-    if(Array.isArray(r?.roster)) roots.push(...r.roster);
-    if(Array.isArray(r?.units)) roots.push(...r.units);
-  }
-  for(const unit0 of roots){
-    const unit=unit0?.data&&typeof unit0.data==='object'?unit0.data:unit0; if(!unit||typeof unit!=='object')continue;
-    let owner=unit.baseId??unit.base_id??unit.defId??unit.definitionId??unit.characterId??unit.character_id??unit.name??unit.characterName??'';
-    if(typeof owner==='string'&&owner.includes(':'))owner=owner.split(':')[0];
-    const list=unit.equippedStatMod??unit.equipped_stat_mod??unit.equippedStatMods??unit.mods??unit.modifications;
-    if(!Array.isArray(list))continue;
-    for(const raw0 of list){
-      const raw=raw0?.data&&typeof raw0.data==='object'?{...raw0,...raw0.data}:raw0; if(!raw||typeof raw!=='object')continue;
-      const id=raw.game_id??raw.id??raw.modId??raw.mod_id??raw.uid??raw.definitionId??`roster-${i}`;
-      const mod=normalizeMod({...raw,character:owner,characterId:unit.id??unit.unitId??unit.characterId??owner,game_id:id},i++);
-      if(mod&&!seen.has(String(mod.game_id))){seen.add(String(mod.game_id));out.push(mod);}
-    }
-  }
-  return out;
-}
-
-function looksLikeMod(o){
-  if(!o||typeof o!=='object')return false;
-  const keys=Object.keys(o).map(k=>k.toLowerCase());
-  // SWGOH.GG's mod API commonly identifies the slot/set/pips inside
-  // definitionId, so a raw mod does NOT necessarily expose a separate
-  // slot field. Do not reject those objects before normalizeMod() gets a
-  // chance to decode definitionId.
-  const hasIdentity=keys.some(k=>['definitionid','definition_id','modid','mod_id','uid','set','setid','set_id','setname','modsetid','mod_set_id','modset'].includes(k));
-  const hasShape=keys.some(k=>['slot','slot_id','slotid','modslot','mod_slot','shape','slotindex'].includes(k));
-  const hasStats=keys.some(k=>['primary','primary_stat','primarystat','primarystatvalue','secondarystats','secondarystat','secondary','secondarystats'].includes(k));
-  const hasProgress=keys.some(k=>['level','pips','dotcount','dot_count','rarity','tier','quality','modtier','mod_tier'].includes(k));
-  const hasDefinition=keys.includes('definitionid')||keys.includes('definition_id');
-  return (hasShape||hasIdentity||hasDefinition) && (hasStats || (hasProgress && (hasIdentity || hasShape || hasDefinition)));
-}
-function extractApiMods(json){
-  const out=[]; let i=0;
-  const visit=(o)=>{
-    if(!o||typeof o!=='object')return;
-    if(looksLikeMod(o)){
-      const raw={...o};
-      if(!raw.secondary_stats&&raw.secondaryStats)raw.secondary_stats=raw.secondaryStats;
-      if(!raw.primary_stat&&raw.primaryStat)raw.primary_stat=raw.primaryStat;
-      const mod=normalizeMod({...raw,game_id:raw.game_id||raw.id||raw.uid||raw.modId||raw.definitionId||`api-${i}`},i++);
-      if(mod)out.push(mod);
-    }
-  };
-  walkObjects(json,visit);
-  const rosterMods=extractRosterEquippedMods(json); const all=[...out,...rosterMods],seen=new Set();
-  return all.filter(m=>m&&!seen.has(String(m.game_id))&&seen.add(String(m.game_id)));
 }
 function extractCharacters(data) {
   const chars = data?.characters || data?.roster || data?.units || [];
@@ -238,7 +128,7 @@ function splitRosterUnits(units) {
 }
 function setText(id, value) { const el=$(id); if(el) el.textContent=String(value); }
 function updateRosterCounts(characters, ships) {
-  const c=Array.isArray(characters)?characters.length:0, s=Array.isArray(ships)?ships.length:0, m=Math.max(Array.isArray(mods)?mods.length:0,Number(modSummaryCount)||0);
+  const c=Array.isArray(characters)?characters.length:0, s=Array.isArray(ships)?ships.length:0, m=Array.isArray(mods)?mods.length:0;
   setText('charsCount',c); setText('shipsCount',s); setText('unitsCount',c+s); setText('modsCount',m);
   setText('tabCharsCount',c); setText('tabShipsCount',s); setText('tabModsCount',m);
   setText('topUnitsCount',c+s);
@@ -482,39 +372,14 @@ function updateCharacterInfo() {
     </div>`;
 }
 
-// V93.9: keep the V93.4 relay flow; do not require a preliminary api-profile probe.
 const DEFAULT_WORKER_URL = 'https://swgoh-optimizer-relay.lorg75017.workers.dev';
-function normalizeRelayUrl(v){ return String(v||'').trim().replace(/\/$/,''); }
-function workerUrl() {
-  const saved=String(localStorage.getItem('swgohRelayUrl')||'').trim().replace(/\/$/,'');
-  const field=normalizeRelayUrl($('relayUrl')?.value);
-  const gateField=normalizeRelayUrl($('gateRelayUrl')?.value);
-  const value=saved||gateField||field||DEFAULT_WORKER_URL;
-  return /^https:\/\/[^\s]+$/i.test(value)?value:'';
-}
-async function relayFetch(url, options={}){
-  try{return await fetch(url,options);}
-  catch(e){
-    const msg=e?.message||String(e);
-    if(/failed to fetch|networkerror|load failed/i.test(msg)){
-      const saved=String(localStorage.getItem('swgohRelayUrl')||'').trim();
-      if(saved){localStorage.removeItem('swgohRelayUrl');log('Relais mémorisé inaccessible : configuration effacée.');}
-    }
-    throw e;
-  }
-}
-function saveWorkerUrl() { const v=normalizeRelayUrl($('relayUrl')?.value); if(v)localStorage.setItem('swgohRelayUrl',v);else localStorage.removeItem('swgohRelayUrl'); if($('gateRelayUrl'))$('gateRelayUrl').value=v; if($('relayState'))$('relayState').textContent=v?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ'; log(v?`Relais Cloudflare enregistré : ${v}`:'Relais Cloudflare effacé.'); }
+function workerUrl() { return String(localStorage.getItem('swgohRelayUrl') || $('relayUrl')?.value || DEFAULT_WORKER_URL).trim().replace(/\/$/,''); }
+function saveWorkerUrl() { const v=String($('relayUrl').value||'').trim().replace(/\/$/,''); if(v)localStorage.setItem('swgohRelayUrl',v);else localStorage.removeItem('swgohRelayUrl'); $('relayState').textContent=v?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ'; log(v?`Relais Cloudflare enregistré : ${v}`:'Relais Cloudflare effacé.'); }
 async function fetchText(url) {
   const candidates=[], relay=workerUrl();
-  if(relay){const m=url.match(/\/p\/(\d{9})\/(characters|mods)(?:\/)?(?:\?view=mods)?(?:&page=(\d+))?/);if(m){const ally=m[1],path=m[2]||'profile',page=m[3]||'1';candidates.push(`${relay}/?ally=${ally}&path=${path}&page=${page}`);}else{const u=url.match(/\/p\/(\d{9})\/unit\/([A-Za-z0-9_-]+)\/?$/);if(u)candidates.push(`${relay}/?ally=${u[1]}&path=unit&slug=${encodeURIComponent(u[2])}`);const md=url.match(/\/p\/(\d{9})\/mods\/([A-Za-z0-9_-]+)\/?$/);if(md)candidates.push(`${relay}/?ally=${md[1]}&path=mod&slug=${encodeURIComponent(md[2])}`);}}
+  if(relay){const m=url.match(/\/p\/(\d{9})\/(characters|mods)?\/?(?:\?page=(\d+))?/);if(m){const ally=m[1],path=m[2]||'profile',page=m[3]||'1';candidates.push(`${relay}/?ally=${ally}&path=${path}&page=${page}`);}}
   candidates.push(url); let last='';
-  for(const u of candidates){
-    const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),12000);
-    try{const r=await relayFetch(u,{headers:{'Accept':'text/html,application/xhtml+xml,application/json'},signal:controller.signal});if(!r.ok)throw new Error(`HTTP ${r.status}`);const text=await r.text();if(text&&text.length>200)return text;last=`Réponse vide via ${u}`;}
-    catch(e){last=e.name==='AbortError'?'Délai de réponse dépassé (12 s)':(e.message||String(e));}
-    finally{clearTimeout(timeout);}
-  }
+  for(const u of candidates){try{const r=await fetch(u,{headers:{'Accept':'text/html,application/xhtml+xml,application/json'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);const text=await r.text();if(text&&text.length>200)return text;last=`Réponse vide via ${u}`;}catch(e){last=e.message||String(e);}}
   throw new Error(last||'Impossible de lire la page SWGOH.GG.');
 }
 function parseHTML(text){return new DOMParser().parseFromString(text,'text/html');}
@@ -523,73 +388,24 @@ function firstAttr(root,selectors,attr){for(const sel of selectors){const n=root
 function parseNumberValue(v){const m=String(v??'').replace(/\s/g,'').match(/[+-]?[0-9]+(?:[.,][0-9]+)?/);return m?Number(m[0].replace(',','.')):0;}
 function slotFromShape(shape){const s=String(shape||'').toLowerCase();return ({'1':'Square','2':'Square','3':'Arrow','4':'Diamond','5':'Triangle','6':'Circle','7':'Cross',transmitter:'Square',receiver:'Arrow',processor:'Diamond','holo-array':'Triangle','data-bus':'Circle',multiplexer:'Cross'})[s]||shape;}
 function parseStatGeneric(node){if(!node)return{stat:'',value:0};const label=firstText(node,['.statmod-stat-label','[class*="statmod-stat-label"]','[data-stat-name]'])||node.getAttribute?.('data-stat-name')||'';const raw=firstText(node,['.statmod-stat-value','[class*="statmod-stat-value"]','[data-stat-value]'])||node.getAttribute?.('data-stat-value')||node.textContent||'';return{stat:label.trim(),value:parseNumberValue(raw)};}
-function normalizeCurrentModStat(label,value){
-  let stat=String(label||'').trim().replace(/\s+/g,' ');
-  const map={'Off':'Offense','Offense':'Offense','Def':'Defense','Defense':'Defense','Prot':'Protection','Protection':'Protection','HP':'Health','Health':'Health','CC':'Critical Chance','Critical Chance':'Critical Chance','Crit Chance':'Critical Chance','Crit Dam':'Critical Damage','Critical Damage':'Critical Damage','Pot':'Potency','Potency':'Potency','Ten':'Tenacity','Tenacity':'Tenacity','Speed':'Speed'};
-  stat=map[stat]||stat;
-  const n=parseNumberValue(value);
-  return {stat,value:n};
-}
-function parseCurrentModLine(text){
-  const t=String(text||'').replace(/\s+/g,' ').trim();
-  const cleaned=t.replace(/^[A-Z]{1,3}\s+[0-9]+(?:\.[0-9]+)?\s*/,'');
-  const parts=cleaned.split(/\s+(?=\+\d)/).filter(Boolean);
-  const primaryRaw=(parts.shift()||'').replace(/^\+/,'').trim();
-  const secondaries=parts.map(x=>x.trim()).filter(x=>/\(\d+\)/.test(x));
-  const parseOne=(raw)=>{const m=String(raw).replace(/^\+/,'').match(/^([0-9][0-9,.]*)\s+(.+?)(?:\s+\(\d+\))?$/);return m?normalizeCurrentModStat(m[2],m[1]):{stat:'',value:0};};
-  const p=parseOne(primaryRaw);
-  const out={primary_stat:p.stat,primary_value:p.value,secondary_stats:secondaries.map(parseOne).filter(x=>x.stat)};
-  out.secondary_stats.slice(0,4).forEach((x,i)=>{out[`secondary_${i+1}_stat`]=x.stat;out[`secondary_${i+1}_value`]=x.value;});
-  return out;
-}
-function parseCurrentModTitle(text){
-  const raw=String(text||'').replace(/\s+/g,' ').trim();
-  const shapes=['Square','Arrow','Diamond','Triangle','Circle','Cross'];
-  const shape=shapes.find(x=>new RegExp('\\b'+x+'\\b','i').test(raw))||'';
-  if(!shape)return {};
-  const idx=raw.toLowerCase().indexOf(shape.toLowerCase());
-  const before=raw.slice(0,idx).trim(); const after=raw.slice(idx+shape.length).trim();
-  return {slot:shape,set_name:before,primary_stat:after};
-}
-async function loadCharacterModsFromPage(c){
-  if(!c)return [];
-  const key=characterKey(c); if(unitModLoadCache.has(key))return unitModLoadCache.get(key);
-  const promise=(async()=>{
-    try{
-      const base=`https://swgoh.gg/p/${cleanAllyCode($('allyCode')?.value||$('gateAllyCode')?.value||'')}`;
-      const unitId=String(c.baseId||c.base_id||slug(c.name||'')).trim();
-      if(!unitId)return [];
-      const doc=parseHTML(await fetchText(`${base}/unit/${encodeURIComponent(unitId)}/`));
-      const anchors=[...doc.querySelectorAll('a[href*="/mods/"]')].filter(a=>{const h=a.getAttribute('href')||'';return /\/mods\/[A-Za-z0-9_-]+\/?$/.test(h)&&String(a.textContent||'').trim().length>8;}).slice(0,6);
-      const details=await Promise.all(anchors.map(async(a,i)=>{
-        const href=new URL(a.getAttribute('href'),location.origin).href;
-        let titleInfo={};
-        try{const d=parseHTML(await fetchText(href));const h=d.querySelector('h1')?.textContent||'';titleInfo=parseCurrentModTitle(h.split('·').pop()||h);}catch{}
-        const parsed=parseCurrentModLine(a.textContent||'');
-        const m=normalizeMod({game_id:(a.getAttribute('href')||'').split('/').filter(Boolean).pop()||`unit-${key}-${i}`,character:c.baseId||c.name,level:15,rarity:6,...parsed,...titleInfo});
-        return m;
-      }));
-      const result=details.filter(Boolean); 
-      // Keep a local cache per character and merge without requiring the global inventory to be complete.
-      for(const m of result){const existing=mods.findIndex(x=>String(x.game_id)===String(m.game_id));if(existing<0)mods.push(m);else mods[existing]=normalizeMod({...mods[existing],...m});}
-      log(`Mods ${c.name||c.baseId}: ${result.length}/6 récupérés depuis la fiche personnage.`);
-      unitModLoadCache.set(key,result); return result;
-    }catch(e){log(`Mods ${c.name||c.baseId} indisponibles : ${e?.message||e}`);unitModLoadCache.set(key,[]);return []}
-  })();
-  unitModLoadCache.set(key,promise); return promise;
-}
 function parseModsPage(doc,page){
-  const nodes=[...doc.querySelectorAll('.collection-mod, [class*="collection-mod"], [data-mod-id], [data-id], [data-id^="mod"], article[class*="mod"]')],result=[];
+  const nodes=[...doc.querySelectorAll('.collection-mod, [class*=\"collection-mod\"], [data-mod-id], [data-id].mod')],result=[];
   nodes.forEach((node,idx)=>{
-    const img=node.querySelector('.statmod-img, img[class*="statmod-img"], img[alt*="Mod"], img[alt*="mod"]');
-    const alt=img?.getAttribute('alt')||''; const src=img?.getAttribute('src')||img?.getAttribute('data-src')||'';
-    const words=alt.trim().split(/\s+/).filter(Boolean); const shape=words.at(-1)||''; const set=words.length>=5?words.slice(2,-1).join(' '):(words.length>=4?words[2]:'');
-    const primary=parseStatGeneric(node.querySelector('.statmod-stats-1 .statmod-stat, [class*="statmod-stats-1"] [class*="statmod-stat"]'));
-    const secondary=[...node.querySelectorAll('.statmod-stats-2 .statmod-stat, [class*="statmod-stats-2"] [class*="statmod-stat"]')].map(parseStatGeneric).filter(x=>x.stat);
-    const char=firstAttr(node,['img.char-portrait-img','img[class*="char-portrait-img"]'],'alt')||firstText(node,['[data-character]','.collection-char-name-link']);
-    const level=parseNumberValue(firstText(node,['.statmod-level','[class*="statmod-level"]'])); const rarity=node.querySelectorAll('.statmod-pip, [class*="statmod-pip"]').length;
+    const img=node.querySelector('.statmod-img, img[class*=\"statmod-img\"]');
+    const alt=img?.getAttribute('alt')||'';
+    const src=img?.getAttribute('src')||img?.getAttribute('data-src')||'';
+    const words=alt.trim().split(/\s+/).filter(Boolean);
+    const shape=words.at(-1)||'';
+    const set=words.length>=5?words.slice(2,-1).join(' '):(words.length>=4?words[2]:'');
+    const primary=parseStatGeneric(node.querySelector('.statmod-stats-1 .statmod-stat, [class*=\"statmod-stats-1\"] [class*=\"statmod-stat\"]'));
+    const secondary=[...node.querySelectorAll('.statmod-stats-2 .statmod-stat, [class*=\"statmod-stats-2\"] [class*=\"statmod-stat\"]')].map(parseStatGeneric).filter(x=>x.stat);
+    const char=firstAttr(node,['img.char-portrait-img','img[class*=\"char-portrait-img\"]'],'alt');
+    const level=parseNumberValue(firstText(node,['.statmod-level','[class*=\"statmod-level\"]']));
+    const rarity=node.querySelectorAll('.statmod-pip, [class*=\"statmod-pip\"]').length;
     const id=node.getAttribute('data-id')||node.getAttribute('data-mod-id')||`gg-${page}-${idx}`;
-    if(shape||set||primary.stat||secondary.length)result.push(normalizeMod({game_id:id,slot:slotFromShape(shape),set_name:set,rarity,dots:rarity,level,primary_stat:primary.stat,primary_value:primary.value,secondary_stats:secondary,character:char,asset_src:src,raw_alt:alt},page*1000+idx));
+    if(shape||set||primary.stat||secondary.length){
+      result.push(normalizeMod({game_id:id,slot:slotFromShape(shape),set_name:set,rarity,dots:rarity,level,primary_stat:primary.stat,primary_value:primary.value,secondary_stats:secondary,character:char,asset_src:src,raw_alt:alt},page*1000+idx));
+    }
   });
   return result.filter(Boolean);
 }
@@ -597,171 +413,47 @@ function parseCharacters(doc){const result=[],nodes=[...doc.querySelectorAll('.c
 function looksLikeMod(o){
   if(!o||typeof o!=='object')return false;
   const keys=Object.keys(o).map(k=>k.toLowerCase());
-  const hasSlot=keys.some(k=>['slot','slot_id','slotid','modslot','mod_slot','shape','slotindex','slot_index'].includes(k));
-  const hasDefinition=keys.some(k=>['definitionid','definition_id','moddefinitionid','mod_definition_id'].includes(k));
-  const hasSet=keys.some(k=>['set','set_id','setid','setname','modsetid','mod_set_id','modset'].includes(k));
-  const hasStats=keys.some(k=>['primary','primary_stat','primarystat','secondarystats','secondarystat','secondary','secondary_stats','secondarystats'].includes(k));
-  const hasLevel=keys.some(k=>['level','pips','dotcount','dot_count','rarity','tier','quality','modtier','mod_tier'].includes(k));
-  const hasId=keys.some(k=>['id','modid','mod_id','uid','game_id'].includes(k));
-  // The SWGOH API can return compact mod objects with no expanded stats.
-  // They are still valid mods when they carry a definitionId/id + slot/set,
-  // or a definitionId alone (slot/set/pips are encoded in it).
-  return (hasDefinition || (hasId&&(hasSlot||hasSet))) && (hasStats||hasLevel||hasSlot||hasSet||hasDefinition);
+  return (keys.includes('slot')||keys.includes('slot_id')||keys.includes('modslot')||keys.includes('shape')) &&
+         (keys.includes('level')||keys.includes('pips')||keys.includes('rarity')) &&
+         (keys.includes('set')||keys.includes('set_id')||keys.includes('setname')||keys.includes('setid')||keys.includes('primary')||keys.includes('primary_stat')||keys.includes('primarystat'));
 }
 function extractApiMods(json){
-  const out=[]; let i=0; const seen=new Set();
-  const modArrayKeys=new Set(['mods','mod','equippedstatmod','equippedstatmods','equippedstatmodold','equippedmods','equipped_mods','modifications']);
-  const unitKeys=new Set(['roster','rosterunit','rosterunits','units','characters']);
-  const idOf=(raw)=>String(raw?.game_id??raw?.id??raw?.modId??raw?.mod_id??raw?.uid??raw?.definitionId??`api-${i++}`);
-  const ownerOf=(o,fallback='')=>{
-    const data=o?.data&&typeof o.data==='object'?o.data:o;
-    return modOwnerValue(data?.baseId??data?.base_id??data?.defId??data?.definitionId??data?.characterId??data?.character_id??data?.unitId??data?.unit_id??data?.name??data?.characterName??data?.unitName??fallback);
-  };
-  const push=(raw0,owner='')=>{
-    if(!raw0||typeof raw0!=='object')return;
-    const raw=raw0.data&&typeof raw0.data==='object'?{...raw0,...raw0.data}:{...raw0};
-    const ownerValue=owner||modOwnerValue(raw.character??raw.characterName??raw.equippedTo??raw.equipped_to??raw.unit_equiped??raw.unitEquiped??raw.location??raw.usingIn??raw.characterId??raw.character_id??raw.unitId??raw.unit_id??raw.equippedUnitId??raw.equipped_unit_id);
-    const id=idOf(raw);
-    if(seen.has(id))return;
-    const mod=normalizeMod({...raw,character:ownerValue,game_id:id},i++);
-    if(mod){seen.add(id);out.push(mod);}
-  };
-  const visit=(value,owner='')=>{
-    if(value==null||typeof value!=='object')return;
-    const data=value?.data&&typeof value.data==='object'?value.data:value;
-    const localOwner=ownerOf(value,owner)||owner;
-    // A unit can expose its mods as data.mods/equippedStatMod. Do not apply
-    // looksLikeMod here: compact SWGOH objects can legitimately omit stats.
-    for(const key of modArrayKeys){
-      const list=data?.[key];
-      if(Array.isArray(list)) for(const raw of list) push(raw,localOwner);
-    }
-    if(Array.isArray(value)){
-      for(const item of value) visit(item,owner);
-      return;
-    }
-    for(const [key,child] of Object.entries(value)){
-      const lk=String(key).toLowerCase();
-      if(modArrayKeys.has(lk)) continue;
-      // When descending through a roster/unit container, retain the nearest
-      // character owner. Other nested objects may still contain mod arrays.
-      visit(child,localOwner);
-    }
-  };
-  visit(json,'');
-
-  // Some versions of the /api/players/.../mods/ response are dictionaries
-  // keyed by character/unit rather than arrays. Walk those objects too and
-  // treat any object carrying a recognizable mod identity as a mod.
-  const looksLikeStandalone=(o)=>{
-    if(!o||typeof o!=='object'||Array.isArray(o))return false;
-    const k=Object.keys(o).map(x=>x.toLowerCase());
-    return k.some(x=>['definitionid','modid','mod_id','uid'].includes(x)) &&
-           k.some(x=>['level','tier','rarity','pips','primarystat','primary_stat','secondarystat','secondary_stats','slot','shape','set','setid','set_id','bonusset'].includes(x));
-  };
-  const standalone=(value,owner='')=>{
-    if(value==null||typeof value!=='object')return;
-    const localOwner=ownerOf(value,owner)||owner;
-    if(looksLikeStandalone(value))push(value,localOwner);
-    if(Array.isArray(value)){for(const x of value)standalone(x,owner);return;}
-    for(const [k,v] of Object.entries(value)){
-      if(modArrayKeys.has(String(k).toLowerCase())) continue;
-      standalone(v,localOwner);
-    }
-  };
-  standalone(json,'');
-  return out;
+  const out=[]; let i=0;
+  const visit=(o)=>{ if(!o||typeof o!=='object')return; if(looksLikeMod(o)) out.push(normalizeMod({...o,game_id:o.id||o.uid||o.modId||`api-${i}`},i++)); };
+  // Prefer known mod arrays/containers when present, then fall back to a recursive walk.
+  const known=[];
+  for(const key of ['mods','Mods','data']) if(Array.isArray(json?.[key])) known.push(...json[key]);
+  if(Array.isArray(json?.mods)) known.push(...json.mods);
+  if(known.length) known.forEach(visit);
+  if(!out.length) walkObjects(json,visit);
+  const seen=new Set();
+  return out.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
 }
-function unitToCharacter(u,index=0){const o=u?.data&&typeof u.data==='object'?u.data:u;if(!o||typeof o!=='object')return null;let baseId=o.base_id??o.baseId??o.definitionId??o.defId;if(typeof baseId==='string'&&baseId.includes(':'))baseId=baseId.split(':')[0];const name=o.name??o.character??o.characterName??o.unitName??baseId;const levelRaw=o.level??o.currentLevel;const rarityRaw=o.rarity??o.starLevel??o.stars??o.currentRarity;const gearRaw=o.gear_level??o.gearLevel??o.gear??o.currentTier;const hasRosterFields=baseId&&Number.isFinite(Number(levelRaw))&&Number.isFinite(Number(rarityRaw))&&(Object.prototype.hasOwnProperty.call(o,'gear_level')||Object.prototype.hasOwnProperty.call(o,'gearLevel')||Object.prototype.hasOwnProperty.call(o,'gear')||Object.prototype.hasOwnProperty.call(o,'currentTier')||Object.prototype.hasOwnProperty.call(o,'power')||Object.prototype.hasOwnProperty.call(o,'combat_type')||Object.prototype.hasOwnProperty.call(o,'combatType'));if(!hasRosterFields)return null;const relicTierRaw=o.relic_tier??o.relicTier??o.relic_level??o.relicLevel??o.relic?.tier??o.relic?.relicTier??o.relic?.currentTier??0;const unitId=o.id??o.unitId??o.unit_id??o.characterId??o.character_id??baseId;return{name:name||baseId,baseId,id:unitId,characterId:o.characterId??o.character_id??unitId,level:Number(levelRaw||0),gear:Number(gearRaw||0),stars:Number(rarityRaw||0),power:Number(o.power||0),combatType:Number(o.combat_type??o.combatType??1),relic_tier:Number(relicTierRaw)||0,raw:u};}
+function unitToCharacter(u,index=0){const o=u?.data&&typeof u.data==='object'?u.data:u;if(!o||typeof o!=='object')return null;const baseId=o.base_id??o.baseId??o.definitionId;const name=o.name??o.character??o.characterName??o.unitName;const hasRosterFields=baseId&&Number.isFinite(Number(o.level))&&Number.isFinite(Number(o.rarity))&&(Object.prototype.hasOwnProperty.call(o,'gear_level')||Object.prototype.hasOwnProperty.call(o,'gearLevel')||Object.prototype.hasOwnProperty.call(o,'gear')||Object.prototype.hasOwnProperty.call(o,'power')||Object.prototype.hasOwnProperty.call(o,'combat_type'));if(!hasRosterFields)return null;const relicTierRaw=o.relic_tier??o.relicTier??o.relic_level??o.relicLevel??o.relic?.tier??o.relic?.relicTier??0;return{name:name||baseId,baseId,level:Number(o.level||0),gear:Number(o.gear_level??o.gearLevel??o.gear??0),stars:Number(o.rarity??o.starLevel??o.stars??0),power:Number(o.power||0),combatType:Number(o.combat_type??o.combatType??1),relic_tier:Number(relicTierRaw)||0,raw:u};}
 function extractApiCharacters(json){const direct=Array.isArray(json?.units)?json.units:[];let out=direct.map(unitToCharacter).filter(Boolean);if(!out.length){const candidates=[];walkObjects(json,o=>{const unit=unitToCharacter(o);if(unit)candidates.push(unit);});out=candidates;}const seen=new Set();return out.filter(x=>{const key=`${x.baseId||''}|${x.name||''}`;if(seen.has(key))return false;seen.add(key);return true;});}
-async function fetchJSON(url){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12000);try{const r=await relayFetch(url,{headers:{'Accept':'application/json,text/plain,*/*'},signal:controller.signal});if(!r.ok)throw new Error(`HTTP ${r.status}`);return JSON.parse(await r.text());}catch(e){if(e.name==='AbortError')throw new Error('Délai API dépassé (12 s)');throw e;}finally{clearTimeout(timeout);}}
-
-function setGateMessage(message,state=''){const box=$('gateMessage');const step=$('gateStep');const gate=$('holocronGate');if(box){box.textContent=message;box.className=`gate-message ${state}`;}if(gate)gate.classList.toggle('is-loading',state==='loading');if(step&&state==='loading')step.textContent='SYNCHRONISATION EN COURS';if(step&&state==='error')step.textContent='SYNCHRONISATION INTERROMPUE';if(step&&state==='success')step.textContent='ROSTER SYNCHRONISÉ';}
-function finishHolocronGate(){const gate=$('holocronGate'),shell=$('appShell');if(!gate||!shell)return;setGateMessage('ROSTER SYNCHRONISÉ · OUVERTURE DE L’HOLOCRON','success');const step=$('gateStep');if(step)step.textContent='ROSTER SYNCHRONISÉ';gate.classList.remove('is-loading');gate.classList.add('is-success');setTimeout(()=>{shell.hidden=false;document.body.classList.add('holocron-unlocked');gate.remove();window.scrollTo(0,0);},2050);}
-async function submitGateCode(){const relayInput=normalizeRelayUrl($('gateRelayUrl')?.value||DEFAULT_WORKER_URL); if(relayInput){localStorage.setItem('swgohRelayUrl',relayInput); if($('gateRelayUrl'))$('gateRelayUrl').value=relayInput;} if(!workerUrl()){setGateMessage('RELAIS CLOUDFLARE REQUIS · RENSEIGNEZ UNE URL WORKERS.DEV','error');if($('gateRelayUrl'))$('gateRelayUrl').focus();return;} const raw=cleanAllyCode($('gateAllyCode')?.value||'');if(raw.length!==9){setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');$('gateAllyCode')?.focus();return;}const target=$('allyCode');if(target)target.value=raw;setGateMessage('IDENTIFICATION DU ROSTER · CHARGEMENT DES DONNÉES','loading');$('gateActivate').disabled=true;loadRemotePlayer().finally(()=>{if($('gateActivate'))$('gateActivate').disabled=false;});}
+async function fetchJSON(url){const r=await fetch(url,{headers:{'Accept':'application/json,text/plain,*/*'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);return JSON.parse(await r.text());}
 
 async function loadRemotePlayer(){
-  const allyCode=cleanAllyCode($('allyCode')?.value || $('gateAllyCode')?.value || '');if(allyCode.length!==9){log('Ally Code invalide : 9 chiffres attendus.');setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');return;}
-  const loadBtn=$('loadPlayer'); if(loadBtn){loadBtn.disabled=true;loadBtn.textContent='CHARGEMENT…';} if($('log')) $('log').textContent=''; const fmt=formatAlly(allyCode); log(`Recherche du joueur ${fmt}…`);
+  const allyCode=cleanAllyCode($('allyCode').value);if(allyCode.length!==9){log('Ally Code invalide : 9 chiffres attendus.');return;}
+  $('loadPlayer').disabled=true;$('loadPlayer').textContent='CHARGEMENT…';$('log').textContent='';const fmt=formatAlly(allyCode);log(`Recherche du joueur ${fmt}…`);
   try{
     if(workerUrl())log('Relais Cloudflare actif : récupération via relais sécurisé.');else log('Aucun relais configuré : tentative directe depuis le navigateur.');
     const base=`https://swgoh.gg/p/${allyCode}`,relay=workerUrl();let apiChars=[],apiMods=[];
-    if(relay){
-      log('Récupération des données principales…');
-      const results=await Promise.allSettled([
-        fetchJSON(`${relay}/?ally=${allyCode}&path=api-profile`),
-        fetchJSON(`${relay}/?ally=${allyCode}&path=api-mods`),
-        fetchText(`${base}/`)
-      ]);
-      if(results[0].status==='fulfilled'){
-        apiChars=extractApiCharacters(results[0].value);
-        const explicitRosterMods=extractExplicitRosterMods(results[0].value);
-        const rosterMods=explicitRosterMods.length?explicitRosterMods:extractRosterEquippedMods(results[0].value);
-        log(`Inspection roster mods : ${explicitRosterMods.length} via rosterUnit/equippedStatMod.`);
-        if(rosterMods.length){apiMods.push(...rosterMods);log(`Mods équipés trouvés directement dans le roster API : ${rosterMods.length}.`);}
-        log(`API roster : ${apiChars.length} unités candidates.`);
-      }else log(`API roster indisponible : ${results[0].reason?.message||results[0].reason}`);
-      if(results[1].status==='fulfilled'){
-        const endpointMods=extractApiMods(results[1].value);
-        const seen=new Set(apiMods.map(m=>String(m.game_id||'')));
-        for(const m of endpointMods){const k=String(m.game_id||'');if(!seen.has(k)){apiMods.push(m);seen.add(k);}}
-        log(`API mods : ${endpointMods.length} candidats supplémentaires (${apiMods.length} au total).`); if(!endpointMods.length){ const v=results[1].value; log(`Diagnostic API mods : ${Array.isArray(v)?'tableau':typeof v} · clés ${v&&typeof v==='object'?Object.keys(v).slice(0,12).join(', '):'—'}.`); }
-      }else log(`API mods indisponible : ${results[1].reason?.message||results[1].reason}`);
-      if(results[0].status==='fulfilled'){
-        const rosterMods=extractExplicitRosterMods(results[0].value);
-        if(rosterMods.length){const ids=new Set(apiMods.map(m=>String(m.game_id)));for(const m of rosterMods)if(!ids.has(String(m.game_id))){apiMods.push(m);ids.add(String(m.game_id));}log(`Mods équipés extraits du roster API : ${rosterMods.length}.`);}
-      }
-      var profileText=results[2].status==='fulfilled'?results[2].value:null;
-      if(!profileText){
-        const reason=results[2].reason?.message||'Profil SWGOH.GG indisponible';
-        log(`Relais inaccessible pour le profil : ${reason}`);
-        // One direct attempt is useful when the configured relay is stale.
-        try{
-          log('Tentative directe SWGOH.GG…');
-          const direct=await fetch(`${base}/`,{headers:{'Accept':'text/html,application/xhtml+xml'},mode:'cors'});
-          if(direct.ok) profileText=await direct.text();
-        }catch(e){ log(`Accès direct impossible : ${e?.message||e}`); }
-        if(!profileText) throw new Error(`Relais Cloudflare inaccessible (${reason}). Vérifie l’URL du Worker.`);
-      }
-    } else {
-      var profileText=await fetchText(`${base}/`);
-    }
-    const profileDoc=parseHTML(profileText),title=profileDoc.querySelector('h1')?.textContent?.trim()||'Joueur',bodyText=profileDoc.body.textContent||'';accountGalacticPower=extractGalacticPowerFromProfile(bodyText);renderGalacticPower();const rosterMatch=bodyText.match(/Roster\s+([0-9,]+)\s+units/i);const modsMatch=bodyText.match(/([0-9,]+)\s+Mods/i);log(`Profil SWGOH.GG trouvé : ${title}.`);if(rosterMatch)log(`Roster annoncé : ${rosterMatch[1]} unités.`);if(modsMatch)log(`Mods annoncés : ${modsMatch[1]}.`);log('Lecture du roster…');
+    if(relay){log('Tentative API JSON SWGOH.GG via le Worker…');try{const api=await fetchJSON(`${relay}/?ally=${allyCode}&path=api-profile`);apiChars=extractApiCharacters(api);apiMods=extractApiMods(api);log(`API : ${apiChars.length} unités candidates, ${apiMods.length} mods candidats.`);}catch(e){log(`API profil indisponible : ${e.message}`);}if(!apiMods.length){try{const apiModsJson=await fetchJSON(`${relay}/?ally=${allyCode}&path=api-mods`);apiMods=extractApiMods(apiModsJson);log(`API mods : ${apiMods.length} mods candidats.`);}catch(e){log(`API mods indisponible : ${e.message}`);}}}
+    const profileText=await fetchText(`${base}/`),profileDoc=parseHTML(profileText),title=profileDoc.querySelector('h1')?.textContent?.trim()||'Joueur',bodyText=profileDoc.body.textContent||'';accountGalacticPower=extractGalacticPowerFromProfile(bodyText);renderGalacticPower();const rosterMatch=bodyText.match(/Roster\s+([0-9,]+)\s+units/i);const modsMatch=bodyText.match(/([0-9,]+)\s+Mods/i);log(`Profil SWGOH.GG trouvé : ${title}.`);if(rosterMatch)log(`Roster annoncé : ${rosterMatch[1]} unités.`);if(modsMatch)log(`Mods annoncés : ${modsMatch[1]}.`);log('Lecture du roster…');
     if(apiChars.length)log(`Unités directes API retenues : ${apiChars.length}.`);
     const ownedApi=apiChars.filter(c=>Number(c.level||0)>0||Number(c.gear||0)>0||Number(c.stars||0)>0);
     let chars=[],ships=[];
     if(ownedApi.length){const split=splitRosterUnits(ownedApi);chars=split.characters;ships=split.ships;log(`Unités possédées : ${chars.length} personnages + ${ships.length} vaisseaux.`);}else{chars=parseCharacters(parseHTML(await fetchText(`${base}/characters/`)));log(`Fallback HTML : ${chars.length} personnages détectés.`);}
-    rosterCharacters=chars;rosterShips=ships;
-    // Resolve internal API owner ids to the public/base character id so every equipped mod can be attached to its character.
-    const ownerMap=new Map();
-    [...chars,...ships].forEach(c=>{[c.id,c.characterId,c.baseId,c.base_id,c.name].filter(Boolean).forEach(k=>ownerMap.set(compactKey(k),c.baseId||c.base_id||c.name));});
-    apiMods.forEach(m=>{const rawOwner=m.characterId??m.character_id??m.unitId??m.unit_id??m.equippedUnitId??m.equipped_unit_id??m.character??m.location;const resolved=ownerMap.get(compactKey(rawOwner));if(resolved)m.character=resolved;m.characterId=resolved||m.characterId||rawOwner;});
-    log(`${chars.length} personnages récupérés (${apiChars.length} unités candidates API, filtrées sur les unités possédées).`);
-    log('Lecture du nouvel inventaire mods SWGOH.GG…');
-    try{
-      const modSummaryText=await fetchText(`${base}/mods/?view=mods&page=1`);
-      const summaryDoc=parseHTML(modSummaryText); const summaryBody=summaryDoc.body.textContent||'';
-      const countMatch=summaryBody.match(/Page\s+1\s+of\s+\d+\s*[·•]\s*([0-9,]+)\s+mods/i);
-      const scoredMatch=summaryBody.match(/Mods\s+scored\s*([0-9,]+)/i);
-      modSummaryCount=countMatch?Number(countMatch[1].replace(/,/g,'')):(scoredMatch?Number(scoredMatch[1].replace(/,/g,'')):0);
-      const speedHits=[...summaryBody.matchAll(/\+([0-9]+(?:\.[0-9]+)?)\s+Speed(?:\s+\(\d+\))?/gi)].map(m=>Number(m[1]));
-      modSummarySpeed={total:modSummaryCount,no_speed:Math.max(0,modSummaryCount-speedHits.length),_1_10:speedHits.filter(v=>v>=1&&v<=10).length,_11_15:speedHits.filter(v=>v>=11&&v<=15).length,_16_21:speedHits.filter(v=>v>=16&&v<=21).length,gt_21:speedHits.filter(v=>v>21).length};
-      log(`Inventaire SWGOH.GG : ${modSummaryCount||0} mods annoncés.`);
-      loadAllModSummaryPages(base);
-    }catch(e){log(`Résumé mods indisponible : ${e?.message||e}`);}
+    rosterCharacters=chars;rosterShips=ships;log(`${chars.length} personnages récupérés (${apiChars.length} unités candidates API, filtrées sur les unités possédées).`);
     log('Lecture des mods publics pour décoder les statistiques affichées…');
     const htmlMods=[];
-    const seenModPages=new Set();
-    const maxModPages=40;
-    for(let page=1;page<=maxModPages;page++){
-      try{
-        const pageMods=parseModsPage(parseHTML(await fetchText(`${base}/mods/?page=${page}`)),page);
-        if(!pageMods.length){log(`Fin de pagination des mods à la page ${page}.`);break;}
-        const signature=JSON.stringify(pageMods.map(m=>[m.game_id,m.slot,m.set_name,m.rarity,m.level,m.primary_stat,m.primary_value,m.character]));
-        if(seenModPages.has(signature)){log(`Pagination interrompue : page répétée.`);break;}
-        seenModPages.add(signature); htmlMods.push(...pageMods); log(`Page mods ${page}: ${pageMods.length} mods.`);
-        if(pageMods.length<12)break;
-      }catch(err){log(`Page mods ${page} ignorée : ${err?.message||err}`);break;}
+    for(let page=1;page<=100;page++){
+      const pageMods=parseModsPage(parseHTML(await fetchText(`${base}/mods/?page=${page}`)),page);
+      if(!pageMods.length)break;
+      htmlMods.push(...pageMods);
+      log(`Page mods ${page}: ${pageMods.length} mods.`);
+      if(pageMods.length<30)break;
     }
     // Les pages publiques donnent les valeurs réellement affichées (ex. 8 Speed, 5.88%).
     // L'API reste un filet de sécurité pour les éventuels mods non présents dans les pages.
@@ -782,10 +474,10 @@ async function loadRemotePlayer(){
     const seen=new Set();mods=merged.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
     log(`Mods décodés : ${htmlMods.length} via pages publiques + ${Math.max(0,mods.length-htmlMods.length)} compléments API = ${mods.length}.`);
     currentData={allyCode,name:title,characters:chars,ships,mods,galacticPower:accountGalacticPower};updateRosterCounts(chars,ships);renderGalacticPower();buildFactionMap();fillCharacters(chars);updateAccountSummary(title,fmt);renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();
-    $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nUnités totales: ${chars.length+ships.length}\nMods: ${Math.max(mods.length,modSummaryCount||0)}\nProfils Kyber disponibles dans cette version: ${Object.keys(profiles).length}`;
-    log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${Math.max(mods.length,modSummaryCount||0)} mods disponibles (${mods.length} détails chargés).`);if(!mods.length)log('Aucun mod lisible.');showPage('dashboard');if($('holocronGate'))finishHolocronGate();
-  }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, utilise l’import JSON.');if($('holocronGate'))setGateMessage(`ÉCHEC DE SYNCHRONISATION · ${e.message||'ERREUR INCONNUE'}`,'error');}
-  finally{const loadBtn=$('loadPlayer'); if(loadBtn){loadBtn.disabled=false;loadBtn.textContent='CHARGER MON PROFIL';}}
+    $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nUnités totales: ${chars.length+ships.length}\nMods: ${mods.length}\nProfils Kyber disponibles dans cette version: ${Object.keys(profiles).length}`;
+    log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${mods.length} mods exploitables.`);if(!mods.length)log('Aucun mod lisible.');showPage('dashboard');
+  }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, utilise l’import JSON.');}
+  finally{$('loadPlayer').disabled=false;$('loadPlayer').textContent='CHARGER MON PROFIL';}
 }
 function updateAccountSummary(title,fmt){if($('playerName'))$('playerName').textContent=title||'Profil';if($('playerAlly'))$('playerAlly').textContent=fmt||'—';if($('heroPlayerName'))$('heroPlayerName').textContent=title||'Profil';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent=fmt||'—';setText('topAccountName',title||'—');setText('topProfileState','CONNECTÉ');setText('heroProfileState','CONNECTÉ');}
 function modSetLabel(value){
@@ -962,7 +654,7 @@ function renderDataTable(){
   }
 }
 
-$('loadPlayer')?.addEventListener('click',loadRemotePlayer);$('allyCode')?.addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay')?.addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||DEFAULT_WORKER_URL;if($('gateRelayUrl'))$('gateRelayUrl').value=localStorage.getItem('swgohRelayUrl')||DEFAULT_WORKER_URL;$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});$('dataSearch').addEventListener('input',renderDataTable);['dataFactionFilter','dataSideFilter','modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
+$('loadPlayer').addEventListener('click',loadRemotePlayer);$('allyCode').addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay').addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||'';$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});$('dataSearch').addEventListener('input',renderDataTable);['dataFactionFilter','dataSideFilter','modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
 document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.data-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');currentDataset=btn.dataset.dataset;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=currentDataset!=='mods';if(ms)ms.hidden=currentDataset!=='mods';renderDataCharacterFilters();renderDataTable();}));
 
 
@@ -1034,7 +726,7 @@ const V176_FACTION_RULES = {
 
 function compactKey(v){ return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
 function characterKey(c){ return compactKey(c?.baseId??c?.base_id??c?.name??c?.character??''); }
-function modOwnerKey(m){ return compactKey(m?.character??m?.baseId??m?.base_id??m?.characterId??m?.character_id??m?.unitId??m?.unit_id??m?.equippedUnitId??m?.equipped_unit_id??m?.location??''); }
+function modOwnerKey(m){ return compactKey(m?.character??m?.baseId??m?.base_id??m?.characterId??m?.character_id??''); }
 function getCharacterMods(c){
   if(!c) return [];
   const targets=new Set([characterKey(c),compactKey(c.name),compactKey(c.baseId),compactKey(c.base_id)].filter(Boolean));
@@ -1107,48 +799,14 @@ function allFactions(){
 }
 function speedBreakdown(list=mods){
   const out={'1_10':0,'11_15':0,'16_21':0,'22plus':0,'no_speed':0,'primary_speed':0,total:0};
-  if(Array.isArray(list)&&list.length){
-    for(const raw of list){
-      const m=normalizeModForDisplay(raw); out.total++;
-      const x=modSpeedMetrics(m);
-      if(x.primary) out.primary_speed++;
-      else out[speedCategory(x.secondary)]++;
-    }
-    return out;
-  }
-  if(Number(modSummaryCount)>0){
-    out.total=Number(modSummarySpeed.total||modSummaryCount);
-    out.no_speed=Number(modSummarySpeed.no_speed||0);
-    out['1_10']=Number(modSummarySpeed._1_10||0);
-    out['11_15']=Number(modSummarySpeed._11_15||0);
-    out['16_21']=Number(modSummarySpeed._16_21||0);
-    out['22plus']=Number(modSummarySpeed.gt_21||0);
+  for(const raw of list){
+    const m=normalizeModForDisplay(raw); out.total++;
+    const x=modSpeedMetrics(m);
+    if(x.primary) out.primary_speed++;
+    else out[speedCategory(x.secondary)]++;
   }
   return out;
 }
-async function loadAllModSummaryPages(base){
-  try{
-    const first=parseHTML(await fetchText(`${base}/mods/?view=mods&page=1`));
-    const body=first.body.textContent||'';
-    const pm=body.match(/Page\s+1\s+of\s+(\d+)\s*[·•]/i); const pages=Math.min(60,Math.max(1,pm?Number(pm[1]):1));
-    let hits=[]; let counted=0;
-    const runPage=async(page)=>{
-      try{
-        const doc=page===1?first:parseHTML(await fetchText(`${base}/mods/?view=mods&page=${page}`));
-        const text=doc.body.textContent||'';
-        const cm=text.match(new RegExp(`Page\s+${page}\s+of\s+\d+\s*[·•]\s*([0-9,]+)\s+mods`,'i'));
-        if(cm) counted=Math.max(counted,Number(cm[1].replace(/,/g,''))||0);
-        const arr=[...text.matchAll(/\+([0-9]+(?:\.[0-9]+)?)\s+Speed(?:\s+\(\d+\))?/gi)].map(m=>Number(m[1]));
-        hits.push(...arr);
-      }catch(e){log(`Résumé mods page ${page} ignorée.`);}
-    };
-    const queue=[...Array(pages).keys()].map(x=>x+1); const workers=Array.from({length:4},async()=>{while(queue.length){const page=queue.shift();await runPage(page);}}); await Promise.all(workers);
-    modSummaryCount=counted||modSummaryCount; const total=modSummaryCount;
-    modSummarySpeed={total,no_speed:Math.max(0,total-hits.length),_1_10:hits.filter(v=>v>=1&&v<=10).length,_11_15:hits.filter(v=>v>=11&&v<=15).length,_16_21:hits.filter(v=>v>=16&&v<=21).length,gt_21:hits.filter(v=>v>21).length};
-    renderDecisionCenter(); log(`Ventilation speed mods complète : ${hits.length} mods avec Speed détectée sur ${total}.`);
-  }catch(e){log(`Ventilation speed mods différée : ${e?.message||e}`);}
-}
-
 function inventoryRows(){
   return mods.map((raw,i)=>{
     const m=normalizeModForDisplay(raw);
@@ -1156,25 +814,6 @@ function inventoryRows(){
     return {...m,_index:i,_speed:x.secondary||0,_primarySpeed:x.primary,_totalSpeed:modTotalSpeed(m),_speedCategory:x.primary?'primary_speed':speedCategory(x.secondary)};
   });
 }
-
-function renderDecisionCenter(){
-  const total=Math.max(0,rosterCharacters.length);
-  const starBuckets={7:0,6:0,5:0,'<5':0};
-  rosterCharacters.forEach(u=>{const stars=Number(u?.stars??u?.rarity??u?.starLevel??0); if(stars>=7)starBuckets[7]++; else if(stars===6)starBuckets[6]++; else if(stars===5)starBuckets[5]++; else starBuckets['<5']++;});
-  const unitBox=$('unitVentilation'),unitLegend=$('unitLegend');
-  if(unitBox){const vals=[starBuckets[7],starBuckets[6],starBuckets[5],starBuckets['<5']];unitBox.innerHTML=vals.map(v=>`<span style="width:${total?(v/total*100).toFixed(2):0}%"></span>`).join('');}
-  if(unitLegend){const labels=[['7★',starBuckets[7]],['6★',starBuckets[6]],['5★',starBuckets[5]],['<5★',starBuckets['<5']]];unitLegend.innerHTML=labels.map((x,i)=>`<span><i></i>${x[0]} <b>${num(x[1])}</b> <small>${total?(x[1]/total*100).toFixed(0):0}%</small></span>`).join('');}
-  const b=speedBreakdown(mods); const mt=Math.max(0,b.total||mods.length); const modBox=$('modVentilation'),modLegend=$('modLegend');
-  const modVals=[['1–10',b['1_10']],['11–15',b['11_15']],['16–21',b['16_21']],['>21',b['22plus']]];
-  if(modBox)modBox.innerHTML=modVals.map(x=>`<span style="width:${mt?(x[1]/mt*100).toFixed(2):0}%"></span>`).join('');
-  if(modLegend)modLegend.innerHTML=modVals.map(x=>`<span><i></i>${x[0]} <b>${num(x[1])}</b> <small>${mt?(x[1]/mt*100).toFixed(0):0}%</small></span>`).join('');
-  const gp=accountGalacticPower||{total:0,characters:0,ships:0}; const gpt=Number(gp.total)||Number(gp.characters||0)+Number(gp.ships||0); const cp=Number(gp.characters)||0, sp=Number(gp.ships)||0;
-  setText('gpCharPct',gpt?`${(cp/gpt*100).toFixed(0)}%`:'0%'); setText('gpShipPct',gpt?`${(sp/gpt*100).toFixed(0)}%`:'0%');
-  const cb=$('gpCharBar'),sb=$('gpShipBar'); if(cb)cb.style.width=`${gpt?(cp/gpt*100):0}%`; if(sb)sb.style.width=`${gpt?(sp/gpt*100):0}%`;
-  setText('decisionProfileName',$('topAccountName')?.textContent||'Profil synchronisé');
-  setText('decisionLastUpdate',`Personnages ${num(total)} · Vaisseaux ${num(rosterShips.length)} · Mods ${num(Math.max(mods.length,modSummaryCount||0))}`);
-}
-
 function renderV18SpeedRecap(containerId='v18SpeedRecap'){
   const box=$(containerId); if(!box)return;
   const b=speedBreakdown(mods);
@@ -1320,79 +959,15 @@ function topChangeStatValue(value,name){
  const percent=/%|potency|tenacity|critical|chance|avoidance/i.test(name);
  return `${num(value,percent?2:1)}${percent&&!String(name).includes('%')?' pt':''}${String(name).includes('%')?'%':''}`;
 }
-function holocronFallbackCandidates(){
-  const equipped=rosterCharacters.map(c=>({c,mods:getCharacterMods(c)})).filter(x=>x.mods.length);
-  if(!equipped.length)return [];
-  const out=[];
-  for(const target of rosterCharacters){
-    const current=getCharacterMods(target);
-    if(current.length>=6)continue;
-    const missingSlots=['Square','Arrow','Diamond','Triangle','Circle','Cross'].filter(slot=>!current.some(m=>m.slot===slot));
-    for(const slot of missingSlots){
-      let best=null;
-      for(const donor of equipped){
-        if(characterKey(donor.c)===characterKey(target))continue;
-        for(const m of donor.mods){
-          if(m.slot!==slot)continue;
-          const score=holocronModScoreForCharacter(m,target);
-          if(!best||score>best.score)best={donor:donor.c,mod:m,score};
-        }
-      }
-      if(best)out.push({recipient:target,donor:best.donor,oldMod:{slot, set_name:'Emplacement libre',primary_stat:'',primary_value:0,secondary_1_stat:'',secondary_1_value:0},newMod:best.mod,gain:best.score,donorLoss:0,status:'À ÉQUIPER',recipientStatus:current.length?'INCOMPLET':'SANS MODS',priority:best.score});
-    }
-  }
-  return out.sort((a,b)=>b.priority-a.priority).slice(0,10);
-}
-
 function renderHolocronTopChanges(){
- const box=$('holocronTopChanges'),count=$('topchangesCount'),note=$('topchangesSeasonNote');
- if(!box)return;
- if(!Array.isArray(rosterCharacters)||!rosterCharacters.length){
-   if(count)count.textContent='—';
-   box.innerHTML='<div class="topchanges-empty"><strong>Profil requis</strong><span>Charge ton profil SWGOH pour préparer les décisions.</span></div>';
-   return;
- }
+ const box=$('holocronTopChanges');if(!box)return;
+ if(!Array.isArray(rosterCharacters)||!rosterCharacters.length){box.className='topchanges-empty';box.innerHTML='<strong>Profil requis</strong><span>Charge ton profil SWGOH pour analyser les mods réels.</span>';return;}
  const rows=holocronTopChangeCandidates();
- const visibleRows=rows.length?rows:holocronFallbackCandidates();
- if(count)count.textContent=num(visibleRows.length);
+ if(!rows.length){box.className='topchanges-empty';box.innerHTML='<strong>Aucun échange suffisamment pertinent détecté</strong><span>Le moteur n’a trouvé aucun échange répondant aux critères actuels. Vérifie que le profil contient les mods et réessaie après actualisation.</span>';return;}
+ box.className='topchanges-results';
  const gacSeason=holocronLatestGacSeason();
- if(note)note.textContent=gacSeason?`Référence GAC · saison ${esc(gacSeason.season)}`:'Analyse roster · données du profil';
- if(!visibleRows.length){
-   box.innerHTML='<div class="topchanges-empty"><strong>Aucun échange pertinent détecté</strong><span>Le moteur attend suffisamment de mods équipés pour calculer des transferts.</span></div>';
-   return;
- }
- box.innerHTML=visibleRows.map((r,i)=>{
-   const delta=topChangeStatDelta(r.oldMod,r.newMod);
-   const statPreview=delta.slice(0,3).map(x=>`<span class="${x.delta>0?'up':'down'}">${esc(x.name)} ${x.delta>0?'+':'−'}${topChangeStatValue(Math.abs(x.delta),x.name)}</span>`).join('');
-   const recipientName=String(r.recipient?.name||r.recipient?.baseId||'Personnage cible');
-   const donorName=String(r.donor?.name||r.donor?.baseId||'Donneur');
-   const recipientHref=`https://swgoh.gg/units/${slug(recipientName)}/`;
-   const donorHref=`https://swgoh.gg/units/${slug(donorName)}/`;
-   return `<article class="topchange-card">
-      <div class="topchange-number">${String(i+1).padStart(2,'0')}</div>
-      <div class="topchange-body">
-        <div class="topchange-route">
-          <div class="topchange-character">
-            <span class="topchange-label">À AMÉLIORER</span>
-            <a href="${recipientHref}" target="_blank" rel="noopener" class="character-db-link">${esc(recipientName)} ↗</a>
-            <small>Mod actuel · ${esc(r.oldMod.slot)} · ${esc(r.oldMod.set_name||'—')}</small>
-          </div>
-          <span class="topchange-arrow">→</span>
-          <div class="topchange-character">
-            <span class="topchange-label">MOD DISPONIBLE</span>
-            <a href="${donorHref}" target="_blank" rel="noopener" class="character-db-link">${esc(donorName)} ↗</a>
-            <small>${esc(r.newMod.slot)} · ${esc(r.newMod.set_name||'—')} · ${num(modTotalSpeed(r.newMod),1)} vit.</small>
-          </div>
-        </div>
-        <div class="topchange-meta">
-          <span>Primaire <b>${esc(r.newMod.primary_stat||'—')}</b> ${num(r.newMod.primary_value,1)}</span>
-          <span>Speed <b>${num(modTotalSpeed(r.newMod),1)}</b></span>
-          <span>Écart <b>${statPreview||'—'}</b></span>
-        </div>
-        <div class="topchange-action"><span>TRANSFERT RECOMMANDÉ</span><strong>${esc(r.newMod.slot)} → ${esc(recipientName)}</strong></div>
-      </div>
-   </article>`;
- }).join('');
+ const seasonNote=gacSeason?`<div class=\"topchanges-gac-note\">Priorité GAC : saison ${esc(gacSeason.season)} · GL prioritaires · utilisations de la saison de référence.</div>`:'<div class=\"topchanges-gac-note\">Priorité GL activée. Statistiques GAC : aucune saison avec données intégrées ; le classement d’utilisation est en attente.</div>';
+ box.innerHTML=seasonNote+rows.map((r,i)=>{const delta=topChangeStatDelta(r.oldMod,r.newMod);const stats=delta.length?delta.map(x=>`<span class="topchange-stat ${x.delta>0?'is-up':'is-down'}"><b>${esc(x.name)}</b><strong>${x.delta>0?'+':'−'}${topChangeStatValue(Math.abs(x.delta),x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucune secondaire différente détectée.</span>';return `<article class="topchange-result"><div class="topchange-rank">${String(i+1).padStart(2,'0')}</div><div class="topchange-main"><strong>À AMÉLIORER : ${esc(r.recipient.name||r.recipient.baseId)}</strong><small>Mod actuel : ${esc(r.oldMod.slot)} · Donneur : ${esc(r.donor.name||r.donor.baseId)}</small><div class="topchange-mods"><span><b>MOD À REMPLACER</b><br>${esc(r.oldMod.slot)} · ${esc(r.oldMod.set_name||'—')}<br>Primaire : ${esc(r.oldMod.primary_stat||'—')} ${num(r.oldMod.primary_value,1)} · ${num(modTotalSpeed(r.oldMod),1)} vit.</span><span><b>MOD REÇU</b><br>${esc(r.newMod.slot)} · ${esc(r.newMod.set_name||'—')}<br>Primaire : ${esc(r.newMod.primary_stat||'—')} ${num(r.newMod.primary_value,1)} · ${num(modTotalSpeed(r.newMod),1)} vit.</span></div><section class="topchange-stat-panel"><strong>APPORT DES STATISTIQUES DU MOD REÇU</strong><div class="topchange-stat-grid">${stats}</div><small>Écart des statistiques secondaires entre les deux mods. Le set, l’emplacement et la primaire restent identiques.</small></section><div class="topchange-actions"><strong>ÉCHANGE À EFFECTUER</strong><ol><li>Transférer le mod du donneur vers <b>${esc(r.recipient.name||r.recipient.baseId)}</b>.</li><li>Transférer le mod remplacé vers <b>${esc(r.donor.name||r.donor.baseId)}</b>.</li></ol><small>Les valeurs affichées sont les écarts des mods eux-mêmes. Elles ne constituent pas une simulation complète des statistiques finales du personnage ou du combat.</small></div></div></article>`}).join('');
 }
 function showPage(page){
   document.body.dataset.page=page;
@@ -1543,7 +1118,7 @@ function renderCharacterReport(){
   const box=$('characterReport'); if(!box)return;
   const c=rosterCharacters.find(x=>characterKey(x)===analysisSelectedCharacter);
   if(!c){box.innerHTML='<div class="empty">Sélectionnez un personnage depuis PERSONNAGE / FACTION.</div>';return;}
-  const cm=getCharacterMods(c); if(!cm.length){ box.innerHTML='<div class="empty">CHARGEMENT DES MODS DE CE PERSONNAGE…</div>'; loadCharacterModsFromPage(c).then(()=>renderCharacterReport()); return; } const s=v176ModStatus(cm), p=optimizerProfileForCharacter(c)||{}, st=characterReportStats(c);
+  const cm=getCharacterMods(c), s=v176ModStatus(cm), p=optimizerProfileForCharacter(c)||{}, st=characterReportStats(c);
   const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0);
   const primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
   const totalSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0)+modPrimarySpeed(m),0)+Number(st.profile.base_stats?.Speed||0);
@@ -1576,9 +1151,9 @@ function renderCharacterDetail(){
   const c=rosterCharacters.find(x=>characterKey(x)===analysisSelectedCharacter);
   const box=$('characterModDetail'); if(!box)return;
   if(!c){box.innerHTML='<div class="empty">Sélectionnez un personnage.</div>';return;}
-  const cm=getCharacterMods(c); if(!cm.length){ box.innerHTML='<div class="empty">CHARGEMENT DES MODS…</div>'; loadCharacterModsFromPage(c).then(()=>renderCharacterDetail()); return; } const s=v176ModStatus(cm);
+  const cm=getCharacterMods(c), s=v176ModStatus(cm);
   const secSpeed=cm.reduce((n,m)=>n+(modSpeedMetrics(m).secondary||0),0), primarySpeed=cm.reduce((n,m)=>n+modPrimarySpeed(m),0);
-  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">PERSONNAGE</span><div class="character-title-line"><h2>${esc(c.name||c.baseId)}</h2><a class="character-db-link" href="https://swgoh.gg/units/${slug(c.name||c.baseId)}/" target="_blank" rel="noopener">BASE PERSONNAGE ↗</a></div><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${relicLevelFromTier(c.relic_tier??c.relicTier??0)?'R'+num(relicLevelFromTier(c.relic_tier??c.relicTier)):'Sans Relic'} · ${num(c.stars)}★ · Puissance ${num(c.power)}</p>${factionBadgesHtml(factionMap[characterKey(c)]||[])}</div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods équipés</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
+  box.innerHTML=`<div class="character-detail-head"><div><span class="tag">PERSONNAGE</span><h2>${esc(c.name||c.baseId)}</h2><p>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${relicLevelFromTier(c.relic_tier??c.relicTier??0)?'R'+num(relicLevelFromTier(c.relic_tier??c.relicTier)):'Sans Relic'} · ${num(c.stars)}★ · Puissance ${num(c.power)}</p>${factionBadgesHtml(factionMap[characterKey(c)]||[])}</div><div class="detail-kpis"><b>${cm.length}/6</b><span>mods équipés</span><b>${num(secSpeed)}</b><span>Speed secondaire</span><b>${num(primarySpeed)}</b><span>Speed primaire</span><strong class="audit-badge ${s.class}">${esc(s.status)}</strong></div></div>
   <div class="character-detail-actions"><strong>DÉTAIL DES 6 MODS ÉQUIPÉS</strong><button type="button" class="detail-mods-btn" id="openCharacterInventory">OUVRIR DANS L’INVENTAIRE</button></div>
   <div class="mod-detail-grid">${[...cm,...Array(Math.max(0,6-cm.length)).fill(null)].slice(0,6).map((m,i)=>m?renderModCard(m):`<div class="mod-card empty-slot"><strong>${['Square','Arrow','Diamond','Triangle','Circle','Cross'][i]}</strong><span>MOD MANQUANT</span></div>`).join('')}</div>`;
   $('openCharacterInventory')?.addEventListener('click',()=>openCharacterInventory(c));
@@ -1869,7 +1444,7 @@ async function boot(){
   }
 }
 
-$('fileInput')?.addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);showPage('dashboard');if($('holocronGate'))finishHolocronGate();else document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
+$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
 
 $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
@@ -1944,7 +1519,7 @@ $('unlockMediumSearch')?.addEventListener('click',()=>{
   if(ok){reallocationMediumUnlocked=true;const cb=$('reallocationMedium');if(cb)cb.disabled=false;const b=$('unlockMediumSearch');if(b){b.textContent='🔓 MOYENS AUTORISÉS';b.disabled=true;} }
 });
 
-$('clearData').addEventListener('click',()=>{currentData=null;mods=[];modSummaryCount=0;modSummarySpeed={total:0,no_speed:0,_1_10:0,_11_15:0,_16_21:0,gt_21:0};unitModLoadCache.clear();modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';analysisSide='ALL';analysisStatus='TOUS';analysisAuditSpeed='TOUS';analysisAuditSort='priority';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';if($('playerName'))$('playerName').textContent='Profil non chargé';if($('playerAlly'))$('playerAlly').textContent='—';if($('heroPlayerName'))$('heroPlayerName').textContent='Profil non chargé';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent='—';if($('heroProfileState'))$('heroProfileState').textContent='EN ATTENTE';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
+$('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';analysisSide='ALL';analysisStatus='TOUS';analysisAuditSpeed='TOUS';analysisAuditSort='priority';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';if($('playerName'))$('playerName').textContent='Profil non chargé';if($('playerAlly'))$('playerAlly').textContent='—';if($('heroPlayerName'))$('heroPlayerName').textContent='Profil non chargé';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent='—';if($('heroProfileState'))$('heroProfileState').textContent='EN ATTENTE';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
 
 document.querySelectorAll('.analysis-tab').forEach(btn=>btn.addEventListener('click',()=>setAnalysisTab(btn.dataset.analysisTab)));
 $('analysisFaction')?.addEventListener('change',()=>{analysisFaction=$('analysisFaction').value;analysisSelectedCharacter='';renderSelectionPanel();});
@@ -1959,9 +1534,6 @@ $('closeModDetail')?.addEventListener('click',closeModDetail);
 $('modDetailModal')?.addEventListener('click',e=>{if(e.target.id==='modDetailModal')closeModDetail();});
 
 document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{showPage(btn.dataset.page);if(btn.dataset.page==='data')renderDataTable();}));
-
-document.querySelectorAll('.holocron-face[data-page]').forEach(btn=>btn.addEventListener('click',()=>showPage(btn.dataset.page)));
-$('gateActivate')?.addEventListener('click',submitGateCode);$('gateAllyCode')?.addEventListener('keydown',e=>{if(e.key==='Enter')submitGateCode();});$('gateAllyCode')?.addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,9);});
 
 renderGalacticPower();
 boot();
