@@ -493,3 +493,12 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 .report-secondary-row span{font-size:12px;line-height:1.45}
 .topchange-card .topchange-character .character-db-link{display:inline-flex;align-items:center;gap:5px}
 @media(max-width:900px){.report-header > div:first-child{min-width:0;width:100%}}
+
+
+/* V93.4 — relay configuration on the Holocron gate */
+.gate-relay-label{display:block;margin-top:12px;font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.72)}
+.gate-relay-label span{opacity:.55;letter-spacing:.08em}
+.gate-relay-wrap{display:flex;gap:6px;margin-top:5px}
+.gate-relay-wrap input{flex:1;min-width:0;background:rgba(10,10,14,.72);border:1px solid rgba(255,40,40,.42);color:#fff;padding:9px 10px;font:11px monospace;outline:none}
+.gate-relay-wrap button{background:rgba(255,25,25,.08);border:1px solid rgba(255,40,40,.5);color:#fff;padding:0 12px;font-size:9px;letter-spacing:.12em;cursor:pointer}
+.gate-relay-state{margin-top:5px;font-size:8px;letter-spacing:.14em;color:rgba(255,255,255,.48);min-height:12px}

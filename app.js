@@ -483,11 +483,13 @@ function updateCharacterInfo() {
 }
 
 const DEFAULT_WORKER_URL = 'https://swgoh-optimizer-relay.lorg75017.workers.dev';
+function normalizeRelayUrl(v){ return String(v||'').trim().replace(/\/$/,''); }
 function workerUrl() {
   const saved=String(localStorage.getItem('swgohRelayUrl')||'').trim().replace(/\/$/,'');
-  const field=String($('relayUrl')?.value||'').trim().replace(/\/$/,'');
-  const value=saved||field||DEFAULT_WORKER_URL;
-  return /^https:\/\/[^\s]+$/i.test(value)?value:DEFAULT_WORKER_URL;
+  const field=normalizeRelayUrl($('relayUrl')?.value);
+  const gateField=normalizeRelayUrl($('gateRelayUrl')?.value);
+  const value=saved||gateField||field||DEFAULT_WORKER_URL;
+  return /^https:\/\/[^\s]+$/i.test(value)?value:'';
 }
 async function relayFetch(url, options={}){
   try{return await fetch(url,options);}
@@ -495,15 +497,16 @@ async function relayFetch(url, options={}){
     const msg=e?.message||String(e);
     if(/failed to fetch|networkerror|load failed/i.test(msg)){
       const saved=String(localStorage.getItem('swgohRelayUrl')||'').trim();
-      if(saved && saved!==DEFAULT_WORKER_URL){localStorage.removeItem('swgohRelayUrl');log('Ancien relais mémorisé inaccessible : retour au relais par défaut.');return await fetch(url.replace(saved,DEFAULT_WORKER_URL),options);}
+      if(saved){localStorage.removeItem('swgohRelayUrl');log('Relais mémorisé inaccessible : configuration effacée.');}
     }
     throw e;
   }
 }
-function saveWorkerUrl() { const v=String($('relayUrl').value||'').trim().replace(/\/$/,''); if(v)localStorage.setItem('swgohRelayUrl',v);else localStorage.removeItem('swgohRelayUrl'); $('relayState').textContent=v?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ'; log(v?`Relais Cloudflare enregistré : ${v}`:'Relais Cloudflare effacé.'); }
+function saveWorkerUrl() { const v=normalizeRelayUrl($('relayUrl')?.value); if(v)localStorage.setItem('swgohRelayUrl',v);else localStorage.removeItem('swgohRelayUrl'); if($('gateRelayUrl'))$('gateRelayUrl').value=v; if($('relayState'))$('relayState').textContent=v?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ'; log(v?`Relais Cloudflare enregistré : ${v}`:'Relais Cloudflare effacé.'); }
+async function testRelayUrl(){ const input=normalizeRelayUrl($('gateRelayUrl')?.value||$('relayUrl')?.value); const state=$('gateRelayState'); if(!/^https:\/\/[^\s]+$/i.test(input)){if(state)state.textContent='URL INVALIDE';return false;} if(state)state.textContent='TEST EN COURS…'; try{const r=await fetch(`${input}/?path=characters-index`,{cache:'no-store'}); const t=await r.text(); if(!r.ok)throw new Error(`HTTP ${r.status}`); if(!t||t.length<20)throw new Error('Réponse vide'); localStorage.setItem('swgohRelayUrl',input); if($('relayUrl'))$('relayUrl').value=input; if(state)state.textContent='RELAIS OPÉRATIONNEL ✓'; log(`Relais testé avec succès : ${input}`); return true;}catch(e){if(state)state.textContent='RELAIS INACCESSIBLE';log(`Test relais échoué : ${e?.message||e}`);return false;} }
 async function fetchText(url) {
   const candidates=[], relay=workerUrl();
-  if(relay){const m=url.match(/\/p\/(\d{9})\/(characters|mods)(?:\/)?(?:\?view=mods)?(?:&page=(\d+))?/);if(m){const ally=m[1],path=m[2]||'profile',page=m[3]||'1';candidates.push(`${relay}/?ally=${ally}&path=${path}&page=${page}`);}else{const u=url.match(/\/p\/(\d{9})\/unit\/([A-Za-z0-9_-]+)\/?$/);if(u)candidates.push(`${relay}/?ally=${u[1]}&path=unit&slug=${encodeURIComponent(u[2])}`);const md=url.match(/\/p\/(\d{9})\/mods\/([A-Za-z0-9_-]+)\/?$/);if(md)candidates.push(`${relay}/?ally=${md[1]}&path=mod&slug=${encodeURIComponent(md[2])}`);}}
+  if(relay){const m=url.match(/\/p\/(\d{9})\/(characters|mods)(?:\/?)(?:\?(?:view=mods&)?page=(\d+))?/);if(m){const ally=m[1],path=m[2]||'profile',page=m[3]||'1';candidates.push(`${relay}/?ally=${ally}&path=${path}&page=${page}`);}else{const u=url.match(/\/p\/(\d{9})\/unit\/([A-Za-z0-9_-]+)\/?$/);if(u)candidates.push(`${relay}/?ally=${u[1]}&path=unit&slug=${encodeURIComponent(u[2])}`);const md=url.match(/\/p\/(\d{9})\/mods\/([A-Za-z0-9_-]+)\/?$/);if(md)candidates.push(`${relay}/?ally=${md[1]}&path=mod&slug=${encodeURIComponent(md[2])}`);}}
   candidates.push(url); let last='';
   for(const u of candidates){
     const controller=new AbortController();
@@ -675,7 +678,7 @@ async function fetchJSON(url){const controller=new AbortController();const timeo
 
 function setGateMessage(message,state=''){const box=$('gateMessage');const step=$('gateStep');const gate=$('holocronGate');if(box){box.textContent=message;box.className=`gate-message ${state}`;}if(gate)gate.classList.toggle('is-loading',state==='loading');if(step&&state==='loading')step.textContent='SYNCHRONISATION EN COURS';if(step&&state==='error')step.textContent='SYNCHRONISATION INTERROMPUE';if(step&&state==='success')step.textContent='ROSTER SYNCHRONISÉ';}
 function finishHolocronGate(){const gate=$('holocronGate'),shell=$('appShell');if(!gate||!shell)return;setGateMessage('ROSTER SYNCHRONISÉ · OUVERTURE DE L’HOLOCRON','success');const step=$('gateStep');if(step)step.textContent='ROSTER SYNCHRONISÉ';gate.classList.remove('is-loading');gate.classList.add('is-success');setTimeout(()=>{shell.hidden=false;document.body.classList.add('holocron-unlocked');gate.remove();window.scrollTo(0,0);},2050);}
-function submitGateCode(){const raw=cleanAllyCode($('gateAllyCode')?.value||'');if(raw.length!==9){setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');$('gateAllyCode')?.focus();return;}const target=$('allyCode');if(target)target.value=raw;setGateMessage('IDENTIFICATION DU ROSTER · CHARGEMENT DES DONNÉES','loading');$('gateActivate').disabled=true;loadRemotePlayer().finally(()=>{if($('gateActivate'))$('gateActivate').disabled=false;});}
+async function submitGateCode(){const relayInput=normalizeRelayUrl($('gateRelayUrl')?.value); if(relayInput){localStorage.setItem('swgohRelayUrl',relayInput);} if(!workerUrl()){setGateMessage('RELAIS CLOUDFLARE REQUIS · RENSEIGNEZ UNE URL WORKERS.DEV','error');if($('gateRelayUrl'))$('gateRelayUrl').focus();return;} const raw=cleanAllyCode($('gateAllyCode')?.value||'');if(raw.length!==9){setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');$('gateAllyCode')?.focus();return;}const target=$('allyCode');if(target)target.value=raw;setGateMessage('IDENTIFICATION DU ROSTER · CHARGEMENT DES DONNÉES','loading');$('gateActivate').disabled=true;loadRemotePlayer().finally(()=>{if($('gateActivate'))$('gateActivate').disabled=false;});}
 
 async function loadRemotePlayer(){
   const allyCode=cleanAllyCode($('allyCode')?.value || $('gateAllyCode')?.value || '');if(allyCode.length!==9){log('Ally Code invalide : 9 chiffres attendus.');setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');return;}
@@ -959,7 +962,7 @@ function renderDataTable(){
   }
 }
 
-$('loadPlayer')?.addEventListener('click',loadRemotePlayer);$('allyCode')?.addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay')?.addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||'';$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});$('dataSearch').addEventListener('input',renderDataTable);['dataFactionFilter','dataSideFilter','modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
+$('gateRelayUrl')?.addEventListener('keydown',e=>{if(e.key==='Enter')testRelayUrl();});$('gateRelayTest')?.addEventListener('click',testRelayUrl);$('loadPlayer')?.addEventListener('click',loadRemotePlayer);$('allyCode')?.addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay')?.addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||'';if($('gateRelayUrl'))$('gateRelayUrl').value=localStorage.getItem('swgohRelayUrl')||'';$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';if($('gateRelayState')&&workerUrl())$('gateRelayState').textContent='RELAIS CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});$('dataSearch').addEventListener('input',renderDataTable);['dataFactionFilter','dataSideFilter','modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
 document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.data-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');currentDataset=btn.dataset.dataset;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=currentDataset!=='mods';if(ms)ms.hidden=currentDataset!=='mods';renderDataCharacterFilters();renderDataTable();}));
 
 

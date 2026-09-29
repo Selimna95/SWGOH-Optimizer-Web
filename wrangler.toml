@@ -1,0 +1,3 @@
+name = "swgoh-optimizer-relay"
+main = "cloudflare-worker/worker.js"
+compatibility_date = "2026-09-29"
