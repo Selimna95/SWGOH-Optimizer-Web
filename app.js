@@ -408,7 +408,7 @@ function slotFromShape(shape){const s=String(shape||'').toLowerCase();return ({'
 function parseStatGeneric(node){if(!node)return{stat:'',value:0};const label=firstText(node,['.statmod-stat-label','[class*="statmod-stat-label"]','[data-stat-name]'])||node.getAttribute?.('data-stat-name')||'';const raw=firstText(node,['.statmod-stat-value','[class*="statmod-stat-value"]','[data-stat-value]'])||node.getAttribute?.('data-stat-value')||node.textContent||'';return{stat:label.trim(),value:parseNumberValue(raw)};}
 function parseModsPage(doc,page){
   const result=[]; const seen=new Set();
-  const nodes=[...doc.querySelectorAll('.collection-mod, [class*="collection-mod"], [data-mod-id], [data-id].mod, img[alt*~="Mod" i]')];
+  const nodes=[...doc.querySelectorAll('.collection-mod, [class*="collection-mod"], [data-mod-id], [data-id].mod, img[alt*="Mod" i]')];
   const roots=[];
   for(const n of nodes){const root=n.matches?.('img') ? (n.closest('.collection-mod,[class*=\"collection-mod\"],[data-mod-id],[data-id]')||n.parentElement?.parentElement||n.parentElement) : n;if(root&&!roots.includes(root))roots.push(root);}
   roots.forEach((node,idx)=>{
