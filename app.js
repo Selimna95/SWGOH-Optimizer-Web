@@ -482,7 +482,7 @@ function updateCharacterInfo() {
     </div>`;
 }
 
-// V93.7: keep the V93.4 relay flow; do not require a preliminary api-profile probe.
+// V93.9: keep the V93.4 relay flow; do not require a preliminary api-profile probe.
 const DEFAULT_WORKER_URL = 'https://swgoh-optimizer-relay.lorg75017.workers.dev';
 function normalizeRelayUrl(v){ return String(v||'').trim().replace(/\/$/,''); }
 function workerUrl() {
@@ -504,7 +504,6 @@ async function relayFetch(url, options={}){
   }
 }
 function saveWorkerUrl() { const v=normalizeRelayUrl($('relayUrl')?.value); if(v)localStorage.setItem('swgohRelayUrl',v);else localStorage.removeItem('swgohRelayUrl'); if($('gateRelayUrl'))$('gateRelayUrl').value=v; if($('relayState'))$('relayState').textContent=v?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ'; log(v?`Relais Cloudflare enregistré : ${v}`:'Relais Cloudflare effacé.'); }
-async function testRelayUrl(){ const input=normalizeRelayUrl($('gateRelayUrl')?.value||$('relayUrl')?.value||DEFAULT_WORKER_URL); const state=$('gateRelayState'); if(!/^https:\/\/[^\s]+$/i.test(input)){if(state)state.textContent='URL INVALIDE';return false;} if(state)state.textContent='TEST EN COURS…'; try{const r=await fetch(`${input}/?path=characters-index`,{cache:'no-store'}); const t=await r.text(); if(!r.ok)throw new Error(`HTTP ${r.status}`); if(!t||t.length<20)throw new Error('Réponse vide'); localStorage.setItem('swgohRelayUrl',input); if($('relayUrl'))$('relayUrl').value=input; if(state)state.textContent='RELAIS OPÉRATIONNEL ✓'; log(`Relais testé avec succès : ${input}`); return true;}catch(e){if(state)state.textContent='RELAIS INACCESSIBLE';log(`Test relais échoué : ${e?.message||e}`);return false;} }
 async function fetchText(url) {
   const candidates=[], relay=workerUrl();
   if(relay){const m=url.match(/\/p\/(\d{9})\/(characters|mods)(?:\/)?(?:\?view=mods)?(?:&page=(\d+))?/);if(m){const ally=m[1],path=m[2]||'profile',page=m[3]||'1';candidates.push(`${relay}/?ally=${ally}&path=${path}&page=${page}`);}else{const u=url.match(/\/p\/(\d{9})\/unit\/([A-Za-z0-9_-]+)\/?$/);if(u)candidates.push(`${relay}/?ally=${u[1]}&path=unit&slug=${encodeURIComponent(u[2])}`);const md=url.match(/\/p\/(\d{9})\/mods\/([A-Za-z0-9_-]+)\/?$/);if(md)candidates.push(`${relay}/?ally=${md[1]}&path=mod&slug=${encodeURIComponent(md[2])}`);}}
@@ -963,7 +962,7 @@ function renderDataTable(){
   }
 }
 
-$('gateRelayUrl')?.addEventListener('keydown',e=>{if(e.key==='Enter')testRelayUrl();});$('gateRelayTest')?.addEventListener('click',testRelayUrl);$('loadPlayer')?.addEventListener('click',loadRemotePlayer);$('allyCode')?.addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay')?.addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||DEFAULT_WORKER_URL;if($('gateRelayUrl'))$('gateRelayUrl').value=localStorage.getItem('swgohRelayUrl')||DEFAULT_WORKER_URL;$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';if($('gateRelayState')&&workerUrl())$('gateRelayState').textContent='RELAIS CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});$('dataSearch').addEventListener('input',renderDataTable);['dataFactionFilter','dataSideFilter','modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
+$('loadPlayer')?.addEventListener('click',loadRemotePlayer);$('allyCode')?.addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay')?.addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||DEFAULT_WORKER_URL;if($('gateRelayUrl'))$('gateRelayUrl').value=localStorage.getItem('swgohRelayUrl')||DEFAULT_WORKER_URL;$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});$('dataSearch').addEventListener('input',renderDataTable);['dataFactionFilter','dataSideFilter','modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
 document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.data-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');currentDataset=btn.dataset.dataset;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=currentDataset!=='mods';if(ms)ms.hidden=currentDataset!=='mods';renderDataCharacterFilters();renderDataTable();}));
 
 
