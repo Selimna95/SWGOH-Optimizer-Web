@@ -445,7 +445,7 @@ function submitGateCode(){const raw=cleanAllyCode($('gateAllyCode')?.value||'');
 
 async function loadRemotePlayer(){
   const allyCode=cleanAllyCode($('allyCode')?.value || $('gateAllyCode')?.value || '');if(allyCode.length!==9){log('Ally Code invalide : 9 chiffres attendus.');setGateMessage('CODE ALLIÉ INVALIDE · 9 CHIFFRES ATTENDUS','error');return;}
-  $('loadPlayer').disabled=true;$('loadPlayer').textContent='CHARGEMENT…';$('log').textContent='';const fmt=formatAlly(allyCode);log(`Recherche du joueur ${fmt}…`);
+  const loadBtn=$('loadPlayer'); if(loadBtn){loadBtn.disabled=true;loadBtn.textContent='CHARGEMENT…';} if($('log')) $('log').textContent=''; const fmt=formatAlly(allyCode); log(`Recherche du joueur ${fmt}…`);
   try{
     if(workerUrl())log('Relais Cloudflare actif : récupération via relais sécurisé.');else log('Aucun relais configuré : tentative directe depuis le navigateur.');
     const base=`https://swgoh.gg/p/${allyCode}`,relay=workerUrl();let apiChars=[],apiMods=[];
@@ -509,7 +509,7 @@ async function loadRemotePlayer(){
     $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nUnités totales: ${chars.length+ships.length}\nMods: ${mods.length}\nProfils Kyber disponibles dans cette version: ${Object.keys(profiles).length}`;
     log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${mods.length} mods exploitables.`);if(!mods.length)log('Aucun mod lisible.');showPage('dashboard');if($('holocronGate'))finishHolocronGate();
   }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, utilise l’import JSON.');if($('holocronGate'))setGateMessage(`ÉCHEC DE SYNCHRONISATION · ${e.message||'ERREUR INCONNUE'}`,'error');}
-  finally{$('loadPlayer').disabled=false;$('loadPlayer').textContent='CHARGER MON PROFIL';}
+  finally{const loadBtn=$('loadPlayer'); if(loadBtn){loadBtn.disabled=false;loadBtn.textContent='CHARGER MON PROFIL';}}
 }
 function updateAccountSummary(title,fmt){if($('playerName'))$('playerName').textContent=title||'Profil';if($('playerAlly'))$('playerAlly').textContent=fmt||'—';if($('heroPlayerName'))$('heroPlayerName').textContent=title||'Profil';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent=fmt||'—';setText('topAccountName',title||'—');setText('topProfileState','CONNECTÉ');setText('heroProfileState','CONNECTÉ');}
 function modSetLabel(value){
