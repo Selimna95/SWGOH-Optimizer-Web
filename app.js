@@ -449,8 +449,21 @@ async function loadRemotePlayer(){
   try{
     if(workerUrl())log('Relais Cloudflare actif : récupération via relais sécurisé.');else log('Aucun relais configuré : tentative directe depuis le navigateur.');
     const base=`https://swgoh.gg/p/${allyCode}`,relay=workerUrl();let apiChars=[],apiMods=[];
-    if(relay){log('Tentative API JSON SWGOH.GG via le Worker…');try{const api=await fetchJSON(`${relay}/?ally=${allyCode}&path=api-profile`);apiChars=extractApiCharacters(api);apiMods=extractApiMods(api);log(`API : ${apiChars.length} unités candidates, ${apiMods.length} mods candidats.`);}catch(e){log(`API profil indisponible : ${e.message}`);}if(!apiMods.length){try{const apiModsJson=await fetchJSON(`${relay}/?ally=${allyCode}&path=api-mods`);apiMods=extractApiMods(apiModsJson);log(`API mods : ${apiMods.length} mods candidats.`);}catch(e){log(`API mods indisponible : ${e.message}`);}}}
-    const profileText=await fetchText(`${base}/`),profileDoc=parseHTML(profileText),title=profileDoc.querySelector('h1')?.textContent?.trim()||'Joueur',bodyText=profileDoc.body.textContent||'';accountGalacticPower=extractGalacticPowerFromProfile(bodyText);renderGalacticPower();const rosterMatch=bodyText.match(/Roster\s+([0-9,]+)\s+units/i);const modsMatch=bodyText.match(/([0-9,]+)\s+Mods/i);log(`Profil SWGOH.GG trouvé : ${title}.`);if(rosterMatch)log(`Roster annoncé : ${rosterMatch[1]} unités.`);if(modsMatch)log(`Mods annoncés : ${modsMatch[1]}.`);log('Lecture du roster…');
+    if(relay){
+      log('Récupération des données principales…');
+      const results=await Promise.allSettled([
+        fetchJSON(`${relay}/?ally=${allyCode}&path=api-profile`),
+        fetchJSON(`${relay}/?ally=${allyCode}&path=api-mods`),
+        fetchText(`${base}/`)
+      ]);
+      if(results[0].status==='fulfilled'){apiChars=extractApiCharacters(results[0].value);log(`API roster : ${apiChars.length} unités candidates.`);}else log(`API roster indisponible : ${results[0].reason?.message||results[0].reason}`);
+      if(results[1].status==='fulfilled'){apiMods=extractApiMods(results[1].value);log(`API mods : ${apiMods.length} mods candidats.`);}else log(`API mods indisponible : ${results[1].reason?.message||results[1].reason}`);
+      var profileText=results[2].status==='fulfilled'?results[2].value:null;
+      if(!profileText) throw new Error(results[2].reason?.message||'Profil SWGOH.GG indisponible');
+    } else {
+      var profileText=await fetchText(`${base}/`);
+    }
+    const profileDoc=parseHTML(profileText),title=profileDoc.querySelector('h1')?.textContent?.trim()||'Joueur',bodyText=profileDoc.body.textContent||'';accountGalacticPower=extractGalacticPowerFromProfile(bodyText);renderGalacticPower();const rosterMatch=bodyText.match(/Roster\s+([0-9,]+)\s+units/i);const modsMatch=bodyText.match(/([0-9,]+)\s+Mods/i);log(`Profil SWGOH.GG trouvé : ${title}.`);if(rosterMatch)log(`Roster annoncé : ${rosterMatch[1]} unités.`);if(modsMatch)log(`Mods annoncés : ${modsMatch[1]}.`);log('Lecture du roster…');
     if(apiChars.length)log(`Unités directes API retenues : ${apiChars.length}.`);
     const ownedApi=apiChars.filter(c=>Number(c.level||0)>0||Number(c.gear||0)>0||Number(c.stars||0)>0);
     let chars=[],ships=[];
@@ -458,20 +471,21 @@ async function loadRemotePlayer(){
     rosterCharacters=chars;rosterShips=ships;log(`${chars.length} personnages récupérés (${apiChars.length} unités candidates API, filtrées sur les unités possédées).`);
     log('Lecture des mods publics pour décoder les statistiques affichées…');
     const htmlMods=[];
-    const seenModPages=new Set();
-    // Certains relais/pages renvoient toujours le même contenu quelle que soit la pagination.
-    // On détecte ces répétitions pour éviter de laisser l'activation tourner indéfiniment.
-    const maxModPages=40;
-    for(let page=1;page<=maxModPages;page++){
-      const pageMods=parseModsPage(parseHTML(await fetchText(`${base}/mods/?page=${page}`)),page);
-      if(!pageMods.length){log(`Fin de pagination des mods à la page ${page}.`);break;}
-      const signature=JSON.stringify(pageMods.map(m=>[m.slot,m.set_name,m.rarity,m.level,m.primary_stat,m.primary_value,m.character,(m.secondary_stats||[]).map(x=>[x.stat,x.value])]));
-      if(seenModPages.has(signature)){log(`Pagination interrompue : la page ${page} répète une page précédente.`);break;}
-      seenModPages.add(signature);
-      htmlMods.push(...pageMods);
-      log(`Page mods ${page}: ${pageMods.length} mods.`);
-      if(pageMods.length<30)break;
-      if(page===maxModPages)log(`Limite de sécurité atteinte (${maxModPages} pages HTML). Les données API disponibles sont conservées.`);
+    // L'API contient déjà les mods du roster : inutile de parcourir des dizaines de pages HTML.
+    // Le fallback HTML reste volontairement court si l'API ne fournit aucun mod.
+    if(!apiMods.length){
+      const seenModPages=new Set();
+      const maxModPages=4;
+      for(let page=1;page<=maxModPages;page++){
+        const pageMods=parseModsPage(parseHTML(await fetchText(`${base}/mods/?page=${page}`)),page);
+        if(!pageMods.length){log(`Fin de pagination des mods à la page ${page}.`);break;}
+        const signature=JSON.stringify(pageMods.map(m=>[m.slot,m.set_name,m.rarity,m.level,m.primary_stat,m.primary_value,m.character,(m.secondary_stats||[]).map(x=>[x.stat,x.value])]));
+        if(seenModPages.has(signature)){log(`Pagination interrompue : page répétée.`);break;}
+        seenModPages.add(signature); htmlMods.push(...pageMods); log(`Page mods ${page}: ${pageMods.length} mods.`);
+        if(pageMods.length<30)break;
+      }
+    } else {
+      log('API mods disponible : pagination HTML ignorée pour accélérer l’activation.');
     }
     // Les pages publiques donnent les valeurs réellement affichées (ex. 8 Speed, 5.88%).
     // L'API reste un filet de sécurité pour les éventuels mods non présents dans les pages.
