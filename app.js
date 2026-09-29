@@ -168,11 +168,16 @@ function extractRosterEquippedMods(json){
 function looksLikeMod(o){
   if(!o||typeof o!=='object')return false;
   const keys=Object.keys(o).map(k=>k.toLowerCase());
-  const hasIdentity=keys.some(k=>['definitionid','definition_id','modid','uid','set','setid','modsetid','modset'].includes(k));
-  const hasShape=keys.some(k=>['slot','slot_id','slotid','modslot','shape','slotindex'].includes(k));
-  const hasStats=keys.some(k=>['primary','primary_stat','primarystat','secondarystats','secondarystat','secondary'].includes(k));
-  const hasProgress=keys.some(k=>['level','pips','rarity','tier','quality'].includes(k));
-  return (hasShape||hasIdentity) && (hasStats || (hasProgress && (hasIdentity || hasShape)));
+  // SWGOH.GG's mod API commonly identifies the slot/set/pips inside
+  // definitionId, so a raw mod does NOT necessarily expose a separate
+  // slot field. Do not reject those objects before normalizeMod() gets a
+  // chance to decode definitionId.
+  const hasIdentity=keys.some(k=>['definitionid','definition_id','modid','mod_id','uid','set','setid','set_id','setname','modsetid','mod_set_id','modset'].includes(k));
+  const hasShape=keys.some(k=>['slot','slot_id','slotid','modslot','mod_slot','shape','slotindex'].includes(k));
+  const hasStats=keys.some(k=>['primary','primary_stat','primarystat','primarystatvalue','secondarystats','secondarystat','secondary','secondarystats'].includes(k));
+  const hasProgress=keys.some(k=>['level','pips','dotcount','dot_count','rarity','tier','quality','modtier','mod_tier'].includes(k));
+  const hasDefinition=keys.includes('definitionid')||keys.includes('definition_id');
+  return (hasShape||hasIdentity||hasDefinition) && (hasStats || (hasProgress && (hasIdentity || hasShape || hasDefinition)));
 }
 function extractApiMods(json){
   const out=[]; let i=0;
@@ -502,7 +507,7 @@ function extractApiMods(json){
       // SWGOH.GG has used both direct and nested stat fields over time.
       if(!raw.secondary_stats && raw.secondaryStats) raw.secondary_stats=raw.secondaryStats;
       if(!raw.primary_stat && raw.primaryStat) raw.primary_stat=raw.primaryStat;
-      raw.character=raw.character??raw.characterName??raw.characterId??raw.character_id??raw.unitId??raw.unit_id??raw.equippedUnitId??raw.equipped_unit_id??raw.location??'';
+      raw.character=raw.character??raw.characterName??raw.equippedTo??raw.equipped_to??raw.unit_equiped??raw.unitEquiped??raw.characterId??raw.character_id??raw.unitId??raw.unit_id??raw.equippedUnitId??raw.equipped_unit_id??raw.location??raw.usingIn??'';
       out.push(normalizeMod({...raw,game_id:raw.game_id||raw.id||raw.uid||raw.modId||raw.definitionId||`api-${i}`},i++));
     }
   };
