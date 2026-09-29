@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="app.css?v=100.2">
+  <link rel="stylesheet" href="app.css?v=100.3">
 
 
 
 
-<title>Selimna’s Holocron — V100.2</title>
+<title>Selimna’s Holocron — V100.3</title>
 
 
 
@@ -132,23 +132,37 @@
       </div>
     </section>
 
-    <section id="top-changes" class="page">
-  <div class="panel topchanges-page-header">
-    <div>
+    <section id="top-changes" class="page holocron-essential-page">
+  <div class="essential-visual-bg" aria-hidden="true"></div>
+  <header class="essential-command panel">
+    <div class="essential-command-mark">◈</div>
+    <div class="essential-command-copy">
       <div class="eyebrow">HOLOCRON // ESSENTIEL</div>
-      <h2>Les décisions qui comptent maintenant</h2>
-      <p>Une vue rapide des échanges de mods les plus utiles, avec le gain attendu et l'action à effectuer.</p>
+      <h2>L’AVANTAGE NAÎT DE LA <em>VISION.</em></h2>
+      <p>Examine tes données. Découvre tes forces. Domine ton optimisation.</p>
     </div>
-    <div class="topchanges-kpis">
-      <div><span>PROPOSITIONS</span><strong id="topchangesCount">—</strong></div>
-      <div><span>PRIORITÉ</span><strong>GAIN ROSTER</strong></div>
+    <div class="essential-account">
+      <span id="essentialProfileName">SELIMNA</span>
+      <small>PUISSANCE GALACTIQUE</small>
+      <strong id="essentialGpTotal">—</strong>
     </div>
-  </div>
-  <div class="topchanges-toolbar">
+    <div class="essential-command-actions">
+      <button type="button" class="essential-mini-btn" data-essential-action="priorities">PRIORITÉS <b>☰</b></button>
+      <button type="button" class="essential-gain-btn" data-essential-action="gain">◆ GAIN ROSTER</button>
+    </div>
+  </header>
+  <div class="essential-legend-row">
     <div class="topchanges-legend"><span><i></i> Gain potentiel</span><span><i></i> Mod à transférer</span><span><i></i> Personnage cible</span></div>
     <div id="topchangesSeasonNote" class="topchanges-gac-note"></div>
   </div>
-  <div id="holocronTopChanges" class="topchanges-results" aria-live="polite"></div>
+  <div class="essential-results-shell">
+    <div class="essential-results-grid" id="holocronTopChanges" aria-live="polite"></div>
+    <aside class="essential-sith-visual" aria-hidden="true"><div class="essential-sith-glow"></div></aside>
+  </div>
+  <footer class="essential-footer">
+    <div><span>« L’AVANTAGE NE VIENT PAS DE LA FORCE.</span><span>C’EST LA VISION QUI LA REND UTILE. »</span><small>HOLOCRON // SELIMNA</small></div>
+    <strong>MAÎTRISE // OPTIMISATION // VICTOIRE</strong>
+  </footer>
 </section>
 
 <section id="optimizer" class="page">
@@ -340,7 +354,7 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <!-- V100: interface nouvelle / moteur technique V90 conservé intégralement. -->
 <script src="gac-usage.js?v=89"></script>
-<script src="app.js?v=100.2"></script>
-<script src="interface-adapter.js?v=100.2"></script>
+<script src="app.js?v=100.3"></script>
+<script src="interface-adapter.js?v=100.3"></script>
 </body>
 </html>

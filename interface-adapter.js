@@ -53,7 +53,10 @@
 
     // Player name is deliberately kept in the header, never over the Holocron.
     const accountName=(el('topAccountName')?.textContent||'').trim();
-    text('decisionProfileName',accountName && accountName!=='—' ? accountName : 'COMPTE');
+    const displayName=accountName && accountName!=='—' ? accountName : 'COMPTE';
+    text('decisionProfileName',displayName);
+    text('essentialProfileName',displayName.toUpperCase());
+    text('essentialGpTotal',gp.total ? nfmt(gp.total) : '—');
     text('charsCount',chars.length);
     text('modsCount',allMods.length);
     text('gpTotal',gp.total ? nfmt(gp.total) : '0');
