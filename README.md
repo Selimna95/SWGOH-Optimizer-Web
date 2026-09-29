@@ -20,3 +20,13 @@ Version propre de l’application web avec portail Holocron à l’entrée.
 - `assets/backgrounds/` — uniquement les visuels encore utilisés par le dashboard
 - `assets/icons/` — icônes de factions
 - `cloudflare-worker/` — worker de relais facultatif
+
+## V92.4 — Centre de décision Holocron
+
+Le dashboard d'accueil a été refondu autour d'un centre de décision visuel :
+- Holocron central avec trois faces d'accès : **Essentiel**, **Comprendre**, **Expert**.
+- Flux d'énergie reliant les trois blocs de données à l'Holocron.
+- Carte Personnages avec ventilation par étoiles.
+- Carte Puissance galactique avec détail personnages / vaisseaux et proportions.
+- Carte Mods avec ventilation par tranches de vitesse.
+- Les identifiants DOM utilisés par le moteur existant sont conservés pour ne pas casser la synchronisation, l'analyse et l'Optimizer.

@@ -36,7 +36,7 @@ function esc(value) { return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':
 function num(value, digits=0) { const n=Number(value); return Number.isFinite(n) ? n.toLocaleString('fr-FR',{maximumFractionDigits:digits}) : '0'; }
 function parseLabeledNumber(text,label){const escaped=String(label).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const m=String(text||'').match(new RegExp(escaped+'\\s*([0-9][0-9,]*)','i'));return m?Number(String(m[1]).replace(/,/g,'')):0;}
 function extractGalacticPowerFromProfile(text){const body=String(text||'');let total=parseLabeledNumber(body,'Galactic Power');const characters=parseLabeledNumber(body,'Galactic Power (Characters)');const ships=parseLabeledNumber(body,'Galactic Power (Ships)');if(!total)total=characters+ships;return {total,characters,ships};}
-function renderGalacticPower(){const gp=accountGalacticPower||{total:0,characters:0,ships:0};setText('gpTotal',gp.total?num(gp.total):'0');setText('gpCharacters',gp.characters?num(gp.characters):'0');setText('gpShips',gp.ships?num(gp.ships):'0');setText('gpBreakdown',gp.total?`${num(gp.characters)} terrestre · ${num(gp.ships)} spatial`:'En attente de synchronisation');}
+function renderGalacticPower(){const gp=accountGalacticPower||{total:0,characters:0,ships:0};setText('gpTotal',gp.total?num(gp.total):'0');setText('gpCharacters',gp.characters?num(gp.characters):'0');setText('gpShips',gp.ships?num(gp.ships):'0');setText('gpBreakdown',gp.total?`${num(gp.characters)} terrestre · ${num(gp.ships)} spatial`:'En attente de synchronisation');renderDecisionCenter();}
 
 function statNameFromAny(value) {
   const rawNames = {1:'Health',5:'Speed',17:'Potency',18:'Tenacity',28:'Protection',41:'Offense',42:'Defense',45:'Critical Chance',48:'Offense',49:'Defense',53:'Critical Chance',55:'Health',56:'Protection',57:'Speed'};
@@ -818,6 +818,25 @@ function inventoryRows(){
     return {...m,_index:i,_speed:x.secondary||0,_primarySpeed:x.primary,_totalSpeed:modTotalSpeed(m),_speedCategory:x.primary?'primary_speed':speedCategory(x.secondary)};
   });
 }
+
+function renderDecisionCenter(){
+  const total=Math.max(0,rosterCharacters.length);
+  const starBuckets={7:0,6:0,5:0,'<5':0};
+  rosterCharacters.forEach(u=>{const stars=Number(u?.stars??u?.rarity??u?.starLevel??0); if(stars>=7)starBuckets[7]++; else if(stars===6)starBuckets[6]++; else if(stars===5)starBuckets[5]++; else starBuckets['<5']++;});
+  const unitBox=$('unitVentilation'),unitLegend=$('unitLegend');
+  if(unitBox){const vals=[starBuckets[7],starBuckets[6],starBuckets[5],starBuckets['<5']];unitBox.innerHTML=vals.map(v=>`<span style="width:${total?(v/total*100).toFixed(2):0}%"></span>`).join('');}
+  if(unitLegend){const labels=[['7★',starBuckets[7]],['6★',starBuckets[6]],['5★',starBuckets[5]],['<5★',starBuckets['<5']]];unitLegend.innerHTML=labels.map((x,i)=>`<span><i></i>${x[0]} <b>${num(x[1])}</b> <small>${total?(x[1]/total*100).toFixed(0):0}%</small></span>`).join('');}
+  const b=speedBreakdown(mods); const mt=Math.max(0,b.total||mods.length); const modBox=$('modVentilation'),modLegend=$('modLegend');
+  const modVals=[['1–10',b['1_10']],['11–15',b['11_15']],['16–21',b['16_21']],['>21',b['22plus']]];
+  if(modBox)modBox.innerHTML=modVals.map(x=>`<span style="width:${mt?(x[1]/mt*100).toFixed(2):0}%"></span>`).join('');
+  if(modLegend)modLegend.innerHTML=modVals.map(x=>`<span><i></i>${x[0]} <b>${num(x[1])}</b> <small>${mt?(x[1]/mt*100).toFixed(0):0}%</small></span>`).join('');
+  const gp=accountGalacticPower||{total:0,characters:0,ships:0}; const gpt=Number(gp.total)||Number(gp.characters||0)+Number(gp.ships||0); const cp=Number(gp.characters)||0, sp=Number(gp.ships)||0;
+  setText('gpCharPct',gpt?`${(cp/gpt*100).toFixed(0)}%`:'0%'); setText('gpShipPct',gpt?`${(sp/gpt*100).toFixed(0)}%`:'0%');
+  const cb=$('gpCharBar'),sb=$('gpShipBar'); if(cb)cb.style.width=`${gpt?(cp/gpt*100):0}%`; if(sb)sb.style.width=`${gpt?(sp/gpt*100):0}%`;
+  setText('decisionProfileName',$('topAccountName')?.textContent||'Profil synchronisé');
+  setText('decisionLastUpdate',`Personnages ${num(total)} · Vaisseaux ${num(rosterShips.length)} · Mods ${num(mods.length)}`);
+}
+
 function renderV18SpeedRecap(containerId='v18SpeedRecap'){
   const box=$(containerId); if(!box)return;
   const b=speedBreakdown(mods);
@@ -1539,6 +1558,7 @@ $('modDetailModal')?.addEventListener('click',e=>{if(e.target.id==='modDetailMod
 
 document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{showPage(btn.dataset.page);if(btn.dataset.page==='data')renderDataTable();}));
 
+document.querySelectorAll('.holocron-face[data-page]').forEach(btn=>btn.addEventListener('click',()=>showPage(btn.dataset.page)));
 $('gateActivate')?.addEventListener('click',submitGateCode);$('gateAllyCode')?.addEventListener('keydown',e=>{if(e.key==='Enter')submitGateCode();});$('gateAllyCode')?.addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,9);});
 
 renderGalacticPower();
