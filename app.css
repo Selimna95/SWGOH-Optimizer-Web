@@ -390,3 +390,8 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
   .holocron-gate .gate-login{top:73%;width:min(310px,82vw)}
   .holocron-gate .gate-holocron-image{width:100vw !important;height:100vh !important;object-fit:contain !important}
 }
+
+
+/* V92.2 — guaranteed photo render: the Holocron is part of the document, never dependent on a relative asset URL. */
+.holocron-gate .gate-visual{z-index:1!important;display:block!important;visibility:visible!important;opacity:1!important;}
+.holocron-gate .gate-holocron-image{z-index:1!important;visibility:visible!important;display:block!important;opacity:1!important;}
