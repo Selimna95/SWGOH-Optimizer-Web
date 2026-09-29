@@ -1,11 +1,10 @@
-/* Selimna's Holocron V100
-   Interface adapter only.
-   The data/relay/optimizer engine remains the V90 implementation. */
+/* Selimna's Holocron V100.2
+   VISUAL ADAPTER ONLY.
+   The V90 technical/data engine is intentionally untouched. */
 (function(){
   'use strict';
 
   const DEFAULT_RELAY='https://swgoh-optimizer-relay.lorg75017.workers.dev';
-
   function el(id){ return document.getElementById(id); }
   function text(id,v){ const n=el(id); if(n) n.textContent=String(v ?? ''); }
   function nfmt(v){ return Number(v||0).toLocaleString('fr-FR'); }
@@ -21,20 +20,29 @@
     return vals.reduce((a,b)=>a+b,0);
   }
 
+  function relicOf(c){
+    if(!c) return 0;
+    const raw=c.relic_tier ?? c.relicTier ?? c.relic_level ?? c.relicLevel ?? c.raw?.relic_tier ?? c.raw?.relicTier ?? 0;
+    const n=Number(raw);
+    if(!Number.isFinite(n) || n<=2) return 0;
+    return Math.max(0,Math.min(10,Math.floor(n)-2));
+  }
+  function gearOf(c){ return Number(c?.gear ?? c?.gear_level ?? c?.gearLevel ?? c?.raw?.gear_level ?? c?.raw?.gearLevel ?? 0) || 0; }
+
   function renderBars(containerId, rows){
     const root=el(containerId); if(!root) return;
-    const total=rows.reduce((a,r)=>a+r.value,0);
-    root.innerHTML=rows.map(r=>{
-      const pct=total ? Math.max(2,Math.round(r.value/total*100)) : 0;
-      return `<div class="decision-bar-row">
-        <span>${r.label}</span><div class="decision-bar-track"><i style="width:${pct}%"></i></div><b>${nfmt(r.value)}</b>
-      </div>`;
+    const total=rows.reduce((a,r)=>a+Math.max(0,Number(r.value)||0),0);
+    root.innerHTML=rows.map((r,i)=>{
+      const value=Math.max(0,Number(r.value)||0);
+      const pct=total ? (value/total*100) : 0;
+      return `<span class="decision-segment seg-${i}" style="width:${pct.toFixed(2)}%" title="${r.label} : ${nfmt(value)}" aria-label="${r.label} : ${nfmt(value)}"></span>`;
     }).join('');
+    root.setAttribute('aria-label',rows.map(r=>`${r.label} ${nfmt(r.value)}`).join(', '));
   }
 
   function renderLegend(id, rows){
     const root=el(id); if(!root) return;
-    root.innerHTML=rows.map(r=>`<span><i></i>${r.label} <b>${nfmt(r.value)}</b></span>`).join('');
+    root.innerHTML=rows.map(r=>`<span><i></i><b>${r.label}</b><strong>${nfmt(r.value)}</strong></span>`).join('');
   }
 
   function renderDecision(){
@@ -43,7 +51,9 @@
     const allMods=(typeof mods!=='undefined' && Array.isArray(mods))?mods:[];
     const gp=(typeof accountGalacticPower!=='undefined' && accountGalacticPower)||{total:0,characters:0,ships:0};
 
-    text('decisionProfileName',el('topAccountName')?.textContent||'ROSTER');
+    // Player name is deliberately kept in the header, never over the Holocron.
+    const accountName=(el('topAccountName')?.textContent||'').trim();
+    text('decisionProfileName',accountName && accountName!=='—' ? accountName : 'COMPTE');
     text('charsCount',chars.length);
     text('modsCount',allMods.length);
     text('gpTotal',gp.total ? nfmt(gp.total) : '0');
@@ -57,13 +67,15 @@
     const cb=el('gpCharBar'), sb=el('gpShipBar');
     if(cb) cb.style.width=cp+'%'; if(sb) sb.style.width=sp+'%';
 
-    // Roster ventilation: factual grouping by the roster's relic/gear fields.
+    // IMPORTANT: use the actual V90-normalized relic_tier / gear fields.
+    // The previous visual adapter looked for "relic" and therefore put almost
+    // every character in "Autres", even though the technical engine had the data.
     const groups=[
-      {label:'R9+', value:chars.filter(c=>Number(c.relic||c.relicLevel||0)>=9).length},
-      {label:'R7–8', value:chars.filter(c=>{const r=Number(c.relic||c.relicLevel||0);return r>=7&&r<9;}).length},
-      {label:'R5–6', value:chars.filter(c=>{const r=Number(c.relic||c.relicLevel||0);return r>=5&&r<7;}).length},
-      {label:'G13', value:chars.filter(c=>{const r=Number(c.relic||c.relicLevel||0);const g=Number(c.gear||c.gearLevel||0);return r<5&&g>=13;}).length},
-      {label:'Autres', value:chars.filter(c=>{const r=Number(c.relic||c.relicLevel||0);const g=Number(c.gear||c.gearLevel||0);return r<5&&g<13;}).length}
+      {label:'R9–R10', value:chars.filter(c=>relicOf(c)>=9).length},
+      {label:'R7–R8', value:chars.filter(c=>{const r=relicOf(c);return r>=7&&r<9;}).length},
+      {label:'R5–R6', value:chars.filter(c=>{const r=relicOf(c);return r>=5&&r<7;}).length},
+      {label:'G13', value:chars.filter(c=>relicOf(c)<5&&gearOf(c)>=13).length},
+      {label:'Autres', value:chars.filter(c=>relicOf(c)<5&&gearOf(c)<13).length}
     ];
     renderBars('unitVentilation',groups);
     renderLegend('unitLegend',groups);
@@ -78,7 +90,8 @@
     renderBars('modVentilation',speedGroups);
     renderLegend('modLegend',speedGroups);
 
-    text('unitsDelta',ships.length ? `+${nfmt(ships.length)} V` : '—');
+    // No meaningless "+70 V" badge in the character card.
+    text('unitsDelta','');
     text('modsDelta',allMods.length ? 'SYNC' : '—');
     text('decisionLastUpdate',new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}));
   }
@@ -88,21 +101,13 @@
     if(shell) shell.hidden=false;
     renderDecision();
     if(gate){
-      // The visual gate CSS listens to is-success. V100 previously added
-      // gate-complete, a class that has no exit animation, so the gate stayed
-      // permanently above the dashboard after a successful sync.
       gate.classList.remove('gate-complete');
       gate.classList.add('is-success');
-      window.setTimeout(()=>{
-        gate.hidden=true;
-        gate.classList.remove('is-success');
-      },2150);
+      window.setTimeout(()=>{gate.hidden=true;gate.classList.remove('is-success');},2150);
     }
   }
 
-  function setGate(msg,kind){
-    const n=el('gateMessage'); if(n){n.textContent=msg;n.dataset.state=kind||'';}
-  }
+  function setGate(msg,kind){ const n=el('gateMessage'); if(n){n.textContent=msg;n.dataset.state=kind||'';} }
 
   function startLegacyLoad(){
     const input=el('gateAllyCode');
@@ -114,50 +119,43 @@
     const legacy=el('allyCode'); if(legacy) legacy.value=ally;
     setGate('IDENTIFICATION DU ROSTER · CHARGEMENT DES DONNÉES','loading');
     const btn=el('gateActivate'); if(btn) btn.disabled=true;
-
     if(typeof window.loadRemotePlayer!=='function'){
       setGate('MOTEUR DE SYNCHRONISATION INDISPONIBLE','error');
-      if(btn) btn.disabled=false;
-      return;
+      if(btn) btn.disabled=false; return;
     }
-    // V90 catches its own errors. Poll the existing data state rather than
-    // altering that technical loader.
     try{ window.loadRemotePlayer(); }catch(e){
       setGate('ÉCHEC DE SYNCHRONISATION · '+(e.message||e),'error');
-      if(btn) btn.disabled=false;
-      return;
+      if(btn) btn.disabled=false; return;
     }
-
     const started=Date.now();
     const timer=setInterval(()=>{
       const data=(typeof currentData!=='undefined')?currentData:null;
       const chars=(typeof rosterCharacters!=='undefined' && Array.isArray(rosterCharacters))?rosterCharacters:[];
       const modsNow=(typeof mods!=='undefined' && Array.isArray(mods))?mods:[];
       if(data && (chars.length || modsNow.length)){
-        clearInterval(timer);
-        if(btn) btn.disabled=false;
-        setGate('ROSTER SYNCHRONISÉ','ok');
-        showApp();
+        clearInterval(timer); if(btn) btn.disabled=false;
+        setGate('ROSTER SYNCHRONISÉ','ok'); showApp();
       }else if(Date.now()-started>90000){
-        clearInterval(timer);
-        if(btn) btn.disabled=false;
+        clearInterval(timer); if(btn) btn.disabled=false;
         setGate('ÉCHEC DE SYNCHRONISATION · Consultez le journal de chargement.','error');
       }
     },300);
   }
 
+  function bindDecisionCard(card){
+    if(!card || card.dataset.bound==='1') return;
+    card.dataset.bound='1';
+    const page=card.dataset.page; if(!page) return;
+    card.setAttribute('role','link'); card.setAttribute('tabindex','0');
+    card.addEventListener('click',()=>{if(typeof window.showPage==='function')window.showPage(page);});
+    card.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&typeof window.showPage==='function'){e.preventDefault();window.showPage(page);}});
+  }
+
   function init(){
-    const gateBtn=el('gateActivate');
-    if(gateBtn) gateBtn.addEventListener('click',startLegacyLoad);
-    const code=el('gateAllyCode');
-    if(code) code.addEventListener('keydown',e=>{if(e.key==='Enter')startLegacyLoad();});
-    document.querySelectorAll('.holocron-face').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        if(typeof window.showPage==='function') window.showPage(btn.dataset.page);
-      });
-    });
-    // The technical V90 engine updates its own counters. Refresh the visual
-    // layer periodically without touching the data pipeline.
+    const gateBtn=el('gateActivate'); if(gateBtn) gateBtn.addEventListener('click',startLegacyLoad);
+    const code=el('gateAllyCode'); if(code) code.addEventListener('keydown',e=>{if(e.key==='Enter')startLegacyLoad();});
+    document.querySelectorAll('.holocron-face').forEach(btn=>btn.addEventListener('click',()=>{if(typeof window.showPage==='function')window.showPage(btn.dataset.page);}));
+    document.querySelectorAll('.decision-card[data-page]').forEach(bindDecisionCard);
     setInterval(renderDecision,1000);
   }
 

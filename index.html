@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="app.css?v=100.1">
+  <link rel="stylesheet" href="app.css?v=100.2">
 
 
 
 
-<title>Selimna’s Holocron — V100.1</title>
+<title>Selimna’s Holocron — V100.2</title>
 
 
 
@@ -88,14 +88,14 @@
       <div class="decision-stage" aria-label="Centre de décision Holocron">
         <div class="decision-flow flow-left-top"></div><div class="decision-flow flow-left-bottom"></div><div class="decision-flow flow-right-top"></div><div class="decision-flow flow-right-bottom"></div><div class="decision-flow flow-bottom"></div>
 
-        <article class="decision-card unit-card">
+        <article class="decision-card unit-card" data-page="data" title="Ouvrir les données du roster">
           <div class="decision-card-head"><span class="card-icon">♙</span><div><span>PERSONNAGES</span><strong id="charsCount">0</strong><small>UNITÉS TOTALES</small></div><em id="unitsDelta">—</em></div>
           <div class="decision-card-title">VENTILATION DU ROSTER</div>
           <div class="decision-bars" id="unitVentilation"></div>
           <div class="decision-legend" id="unitLegend"></div>
         </article>
 
-        <article class="decision-card gp-card">
+        <article class="decision-card gp-card" data-page="data" title="Ouvrir les données de puissance">
           <div class="decision-card-head"><span class="card-icon">✦</span><div><span>PUISSANCE GALACTIQUE</span><strong id="gpTotal">0</strong><small>PUISSANCE TOTALE</small></div><em id="gpDelta">—</em></div>
           <div class="decision-card-title">DÉTAIL DE LA PUISSANCE</div>
           <div class="decision-detail-list"><div><span>Personnages</span><strong id="gpCharacters">0</strong><i id="gpCharPct">0%</i></div><div><span>Vaisseaux</span><strong id="gpShips">0</strong><i id="gpShipPct">0%</i></div></div>
@@ -114,7 +114,7 @@
           <div class="decision-pedestal"></div>
         </div>
 
-        <article class="decision-card mod-card">
+        <article class="decision-card mod-card" data-page="mods-analysis" title="Ouvrir l’analyse des mods">
           <div class="decision-card-head"><span class="card-icon">◈</span><div><span>MODS</span><strong id="modsCount">0</strong><small>MODS ÉQUIPÉS</small></div><em id="modsDelta">—</em></div>
           <div class="decision-card-title">VENTILATION PAR VITESSE</div>
           <div class="decision-bars mods-bars" id="modVentilation"></div>
@@ -340,7 +340,7 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <!-- V100: interface nouvelle / moteur technique V90 conservé intégralement. -->
 <script src="gac-usage.js?v=89"></script>
-<script src="app.js?v=100.1"></script>
-<script src="interface-adapter.js?v=100.1"></script>
+<script src="app.js?v=100.2"></script>
+<script src="interface-adapter.js?v=100.2"></script>
 </body>
 </html>
