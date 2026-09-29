@@ -483,7 +483,23 @@ function updateCharacterInfo() {
 }
 
 const DEFAULT_WORKER_URL = 'https://swgoh-optimizer-relay.lorg75017.workers.dev';
-function workerUrl() { return String(localStorage.getItem('swgohRelayUrl') || $('relayUrl')?.value || DEFAULT_WORKER_URL).trim().replace(/\/$/,''); }
+function workerUrl() {
+  const saved=String(localStorage.getItem('swgohRelayUrl')||'').trim().replace(/\/$/,'');
+  const field=String($('relayUrl')?.value||'').trim().replace(/\/$/,'');
+  const value=saved||field||DEFAULT_WORKER_URL;
+  return /^https:\/\/[^\s]+$/i.test(value)?value:DEFAULT_WORKER_URL;
+}
+async function relayFetch(url, options={}){
+  try{return await fetch(url,options);}
+  catch(e){
+    const msg=e?.message||String(e);
+    if(/failed to fetch|networkerror|load failed/i.test(msg)){
+      const saved=String(localStorage.getItem('swgohRelayUrl')||'').trim();
+      if(saved && saved!==DEFAULT_WORKER_URL){localStorage.removeItem('swgohRelayUrl');log('Ancien relais mémorisé inaccessible : retour au relais par défaut.');return await fetch(url.replace(saved,DEFAULT_WORKER_URL),options);}
+    }
+    throw e;
+  }
+}
 function saveWorkerUrl() { const v=String($('relayUrl').value||'').trim().replace(/\/$/,''); if(v)localStorage.setItem('swgohRelayUrl',v);else localStorage.removeItem('swgohRelayUrl'); $('relayState').textContent=v?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ'; log(v?`Relais Cloudflare enregistré : ${v}`:'Relais Cloudflare effacé.'); }
 async function fetchText(url) {
   const candidates=[], relay=workerUrl();
@@ -492,7 +508,7 @@ async function fetchText(url) {
   for(const u of candidates){
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),12000);
-    try{const r=await fetch(u,{headers:{'Accept':'text/html,application/xhtml+xml,application/json'},signal:controller.signal});if(!r.ok)throw new Error(`HTTP ${r.status}`);const text=await r.text();if(text&&text.length>200)return text;last=`Réponse vide via ${u}`;}
+    try{const r=await relayFetch(u,{headers:{'Accept':'text/html,application/xhtml+xml,application/json'},signal:controller.signal});if(!r.ok)throw new Error(`HTTP ${r.status}`);const text=await r.text();if(text&&text.length>200)return text;last=`Réponse vide via ${u}`;}
     catch(e){last=e.name==='AbortError'?'Délai de réponse dépassé (12 s)':(e.message||String(e));}
     finally{clearTimeout(timeout);}
   }
@@ -655,7 +671,7 @@ function extractApiMods(json){
 }
 function unitToCharacter(u,index=0){const o=u?.data&&typeof u.data==='object'?u.data:u;if(!o||typeof o!=='object')return null;let baseId=o.base_id??o.baseId??o.definitionId??o.defId;if(typeof baseId==='string'&&baseId.includes(':'))baseId=baseId.split(':')[0];const name=o.name??o.character??o.characterName??o.unitName??baseId;const levelRaw=o.level??o.currentLevel;const rarityRaw=o.rarity??o.starLevel??o.stars??o.currentRarity;const gearRaw=o.gear_level??o.gearLevel??o.gear??o.currentTier;const hasRosterFields=baseId&&Number.isFinite(Number(levelRaw))&&Number.isFinite(Number(rarityRaw))&&(Object.prototype.hasOwnProperty.call(o,'gear_level')||Object.prototype.hasOwnProperty.call(o,'gearLevel')||Object.prototype.hasOwnProperty.call(o,'gear')||Object.prototype.hasOwnProperty.call(o,'currentTier')||Object.prototype.hasOwnProperty.call(o,'power')||Object.prototype.hasOwnProperty.call(o,'combat_type')||Object.prototype.hasOwnProperty.call(o,'combatType'));if(!hasRosterFields)return null;const relicTierRaw=o.relic_tier??o.relicTier??o.relic_level??o.relicLevel??o.relic?.tier??o.relic?.relicTier??o.relic?.currentTier??0;const unitId=o.id??o.unitId??o.unit_id??o.characterId??o.character_id??baseId;return{name:name||baseId,baseId,id:unitId,characterId:o.characterId??o.character_id??unitId,level:Number(levelRaw||0),gear:Number(gearRaw||0),stars:Number(rarityRaw||0),power:Number(o.power||0),combatType:Number(o.combat_type??o.combatType??1),relic_tier:Number(relicTierRaw)||0,raw:u};}
 function extractApiCharacters(json){const direct=Array.isArray(json?.units)?json.units:[];let out=direct.map(unitToCharacter).filter(Boolean);if(!out.length){const candidates=[];walkObjects(json,o=>{const unit=unitToCharacter(o);if(unit)candidates.push(unit);});out=candidates;}const seen=new Set();return out.filter(x=>{const key=`${x.baseId||''}|${x.name||''}`;if(seen.has(key))return false;seen.add(key);return true;});}
-async function fetchJSON(url){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12000);try{const r=await fetch(url,{headers:{'Accept':'application/json,text/plain,*/*'},signal:controller.signal});if(!r.ok)throw new Error(`HTTP ${r.status}`);return JSON.parse(await r.text());}catch(e){if(e.name==='AbortError')throw new Error('Délai API dépassé (12 s)');throw e;}finally{clearTimeout(timeout);}}
+async function fetchJSON(url){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12000);try{const r=await relayFetch(url,{headers:{'Accept':'application/json,text/plain,*/*'},signal:controller.signal});if(!r.ok)throw new Error(`HTTP ${r.status}`);return JSON.parse(await r.text());}catch(e){if(e.name==='AbortError')throw new Error('Délai API dépassé (12 s)');throw e;}finally{clearTimeout(timeout);}}
 
 function setGateMessage(message,state=''){const box=$('gateMessage');const step=$('gateStep');const gate=$('holocronGate');if(box){box.textContent=message;box.className=`gate-message ${state}`;}if(gate)gate.classList.toggle('is-loading',state==='loading');if(step&&state==='loading')step.textContent='SYNCHRONISATION EN COURS';if(step&&state==='error')step.textContent='SYNCHRONISATION INTERROMPUE';if(step&&state==='success')step.textContent='ROSTER SYNCHRONISÉ';}
 function finishHolocronGate(){const gate=$('holocronGate'),shell=$('appShell');if(!gate||!shell)return;setGateMessage('ROSTER SYNCHRONISÉ · OUVERTURE DE L’HOLOCRON','success');const step=$('gateStep');if(step)step.textContent='ROSTER SYNCHRONISÉ';gate.classList.remove('is-loading');gate.classList.add('is-success');setTimeout(()=>{shell.hidden=false;document.body.classList.add('holocron-unlocked');gate.remove();window.scrollTo(0,0);},2050);}
@@ -693,7 +709,17 @@ async function loadRemotePlayer(){
         if(rosterMods.length){const ids=new Set(apiMods.map(m=>String(m.game_id)));for(const m of rosterMods)if(!ids.has(String(m.game_id))){apiMods.push(m);ids.add(String(m.game_id));}log(`Mods équipés extraits du roster API : ${rosterMods.length}.`);}
       }
       var profileText=results[2].status==='fulfilled'?results[2].value:null;
-      if(!profileText) throw new Error(results[2].reason?.message||'Profil SWGOH.GG indisponible');
+      if(!profileText){
+        const reason=results[2].reason?.message||'Profil SWGOH.GG indisponible';
+        log(`Relais inaccessible pour le profil : ${reason}`);
+        // One direct attempt is useful when the configured relay is stale.
+        try{
+          log('Tentative directe SWGOH.GG…');
+          const direct=await fetch(`${base}/`,{headers:{'Accept':'text/html,application/xhtml+xml'},mode:'cors'});
+          if(direct.ok) profileText=await direct.text();
+        }catch(e){ log(`Accès direct impossible : ${e?.message||e}`); }
+        if(!profileText) throw new Error(`Relais Cloudflare inaccessible (${reason}). Vérifie l’URL du Worker.`);
+      }
     } else {
       var profileText=await fetchText(`${base}/`);
     }
