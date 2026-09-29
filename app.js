@@ -108,7 +108,8 @@ function parseModDefinitionId(definitionId){
 }
 function normalizeMod(m, index=0) {
   if (!m || typeof m !== 'object') return null;
-  const out = {...m};
+  const nested=(m.data&&typeof m.data==='object')?m.data:null;
+  const out = nested ? {...m,...nested} : {...m};
   const def=out.definitionId??out.definition_id??out.modDefinitionId??out.mod_definition_id;
   const meta=parseModDefinitionId(def);
   out.game_id = out.game_id ?? out.id ?? out.modId ?? out.uid ?? `web-${index}`;
@@ -143,19 +144,27 @@ function extractRosterEquippedMods(json){
   const out=[]; let i=0; const seen=new Set();
   const visit=(unit)=>{
     if(!unit||typeof unit!=='object')return;
-    const list=unit.equippedStatMod??unit.equippedStatModOld??unit.mods;
+    const data=unit.data&&typeof unit.data==='object'?unit.data:unit;
+    const list=data.equippedStatMod??data.equipped_stat_mod??data.equippedStatMods??data.mods;
     if(!Array.isArray(list)||!list.length)return;
-    let owner=modOwnerValue(unit.baseId??unit.base_id??unit.characterId??unit.character_id??unit.name??unit.characterName??unit.unitName??unit.definitionId);
+    let owner=modOwnerValue(data.baseId??data.base_id??data.characterId??data.character_id??data.name??data.characterName??data.unitName??data.definitionId??unit.baseId??unit.base_id??unit.definitionId);
     if(owner.includes(':'))owner=owner.split(':')[0];
-    for(const raw of list){
-      if(!raw||typeof raw!=='object')continue;
-      const mod=normalizeMod({...raw,character:owner,characterId:unit.id??unit.unitId??unit.characterId??owner,game_id:raw.id??raw.uid??raw.modId??`roster-${i}`},i++);
+    const ownerId=data.id??unit.id??data.unitId??data.unit_id??data.characterId??data.character_id??owner;
+    for(const raw0 of list){
+      if(!raw0||typeof raw0!=='object')continue;
+      const raw=raw0.data&&typeof raw0.data==='object'?{...raw0,...raw0.data}:raw0;
+      const mod=normalizeMod({...raw,character:owner,characterId:ownerId,game_id:raw.game_id??raw.id??raw.modId??raw.mod_id??raw.uid??`roster-${i}`},i++);
       if(mod&&!seen.has(String(mod.game_id))){seen.add(String(mod.game_id));out.push(mod);}
     }
   };
-  walkObjects(json,o=>{if(o&&Array.isArray(o.equippedStatMod))visit(o);else if(o&&Array.isArray(o.mods)&&o.definitionId)visit(o);});
+  walkObjects(json,o=>{
+    if(!o||typeof o!=='object')return;
+    const data=o.data&&typeof o.data==='object'?o.data:o;
+    if(Array.isArray(data.equippedStatMod)||Array.isArray(data.equipped_stat_mod)||Array.isArray(data.equippedStatMods)||Array.isArray(data.mods))visit(o);
+  });
   return out;
 }
+
 function looksLikeMod(o){
   if(!o||typeof o!=='object')return false;
   const keys=Object.keys(o).map(k=>k.toLowerCase());
@@ -523,8 +532,18 @@ async function loadRemotePlayer(){
         fetchJSON(`${relay}/?ally=${allyCode}&path=api-mods`),
         fetchText(`${base}/`)
       ]);
-      if(results[0].status==='fulfilled'){apiChars=extractApiCharacters(results[0].value);log(`API roster : ${apiChars.length} unités candidates.`);}else log(`API roster indisponible : ${results[0].reason?.message||results[0].reason}`);
-      if(results[1].status==='fulfilled'){apiMods=extractApiMods(results[1].value);log(`API mods : ${apiMods.length} mods candidats.`);}else log(`API mods indisponible : ${results[1].reason?.message||results[1].reason}`);
+      if(results[0].status==='fulfilled'){
+        apiChars=extractApiCharacters(results[0].value);
+        const rosterMods=extractRosterEquippedMods(results[0].value);
+        if(rosterMods.length){apiMods.push(...rosterMods);log(`Mods équipés trouvés directement dans le roster API : ${rosterMods.length}.`);}
+        log(`API roster : ${apiChars.length} unités candidates.`);
+      }else log(`API roster indisponible : ${results[0].reason?.message||results[0].reason}`);
+      if(results[1].status==='fulfilled'){
+        const endpointMods=extractApiMods(results[1].value);
+        const seen=new Set(apiMods.map(m=>String(m.game_id||'')));
+        for(const m of endpointMods){const k=String(m.game_id||'');if(!seen.has(k)){apiMods.push(m);seen.add(k);}}
+        log(`API mods : ${endpointMods.length} candidats supplémentaires (${apiMods.length} au total).`);
+      }else log(`API mods indisponible : ${results[1].reason?.message||results[1].reason}`);
       if(results[0].status==='fulfilled'){
         const rosterMods=extractRosterEquippedMods(results[0].value);
         if(rosterMods.length){const ids=new Set(apiMods.map(m=>String(m.game_id)));for(const m of rosterMods)if(!ids.has(String(m.game_id))){apiMods.push(m);ids.add(String(m.game_id));}log(`Mods équipés extraits du roster API : ${rosterMods.length}.`);}
