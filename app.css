@@ -289,3 +289,55 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 @media(max-width:900px){.gate-content{grid-template-columns:1fr;grid-template-rows:auto minmax(350px,1fr) auto;gap:8px;width:min(560px,90vw);transform:none}.gate-copy{text-align:center}.gate-copy h1{font-size:25px}.gate-copy p{margin-top:10px}.gate-chamber{height:48vh;min-height:350px}.gate-login{width:min(360px,100%);margin:0 auto}.gate-brand{padding:18px 5vw}.gate-footer{padding:0 5vw 18px}.holocron-pedestal{bottom:7%;transform:translateX(-50%) scale(.78)}.gate-status{bottom:-2%}}
 @media(max-width:560px){.gate-brand-mark{width:34px;height:34px;font-size:27px}.gate-brand strong{font-size:16px}.gate-brand small{font-size:6px}.gate-copy h1{font-size:22px;letter-spacing:.18em}.gate-copy p{font-size:10px}.gate-chamber{height:43vh;min-height:300px}.holocron-pedestal{transform:translateX(-50%) scale(.58);bottom:3%}.gate-energy{bottom:12%;transform:translateX(-50%) scale(.72)}.energy-b{transform:translateX(-50%) rotate(27deg) scale(.72)}.energy-c{transform:translateX(-50%) rotate(-23deg) scale(.72)}.gate-status{bottom:-3%;min-width:230px}.gate-status b{font-size:8px}.gate-footer{font-size:6px;letter-spacing:.12em}.gate-content{grid-template-rows:auto minmax(280px,1fr) auto;gap:0}.gate-login button,.gate-input-wrap{height:43px}}
 @media(prefers-reduced-motion:reduce){.holocron-gate *{animation:none!important}}
+
+/* =====================================================================
+   V92 — HOLOCRON GATE / PHOTO REFERENCE
+   The supplied Holocron photograph is the primary visual anchor.
+   ===================================================================== */
+.holocron-gate{
+  position:fixed;inset:0;z-index:10000;overflow:hidden;min-height:100dvh;
+  background:#000;color:#f4f4f5;font-family:Inter,"Segoe UI",sans-serif;
+}
+.holocron-gate[hidden]{display:none}
+.gate-backdrop{position:absolute;inset:0;background:#000}
+.gate-visual{
+  position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;
+}
+.gate-holocron-image{
+  display:block;width:min(100vw,100vh * 1.7777778);height:auto;max-width:none;
+  object-fit:contain;filter:brightness(.9) contrast(1.08) saturate(1.06);
+  user-select:none;-webkit-user-drag:none;
+  transition:transform .9s cubic-bezier(.2,.75,.2,1),filter .7s ease,opacity .8s ease;
+}
+.gate-energy-lines,.gate-energy-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
+.gate-energy-lines{width:min(55vw,1000px);height:min(55vw,1000px);border-radius:50%;opacity:0}
+.gate-energy-lines:before,.gate-energy-lines:after{
+  content:"";position:absolute;left:50%;top:50%;width:145%;height:1px;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,25,43,0) 18%,rgba(255,25,43,.9) 50%,rgba(255,25,43,0) 82%,transparent 100%);
+  box-shadow:0 0 16px rgba(255,25,43,.8),0 0 45px rgba(255,25,43,.35);
+  transform:translate(-50%,-50%) rotate(17deg);
+}
+.gate-energy-lines:after{transform:translate(-50%,-50%) rotate(-17deg);opacity:.7}
+.gate-energy-core{width:90px;height:90px;border-radius:50%;opacity:0;background:radial-gradient(circle,#fff 0 2%,#ff263c 9%,rgba(255,25,43,.2) 34%,transparent 70%);filter:blur(.2px);box-shadow:0 0 40px #ff1f35,0 0 100px rgba(255,25,43,.55)}
+.gate-login{
+  position:absolute;left:50%;top:clamp(67%,calc(50% + 250px),76%);transform:translateX(-50%);
+  width:min(330px,42vw);z-index:4;text-align:center;
+}
+.gate-login>label{display:block;margin:0 0 8px;color:#d7d8dc;font:600 9px Inter,sans-serif;letter-spacing:.30em;text-shadow:0 1px 8px #000}
+.gate-input-wrap{height:47px;display:flex;align-items:center;border:1px solid rgba(255,255,255,.42);background:rgba(3,3,5,.84);box-shadow:0 0 24px rgba(0,0,0,.7),0 0 18px rgba(255,25,43,.12),inset 0 0 18px rgba(255,255,255,.035);border-radius:2px}
+.gate-input-wrap>span{width:42px;text-align:center;color:#eee;font-size:17px}.gate-input-wrap input{width:100%;height:100%;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;color:#fff;font:14px Inter,sans-serif;letter-spacing:.20em;text-align:left}.gate-input-wrap i{width:42px;color:#fff;font-style:normal;font-size:18px}
+.gate-login button{position:relative;width:100%;height:45px;margin-top:12px;border:1px solid #ff2037;background:rgba(16,2,5,.82);color:#fff;border-radius:2px;font:600 9px Inter,sans-serif;letter-spacing:.24em;box-shadow:0 0 22px rgba(255,25,43,.18),inset 0 0 18px rgba(255,31,48,.07);cursor:pointer}
+.gate-login button:after{content:"";position:absolute;inset:4px;border:1px solid rgba(255,52,65,.22);pointer-events:none}.gate-login button:hover{box-shadow:0 0 30px rgba(255,25,43,.34)}
+.button-spinner{display:none;width:10px;height:10px;margin-right:8px;vertical-align:-1px;border:1px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.gate-message{min-height:24px;margin-top:8px;text-align:center;color:#81838b;font:8px/1.5 Inter,sans-serif;letter-spacing:.08em;text-shadow:0 1px 8px #000}.gate-message.error{color:#ff6674}.gate-message.loading{color:#ffb4bc}.gate-message.success{color:#ff6674}
+.gate-brand{position:absolute;z-index:3;left:clamp(18px,4vw,70px);top:clamp(18px,4vw,42px);display:flex;flex-direction:column;gap:4px;text-shadow:0 1px 12px #000}.gate-brand span{font:600 8px Inter,sans-serif;letter-spacing:.42em;color:#aeb0b8}.gate-brand strong{font:500 19px Inter,sans-serif;letter-spacing:.25em;color:#f1f1f3}.gate-footer{position:absolute;z-index:3;left:clamp(18px,4vw,70px);right:clamp(18px,4vw,70px);bottom:20px;display:flex;justify-content:space-between;color:#686a72;font:7px Inter,sans-serif;letter-spacing:.18em;text-shadow:0 1px 8px #000}.gate-footer span:last-child{color:#999ba2}
+.gate-step{position:absolute;z-index:4;right:clamp(18px,4vw,70px);top:50%;transform:translateY(-50%);writing-mode:vertical-rl;color:#777981;font:600 8px Inter,sans-serif;letter-spacing:.28em;opacity:.9}
+.holocron-gate.is-loading .gate-energy-lines{opacity:1;animation:gateEnergySpin 1.15s linear infinite}.holocron-gate.is-loading .gate-energy-core{opacity:1;animation:gateCorePulse .7s ease-in-out infinite alternate}.holocron-gate.is-loading .gate-holocron-image{filter:brightness(1.02) contrast(1.12) saturate(1.16);transform:scale(1.012)}.holocron-gate.is-loading .button-spinner{display:inline-block}
+.holocron-gate.is-success .gate-energy-lines{opacity:1;animation:gateEnergyBurst .7s ease-out forwards}.holocron-gate.is-success .gate-energy-core{opacity:1;animation:gateCoreBurst .8s ease-out forwards}.holocron-gate.is-success .gate-holocron-image{filter:brightness(1.45) contrast(1.18) saturate(1.2);transform:scale(1.055)}.holocron-gate.is-success .gate-login,.holocron-gate.is-success .gate-brand,.holocron-gate.is-success .gate-footer,.holocron-gate.is-success .gate-step{opacity:0;transition:opacity .35s ease}.holocron-gate.is-success{animation:gateFadeOut .9s cubic-bezier(.22,.7,.25,1) forwards;pointer-events:none}
+@keyframes gateEnergySpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes gateEnergyBurst{0%{opacity:1;transform:translate(-50%,-50%) scale(.65) rotate(0)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.45) rotate(28deg)}}
+@keyframes gateCorePulse{from{transform:translate(-50%,-50%) scale(.72);filter:blur(.2px)}to{transform:translate(-50%,-50%) scale(1.25);filter:blur(1px)}}
+@keyframes gateCoreBurst{0%{opacity:1;transform:translate(-50%,-50%) scale(.7)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.8)}}
+@media(max-width:800px){.gate-login{width:min(320px,76vw);top:70%}.gate-step{display:none}.gate-brand strong{font-size:16px}.gate-footer{bottom:12px;font-size:6px}.gate-footer span:last-child{display:none}}
+@media(max-width:520px){.gate-login{top:68%;width:min(300px,82vw)}.gate-holocron-image{width:177.7778vh;max-width:none;height:100vh;object-fit:cover}.gate-brand{top:16px;left:18px}.gate-brand span{font-size:7px}.gate-brand strong{font-size:14px}.gate-login>label{font-size:8px}.gate-input-wrap{height:43px}.gate-login button{height:42px}}
+@media(prefers-reduced-motion:reduce){.holocron-gate *{animation:none!important;transition:none!important}}

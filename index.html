@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="app.css?v=91">
+  <link rel="stylesheet" href="app.css?v=92">
 
 
 
 
-<title>Selimna’s Holocron — V91</title>
+<title>Selimna’s Holocron — V92</title>
 
 
 
@@ -21,39 +21,22 @@
 </head>
 <body>
 
-<div id="holocronGate" class="holocron-gate" aria-label="Connexion à l'Holocron">
+<div id="holocronGate" class="holocron-gate" aria-label="Connexion à l’Holocron">
   <div class="gate-backdrop" aria-hidden="true"></div>
-  <div class="gate-vignette" aria-hidden="true"></div>
-  <div class="gate-brand">
-    <div class="gate-brand-mark">◆</div>
-    <div><span>SELIMNA’S</span><strong>HOLOCRON</strong><small>ROSTER INTELLIGENCE FOR SWGOH</small></div>
+  <div class="gate-visual" aria-hidden="true">
+    <img src="assets/backgrounds/holocron-gate.jpg" alt="" class="gate-holocron-image">
+    <div class="gate-energy-lines"></div>
+    <div class="gate-energy-core"></div>
   </div>
-  <div class="gate-content">
-    <section class="gate-copy">
-      <div class="gate-eyebrow">SELIMNA’S // HOLOCRON</div>
-      <h1>UNLOCK THE<br><strong>KNOWLEDGE</strong></h1>
-      <p>Entrez votre code allié pour synchroniser<br>votre roster et révéler le savoir des Sith.</p>
-    </section>
-    <section class="gate-chamber">
-      <div class="gate-energy energy-a"></div><div class="gate-energy energy-b"></div><div class="gate-energy energy-c"></div>
-      <div class="holocron-pedestal">
-        <div class="pedestal-top"></div><div class="pedestal-glow"></div>
-        <div class="holocron-core" aria-hidden="true">
-          <span class="core-face face-1"></span><span class="core-face face-2"></span><span class="core-face face-3"></span><span class="core-face face-4"></span>
-          <span class="core-inner"></span><span class="core-beam"></span>
-        </div>
-        <div class="energy-ring ring-1"></div><div class="energy-ring ring-2"></div><div class="energy-ring ring-3"></div>
-      </div>
-      <div class="gate-status"><span></span><b id="gateStep">IDENTIFICATION DU ROSTER</b><small>PRÊT POUR SYNCHRONISATION</small></div>
-    </section>
-    <section class="gate-login">
-      <label for="gateAllyCode">CODE ALLIÉ</label>
-      <div class="gate-input-wrap"><span>♙</span><input id="gateAllyCode" inputmode="numeric" maxlength="11" placeholder="123456789" autocomplete="off"><i>✓</i></div>
-      <button id="gateActivate" type="button"><span class="button-spinner"></span>ACTIVER L’HOLOCRON</button>
-      <div id="gateMessage" class="gate-message" aria-live="polite">Le savoir attend votre code.</div>
-    </section>
+  <div class="gate-login">
+    <label for="gateAllyCode">CODE ALLIÉ</label>
+    <div class="gate-input-wrap"><span>♙</span><input id="gateAllyCode" inputmode="numeric" maxlength="9" placeholder="123456789" autocomplete="off" aria-label="Code allié"><i>✓</i></div>
+    <button id="gateActivate" type="button"><span class="button-spinner"></span>ACTIVER L’HOLOCRON</button>
+    <div id="gateMessage" class="gate-message" aria-live="polite">Le savoir attend votre code.</div>
   </div>
+  <div class="gate-brand"><span>SELIMNA’S</span><strong>HOLOCRON</strong></div>
   <div class="gate-footer"><span>HOLOCRON V1.0.0</span><span>LE SAVOIR EST UNE ARME</span></div>
+  <div id="gateStep" class="gate-step" aria-live="polite">IDENTIFICATION DU ROSTER</div>
 </div>
 
 <div id="appShell" class="app-shell" hidden>
