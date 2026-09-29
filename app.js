@@ -113,23 +113,23 @@ function normalizeMod(m, index=0) {
   const def=out.definitionId??out.definition_id??out.modDefinitionId??out.mod_definition_id;
   const meta=parseModDefinitionId(def);
   out.game_id = out.game_id ?? out.id ?? out.modId ?? out.uid ?? `web-${index}`;
-  out.slot = out.slot ?? out.slot_id ?? out.slotId ?? out.mod_slot ?? out.modSlot ?? out.shape ?? out.slotIndex ?? meta.slot;
-  out.set_name = out.set_name ?? out.set ?? out.setName ?? out.setId ?? out.modSetId ?? out.mod_set_id ?? out.modSet ?? meta.setId;
+  out.slot = out.slot ?? out.slot_id ?? out.slotId ?? out.mod_slot ?? out.modSlot ?? out.shape ?? out.slotIndex ?? out.slot_index ?? meta.slot;
+  out.set_name = out.set_name ?? out.set ?? out.setName ?? out.set_id ?? out.setId ?? out.modSetId ?? out.mod_set_id ?? out.modSet ?? out.bonusSet ?? out.bonus_set ?? meta.setId;
   out.pips = Number(out.pips ?? out.dotCount ?? out.dot_count ?? out.rarity ?? meta.rarity ?? 0) || 0;
   out.rarity = Number(out.rarity ?? out.pips ?? meta.rarity ?? 0) || 0;
   if (out.set_name && typeof out.set_name === 'object') out.set_name = out.set_name.name ?? out.set_name.id ?? out.set_name.setId ?? out.set_name.modSetId;
-  const primaryRaw = out.primary_stat ?? out.primaryStat ?? out.primary ?? out.primaryStatValue;
+  const primaryRaw = out.primary_stat ?? out.primaryStat ?? out.primary_statistic ?? out.primary ?? out.primaryStatValue;
   const primary = statObjectFromAny(primaryRaw);
   out.primary_stat = primary.stat || (typeof out.primary_stat === 'string' ? out.primary_stat : '');
   out.primary_value = primary.display_value ? primary.value : statValueFromAny(out.primary_value ?? out.primaryValue ?? primaryRaw?.value ?? primaryRaw?.amount ?? primaryRaw?.stat?.unscaledDecimalValue ?? 0);
-  const secs = out.secondary_stats ?? out.secondaryStats ?? out.secondaryStat ?? out.secondary ?? [];
+  const secs = out.secondary_stats ?? out.secondaryStats ?? out.secondaryStat ?? out.secondary_stat ?? out.secondary ?? [];
   if (Array.isArray(secs)) secs.slice(0,4).forEach((raw,i)=>{
     const ss=statObjectFromAny(raw);
     out[`secondary_${i+1}_stat`] = ss.stat;
     out[`secondary_${i+1}_value`] = ss.display_value ? ss.value : statValueFromAny(raw?.value ?? raw?.amount ?? raw?.unscaledDecimalValue ?? raw?.unscaled_decimal_value ?? raw?.stat?.unscaledDecimalValue ?? ss.value);
   });
   out.level = Number(out.level ?? 0);
-  out.tier = out.tier ?? out.quality ?? out.grade ?? out.modTier ?? out.mod_tier ?? out.rarityTier ?? out.rarity_tier ?? '';
+  out.tier = out.tier ?? out.quality ?? out.grade ?? out.modTier ?? out.mod_tier ?? out.rarityTier ?? out.rarity_tier ?? out.mod_tier_value ?? '';
   const owner=modOwnerValue(out.character ?? out.characterName ?? out.equippedTo ?? out.equipped_to ?? out.unit_equiped ?? out.unitEquiped ?? out.location ?? out.usingIn ?? out.characterId ?? out.character_id ?? out.unitId ?? out.unit_id ?? out.equippedUnitId ?? out.equipped_unit_id);
   out.character = owner;
   out.characterId = out.characterId ?? out.character_id ?? out.unitId ?? out.unit_id ?? out.equippedUnitId ?? out.equipped_unit_id ?? owner;
@@ -502,7 +502,7 @@ function parseNumberValue(v){const m=String(v??'').replace(/\s/g,'').match(/[+-]
 function slotFromShape(shape){const s=String(shape||'').toLowerCase();return ({'1':'Square','2':'Square','3':'Arrow','4':'Diamond','5':'Triangle','6':'Circle','7':'Cross',transmitter:'Square',receiver:'Arrow',processor:'Diamond','holo-array':'Triangle','data-bus':'Circle',multiplexer:'Cross'})[s]||shape;}
 function parseStatGeneric(node){if(!node)return{stat:'',value:0};const label=firstText(node,['.statmod-stat-label','[class*="statmod-stat-label"]','[data-stat-name]'])||node.getAttribute?.('data-stat-name')||'';const raw=firstText(node,['.statmod-stat-value','[class*="statmod-stat-value"]','[data-stat-value]'])||node.getAttribute?.('data-stat-value')||node.textContent||'';return{stat:label.trim(),value:parseNumberValue(raw)};}
 function parseModsPage(doc,page){
-  const nodes=[...doc.querySelectorAll('.collection-mod, [class*="collection-mod"], [data-mod-id], [data-id]')],result=[];
+  const nodes=[...doc.querySelectorAll('.collection-mod, [class*="collection-mod"], [data-mod-id], [data-id], [data-id^="mod"], article[class*="mod"]')],result=[];
   nodes.forEach((node,idx)=>{
     const img=node.querySelector('.statmod-img, img[class*="statmod-img"], img[alt*="Mod"], img[alt*="mod"]');
     const alt=img?.getAttribute('alt')||''; const src=img?.getAttribute('src')||img?.getAttribute('data-src')||'';
@@ -532,31 +532,68 @@ function looksLikeMod(o){
   return (hasDefinition || (hasId&&(hasSlot||hasSet))) && (hasStats||hasLevel||hasSlot||hasSet||hasDefinition);
 }
 function extractApiMods(json){
-  const out=[]; let i=0;
+  const out=[]; let i=0; const seen=new Set();
+  const modArrayKeys=new Set(['mods','mod','equippedstatmod','equippedstatmods','equippedstatmodold','equippedmods','equipped_mods','modifications']);
+  const unitKeys=new Set(['roster','rosterunit','rosterunits','units','characters']);
+  const idOf=(raw)=>String(raw?.game_id??raw?.id??raw?.modId??raw?.mod_id??raw?.uid??raw?.definitionId??`api-${i++}`);
+  const ownerOf=(o,fallback='')=>{
+    const data=o?.data&&typeof o.data==='object'?o.data:o;
+    return modOwnerValue(data?.baseId??data?.base_id??data?.defId??data?.definitionId??data?.characterId??data?.character_id??data?.unitId??data?.unit_id??data?.name??data?.characterName??data?.unitName??fallback);
+  };
   const push=(raw0,owner='')=>{
     if(!raw0||typeof raw0!=='object')return;
     const raw=raw0.data&&typeof raw0.data==='object'?{...raw0,...raw0.data}:{...raw0};
-    const ownerValue=owner||raw.character||raw.characterName||raw.equippedTo||raw.equipped_to||raw.unit_equiped||raw.unitEquiped||raw.location||raw.usingIn||raw.characterId||raw.character_id||raw.unitId||raw.unit_id||raw.equippedUnitId||raw.equipped_unit_id||'';
-    const mod=normalizeMod({...raw,character:ownerValue,game_id:raw.game_id||raw.id||raw.uid||raw.modId||raw.mod_id||raw.definitionId||`api-${i}`},i++);
-    if(mod)out.push(mod);
+    const ownerValue=owner||modOwnerValue(raw.character??raw.characterName??raw.equippedTo??raw.equipped_to??raw.unit_equiped??raw.unitEquiped??raw.location??raw.usingIn??raw.characterId??raw.character_id??raw.unitId??raw.unit_id??raw.equippedUnitId??raw.equipped_unit_id);
+    const id=idOf(raw);
+    if(seen.has(id))return;
+    const mod=normalizeMod({...raw,character:ownerValue,game_id:id},i++);
+    if(mod){seen.add(id);out.push(mod);}
   };
-  // Explicitly handle the real Comlink/SWGOH player shape: rosterUnit[].equippedStatMod[].
-  const roster=[];
-  const collectRoster=(o)=>{
-    if(!o||typeof o!=='object')return;
-    const data=o.data&&typeof o.data==='object'?o.data:o;
-    const list=data.equippedStatMod??data.equipped_stat_mod;
-    if(Array.isArray(list)){
-      let owner=data.baseId??data.base_id??data.definitionId??data.defId??data.characterId??data.character_id??data.name??data.characterName??'';
-      if(typeof owner==='string'&&owner.includes(':'))owner=owner.split(':')[0];
-      list.forEach(m=>push(m,owner));
+  const visit=(value,owner='')=>{
+    if(value==null||typeof value!=='object')return;
+    const data=value?.data&&typeof value.data==='object'?value.data:value;
+    const localOwner=ownerOf(value,owner)||owner;
+    // A unit can expose its mods as data.mods/equippedStatMod. Do not apply
+    // looksLikeMod here: compact SWGOH objects can legitimately omit stats.
+    for(const key of modArrayKeys){
+      const list=data?.[key];
+      if(Array.isArray(list)) for(const raw of list) push(raw,localOwner);
+    }
+    if(Array.isArray(value)){
+      for(const item of value) visit(item,owner);
+      return;
+    }
+    for(const [key,child] of Object.entries(value)){
+      const lk=String(key).toLowerCase();
+      if(modArrayKeys.has(lk)) continue;
+      // When descending through a roster/unit container, retain the nearest
+      // character owner. Other nested objects may still contain mod arrays.
+      visit(child,localOwner);
     }
   };
-  walkObjects(json,collectRoster);
-  // Then collect standalone API mod records, including compact records.
-  walkObjects(json,o=>{if(looksLikeMod(o))push(o);});
-  const seen=new Set();
-  return out.filter(m=>m&&!seen.has(String(m.game_id))&&seen.add(String(m.game_id)));
+  visit(json,'');
+
+  // Some versions of the /api/players/.../mods/ response are dictionaries
+  // keyed by character/unit rather than arrays. Walk those objects too and
+  // treat any object carrying a recognizable mod identity as a mod.
+  const looksLikeStandalone=(o)=>{
+    if(!o||typeof o!=='object'||Array.isArray(o))return false;
+    const k=Object.keys(o).map(x=>x.toLowerCase());
+    return k.some(x=>['definitionid','modid','mod_id','uid'].includes(x)) &&
+           k.some(x=>['level','tier','rarity','pips','primarystat','primary_stat','secondarystat','secondary_stats','slot','shape','set','setid','set_id','bonusset'].includes(x));
+  };
+  const standalone=(value,owner='')=>{
+    if(value==null||typeof value!=='object')return;
+    const localOwner=ownerOf(value,owner)||owner;
+    if(looksLikeStandalone(value))push(value,localOwner);
+    if(Array.isArray(value)){for(const x of value)standalone(x,owner);return;}
+    for(const [k,v] of Object.entries(value)){
+      if(modArrayKeys.has(String(k).toLowerCase())) continue;
+      standalone(v,localOwner);
+    }
+  };
+  standalone(json,'');
+  return out;
 }
 function unitToCharacter(u,index=0){const o=u?.data&&typeof u.data==='object'?u.data:u;if(!o||typeof o!=='object')return null;let baseId=o.base_id??o.baseId??o.definitionId??o.defId;if(typeof baseId==='string'&&baseId.includes(':'))baseId=baseId.split(':')[0];const name=o.name??o.character??o.characterName??o.unitName??baseId;const levelRaw=o.level??o.currentLevel;const rarityRaw=o.rarity??o.starLevel??o.stars??o.currentRarity;const gearRaw=o.gear_level??o.gearLevel??o.gear??o.currentTier;const hasRosterFields=baseId&&Number.isFinite(Number(levelRaw))&&Number.isFinite(Number(rarityRaw))&&(Object.prototype.hasOwnProperty.call(o,'gear_level')||Object.prototype.hasOwnProperty.call(o,'gearLevel')||Object.prototype.hasOwnProperty.call(o,'gear')||Object.prototype.hasOwnProperty.call(o,'currentTier')||Object.prototype.hasOwnProperty.call(o,'power')||Object.prototype.hasOwnProperty.call(o,'combat_type')||Object.prototype.hasOwnProperty.call(o,'combatType'));if(!hasRosterFields)return null;const relicTierRaw=o.relic_tier??o.relicTier??o.relic_level??o.relicLevel??o.relic?.tier??o.relic?.relicTier??o.relic?.currentTier??0;const unitId=o.id??o.unitId??o.unit_id??o.characterId??o.character_id??baseId;return{name:name||baseId,baseId,id:unitId,characterId:o.characterId??o.character_id??unitId,level:Number(levelRaw||0),gear:Number(gearRaw||0),stars:Number(rarityRaw||0),power:Number(o.power||0),combatType:Number(o.combat_type??o.combatType??1),relic_tier:Number(relicTierRaw)||0,raw:u};}
 function extractApiCharacters(json){const direct=Array.isArray(json?.units)?json.units:[];let out=direct.map(unitToCharacter).filter(Boolean);if(!out.length){const candidates=[];walkObjects(json,o=>{const unit=unitToCharacter(o);if(unit)candidates.push(unit);});out=candidates;}const seen=new Set();return out.filter(x=>{const key=`${x.baseId||''}|${x.name||''}`;if(seen.has(key))return false;seen.add(key);return true;});}
@@ -591,7 +628,7 @@ async function loadRemotePlayer(){
         const endpointMods=extractApiMods(results[1].value);
         const seen=new Set(apiMods.map(m=>String(m.game_id||'')));
         for(const m of endpointMods){const k=String(m.game_id||'');if(!seen.has(k)){apiMods.push(m);seen.add(k);}}
-        log(`API mods : ${endpointMods.length} candidats supplémentaires (${apiMods.length} au total).`);
+        log(`API mods : ${endpointMods.length} candidats supplémentaires (${apiMods.length} au total).`); if(!endpointMods.length){ const v=results[1].value; log(`Diagnostic API mods : ${Array.isArray(v)?'tableau':typeof v} · clés ${v&&typeof v==='object'?Object.keys(v).slice(0,12).join(', '):'—'}.`); }
       }else log(`API mods indisponible : ${results[1].reason?.message||results[1].reason}`);
       if(results[0].status==='fulfilled'){
         const rosterMods=extractExplicitRosterMods(results[0].value);
