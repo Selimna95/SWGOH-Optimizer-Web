@@ -1265,3 +1265,39 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
   pointer-events:auto!important;
 }
 #modalReallocationBtn:active{transform:translateY(1px)}
+
+/* ============================================================
+   V102 // ARCHITECTURE DES TROIS VOIES
+   Présentation uniquement : moteurs de connexion/récupération inchangés.
+   ============================================================ */
+.phase-nav-label{display:flex;align-items:baseline;gap:7px;margin:14px 9px 6px;padding:0 5px;color:#7895a5;font:900 8px/1 var(--font-display);letter-spacing:.18em;text-transform:uppercase;opacity:.9}
+.phase-nav-label:first-child{margin-top:2px}
+.phase-nav-label span{font-size:11px;color:#aebbc3}
+.phase-nav-label small{margin-left:auto;font-size:6px;letter-spacing:.16em;color:#4f7182}
+.phase-nav-label.acolyte{color:#a9b7c0}.phase-nav-label.acolyte span{color:#d2d9dd}
+.phase-nav-label.disciple{color:#9bb5c2}.phase-nav-label.disciple span{color:#d5e7ee}
+.phase-nav-label.lord{color:#cda4aa}.phase-nav-label.lord span{color:#ff3f54;text-shadow:0 0 10px rgba(255,38,57,.4)}
+.nav{margin-bottom:3px}
+.nav[data-page="optimizer"] .nav-icon{color:#ff5365}.nav[data-page="optimizer"]:hover{border-color:rgba(255,55,75,.32);background:rgba(120,12,24,.1)}
+.nav[data-page="optimizer"].active{background:linear-gradient(90deg,rgba(110,8,20,.42),rgba(50,6,12,.14));border-color:rgba(255,48,66,.58);box-shadow:inset 3px 0 0 #ff3349,0 0 24px rgba(255,25,40,.08)}
+.nav[data-page="optimizer"].active:before{background:#ff3349;box-shadow:0 0 14px #ff3349}
+.phase-inline{display:inline-block;margin-right:12px;font-weight:900;letter-spacing:.13em}
+.phase-inline.acolyte{color:#c7d0d5}.phase-inline.disciple{color:#6ed5f5}.phase-inline.lord{color:#ff4053}
+.decision-header .decision-brand p{display:flex;flex-wrap:wrap;gap:4px 0;margin-top:8px}
+.decision-stage:after{content:"VOIR  →  COMPRENDRE  →  MAÎTRISER";position:absolute;left:50%;bottom:7px;transform:translateX(-50%);color:rgba(134,171,186,.38);font:900 7px var(--font-display);letter-spacing:.22em;white-space:nowrap;pointer-events:none}
+.holocron-essential-page:before{content:"ACOLYTE // VOIR";position:absolute;right:30px;top:7px;color:rgba(255,63,82,.38);font:900 8px var(--font-display);letter-spacing:.24em;z-index:4;pointer-events:none}
+#mods-analysis:before{content:"DISCIPLE // COMPRENDRE & AGIR";position:absolute;right:22px;top:8px;color:rgba(83,208,246,.38);font:900 8px var(--font-display);letter-spacing:.22em;z-index:4;pointer-events:none}
+#optimizer:before,#data:before{content:"SEIGNEUR SITH // MAÎTRISER";position:absolute;right:22px;top:8px;color:rgba(255,63,82,.4);font:900 8px var(--font-display);letter-spacing:.22em;z-index:4;pointer-events:none}
+#mods-analysis .analysis-header{border-color:rgba(69,204,241,.34);background:linear-gradient(110deg,rgba(6,22,34,.96),rgba(3,12,20,.94))}
+#mods-analysis .analysis-header .panel-title{color:#6edfff}
+#mods-analysis .analysis-header .command-rune{color:rgba(107,220,250,.18)}
+#optimizer .controls{border-color:rgba(255,46,65,.25);background:linear-gradient(145deg,rgba(25,10,15,.9),rgba(8,7,11,.95))}
+#optimizer .panel-title{color:#ff5364}
+#data .data-toolbar{border-color:rgba(255,46,65,.2)}
+#data .panel-title{color:#ff6574}
+/* Les trois voies restent compactes sur mobile. */
+@media(max-width:900px){
+  .phase-nav-label{margin-top:10px}
+  .phase-inline{display:block;margin:2px 0}
+  .decision-stage:after{display:none}
+}

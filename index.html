@@ -60,7 +60,7 @@
 
 <div id="appShell" class="app-shell" hidden>
 <header class="topbar">
-  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V91</span></div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V102</span></div>
   <div class="top-status-group">
     <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
     <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
@@ -70,31 +70,36 @@
 </header>
 <main class="layout">
   <aside class="sidebar">
-    <button class="nav active" data-page="dashboard"><span class="nav-icon">⌂</span><span>DASHBOARD</span></button>
-    <button class="nav" data-page="top-changes"><span class="nav-icon">⇄</span><span>TOP 10 ÉCHANGES</span></button>
-    <button class="nav" data-page="data"><span class="nav-icon">▦</span><span>DONNÉES</span></button>
-    <button class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>ANALYSE MODS</span></button>
-    <button class="nav" data-page="optimizer"><span class="nav-icon">✦</span><span>OPTIMIZER</span></button>
+    <div class="phase-nav-label acolyte"><span>Ⅰ</span> ACOLYTE <small>VOIR</small></div>
+    <button class="nav active" data-page="dashboard"><span class="nav-icon">⌂</span><span>COMMAND DECK</span></button>
+    <button class="nav" data-page="top-changes"><span class="nav-icon">⇄</span><span>PRIORITÉS</span></button>
+
+    <div class="phase-nav-label disciple"><span>Ⅱ</span> DISCIPLE <small>COMPRENDRE</small></div>
+    <button class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>COMMAND TACTIQUE</span></button>
+
+    <div class="phase-nav-label lord"><span>Ⅲ</span> SEIGNEUR SITH <small>MAÎTRISER</small></div>
+    <button class="nav" data-page="optimizer"><span class="nav-icon">✦</span><span>FORGE D’OPTIMISATION</span></button>
+    <button class="nav" data-page="data"><span class="nav-icon">▦</span><span>ARCHIVES / DONNÉES</span></button>
     <div class="side-note">100% navigateur<br>aucun PC serveur</div>
   </aside>
   <section class="content">
     <section id="dashboard" class="page active decision-page">
       <div class="decision-header">
-        <div class="decision-brand"><span class="eyebrow">SELIMNA’S HOLOCRON</span><h1>CENTRE DE DÉCISION</h1><p>Acolyte&nbsp;&nbsp;·&nbsp;&nbsp;Disciple&nbsp;&nbsp;·&nbsp;&nbsp;Seigneur Sith</p></div>
+        <div class="decision-brand"><span class="eyebrow">SELIMNA’S HOLOCRON</span><h1>CENTRE DE DÉCISION</h1><p><span class="phase-inline acolyte">ACOLYTE // VOIR</span><span class="phase-inline disciple">DISCIPLE // COMPRENDRE</span><span class="phase-inline lord">SEIGNEUR SITH // MAÎTRISER</span></p></div>
         <div class="decision-status"><span class="status-dot"></span><span>ROSTER SYNCHRONISÉ</span><b id="decisionProfileName">—</b></div>
       </div>
 
       <div class="decision-stage" aria-label="Centre de décision Holocron">
         <div class="decision-flow flow-left-top"></div><div class="decision-flow flow-left-bottom"></div><div class="decision-flow flow-right-top"></div><div class="decision-flow flow-right-bottom"></div><div class="decision-flow flow-bottom"></div>
 
-        <article class="decision-card unit-card" data-page="data" title="Ouvrir les données du roster">
+        <article class="decision-card unit-card" data-page="top-changes" title="Ouvrir les priorités du roster">
           <div class="decision-card-head"><span class="card-icon">♙</span><div><span>PERSONNAGES</span><strong id="charsCount">0</strong><small>UNITÉS TOTALES</small></div><em id="unitsDelta">—</em></div>
           <div class="decision-card-title">VENTILATION DU ROSTER</div>
           <div class="decision-bars" id="unitVentilation"></div>
           <div class="decision-legend" id="unitLegend"></div>
         </article>
 
-        <article class="decision-card gp-card" data-page="data" title="Ouvrir les données de puissance">
+        <article class="decision-card gp-card" data-page="top-changes" title="Ouvrir les priorités du compte">
           <div class="decision-card-head"><span class="card-icon">✦</span><div><span>PUISSANCE GALACTIQUE</span><strong id="gpTotal">0</strong><small>PUISSANCE TOTALE</small></div><em id="gpDelta">—</em></div>
           <div class="decision-card-title">DÉTAIL DE LA PUISSANCE</div>
           <div class="decision-detail-list"><div><span>Personnages</span><strong id="gpCharacters">0</strong><i id="gpCharPct">0%</i></div><div><span>Vaisseaux</span><strong id="gpShips">0</strong><i id="gpShipPct">0%</i></div></div>
@@ -166,7 +171,7 @@
 
 <section id="optimizer" class="page">
       <div class="panel controls">
-        <div class="panel-title">OPTIMISATION V176</div>
+        <div class="panel-title">SEIGNEUR SITH // FORGE D’OPTIMISATION V176</div>
         <div class="form-grid">
           <label>Personnage<select id="character"></select></label>
           <label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="5"></label>
@@ -182,14 +187,14 @@
     <section id="mods-analysis" class="page">
       <div class="panel analysis-header">
         <div>
-          <div class="panel-title">ANALYSE DES MODS — V176</div><div class="laser-sweep" aria-hidden="true"></div><div class="command-rune" aria-hidden="true">HYPERLANE // MODS // V176</div>
-          <p>Portage V176 : récapitulatif Speed, audit des personnages/factions, détail des 6 mods et inventaire complet.</p>
+          <div class="panel-title">DISCIPLE // COMMAND TACTIQUE — V176</div><div class="laser-sweep" aria-hidden="true"></div><div class="command-rune" aria-hidden="true">HYPERLANE // MODS // V176</div>
+          <p>Comprendre le roster, lire les personnages, maîtriser les mods et agir sur les réaffectations.</p>
         </div>
         <div class="analysis-tabs">
-          <button class="analysis-tab active" data-analysis-tab="recap">RÉCAPITULATIF</button>
-          <button class="analysis-tab" data-analysis-tab="selection">PERSONNAGE / FACTION</button>
-          <button class="analysis-tab" data-analysis-tab="report">RAPPORT PERSONNAGE</button>
-          <button class="analysis-tab" data-analysis-tab="inventory">INVENTAIRE DES MODS</button>
+          <button class="analysis-tab active" data-analysis-tab="recap">SITUATION</button>
+          <button class="analysis-tab" data-analysis-tab="selection">PERSONNAGES</button>
+          <button class="analysis-tab" data-analysis-tab="report">DOSSIER PERSONNAGE</button>
+          <button class="analysis-tab" data-analysis-tab="inventory">MODS</button>
           <button class="analysis-tab" data-analysis-tab="reallocation">RÉAFFECTATION</button>
         </div>
       </div>
@@ -291,7 +296,7 @@
 
     <section id="data" class="page">
       <div class="panel data-toolbar">
-        <div class="panel-title">EXPLORATEUR DU ROSTER</div>
+        <div class="panel-title">SEIGNEUR SITH // ARCHIVES DU ROSTER</div>
         <div class="data-tabs">
           <button class="data-tab active" data-dataset="characters">PERSONNAGES <span id="tabCharsCount">0</span></button>
           <button class="data-tab" data-dataset="ships">VAISSEAUX <span id="tabShipsCount">0</span></button>
@@ -305,7 +310,7 @@
         <input id="dataSearch" class="data-search" type="search" placeholder="Rechercher un personnage, un vaisseau, un mod, un set…">
       </div>
       <div class="panel table-panel"><div id="dataTableMeta" class="table-meta">Aucune donnée.</div><div id="dataTable" class="data-table-wrap"><div class="empty">Chargez un profil pour afficher les données.</div></div></div>
-      <div class="panel"><div class="panel-title">SOURCE / DIAGNOSTIC</div><pre id="dataInfo">Aucune donnée.</pre></div>
+      <div class="panel"><div class="panel-title">ARCHIVES // SOURCE & DIAGNOSTIC</div><pre id="dataInfo">Aucune donnée.</pre></div>
       <div class="panel"><button id="clearData" class="danger">EFFACER LES DONNÉES</button></div>
     </section>
 
@@ -353,7 +358,7 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <!-- V100: interface nouvelle / moteur technique V90 conservé intégralement. -->
 <script src="gac-usage.js?v=89"></script>
-<script src="app.js?v=101.4"></script>
-<script src="interface-adapter.js?v=101.4"></script>
+<script src="app.js?v=102.0"></script>
+<script src="interface-adapter.js?v=102.0"></script>
 </body>
 </html>
