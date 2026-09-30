@@ -933,7 +933,7 @@ function holocronTopChangeCandidates(){
           const donorScore=holocronModScoreForCharacter(donorMod,d.c);
           const donorLoss=Math.max(0,donorBest-donorScore);
           if(donorLoss<1.5 && d.status!=='INCOMPLETS')continue;
-          const usagePriority=(r.isGL?1000000000000:0)+(r.gacUses==null?0:r.gacUses*1000);
+          const usagePriority=r.isGL?1000000000:(r.gacUses==null?0:r.gacUses*1000);
           const priority=usagePriority + (r.isGL?0:(recipientPriority[r.status]||0)*100) +
             (donorPriority[d.status]||0)*25 + Math.max(0,gain)*2 + Math.max(0,kyberGain)*12 - donorScore*0.03;
           out.push({donor:d.c,recipient:r.c,oldMod:currentMod,newMod:donorMod,gain,donorLoss,status:d.status,priority,recipientStatus:r.status,kyberGain,isGL:r.isGL,gacUses:r.gacUses,gacSeason:gacSeason?.season??null});
@@ -997,7 +997,7 @@ function renderHolocronTopChanges(){
         </div>
         <section class="topchange-stat-panel"><div class="topchange-stat-title"><strong>APPORT DES STATISTIQUES</strong><span>${positive.length} gain${positive.length>1?'s':''}</span></div><div class="topchange-stat-grid">${stats}</div></section>
       </div>
-      <aside class="topchange-gain"><span>GAIN</span><strong>+${num(r.gain,1)}</strong><small>score</small><i>↗</i></aside>
+      <aside class="topchange-action"><span>OPÉRATION</span><strong>TRANSFÉRER</strong><small>${donor} → ${recipient}</small><i>↗</i></aside>
     </article>`;
  }).join('');
 }
