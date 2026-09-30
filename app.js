@@ -1048,8 +1048,8 @@ function renderHolocronTopChanges(){
           <small>${esc(r.oldMod.slot||'—')} · Donneur <b>${donor}</b></small>
         </header>
         <div class="topchange-mods">
-          <span><b>MOD ACTUEL</b><strong>${esc(r.oldMod.set_name||'—')}</strong><small>${esc(r.oldMod.primary_stat||'—')} · ${oldSpeed} vit.</small></span>
-          <span class="is-received"><b>MOD REÇU</b><strong>${esc(r.newMod.set_name||'—')}</strong><small>${esc(r.newMod.primary_stat||'—')} · ${newSpeed} vit.</small></span>
+          <span><b>MOD ACTUEL</b><div class="topchange-mod-visual">${modIconHtml(r.oldMod,'42')}</div><strong>${esc(r.oldMod.set_name||'—')}</strong><small>${esc(r.oldMod.primary_stat||'—')} · ${oldSpeed} vit.</small></span>
+          <span class="is-received"><b>MOD REÇU</b><div class="topchange-mod-visual">${modIconHtml(r.newMod,'42')}</div><strong>${esc(r.newMod.set_name||'—')}</strong><small>${esc(r.newMod.primary_stat||'—')} · ${newSpeed} vit.</small></span>
         </div>
         <section class="topchange-stat-panel"><div class="topchange-stat-title"><strong>APPORT DES STATISTIQUES</strong><span>${positive.length} gain${positive.length>1?'s':''}</span></div><div class="topchange-stat-grid">${stats}</div></section>
       </div>
@@ -1218,7 +1218,7 @@ function renderCharacterReport(){
   const bySlot=new Map(cm.map(m=>[m.slot,m]));
   const cards=order.map(slot=>{const m=bySlot.get(slot); return m?renderReportModCard(m):`<div class="report-mod-card missing"><div class="report-mod-slot">${slot}</div><h3>MOD MANQUANT</h3><p>Aucun mod équipé sur cet emplacement.</p></div>`;}).join('');
   box.innerHTML=`
-    <div class="report-toolbar"><button class="analysis-back" id="backToCharacterSelection">← PERSONNAGE / FACTION</button><button class="detail-mods-btn" id="reportInventoryBtn">VOIR LES MODS DANS L’INVENTAIRE</button></div>
+    <div class="report-toolbar"><button class="analysis-back" id="backToCharacterSelection">← PERSONNAGE / FACTION</button></div>
     <div class="report-header">
       <div><span class="tag">RAPPORT PERSONNAGE</span><h1>${esc(c.name||c.baseId)}</h1>${factionBadgesHtml(factions)}</div>
       <div class="report-identity"><div><span>NIVEAU</span><b>${num(c.level||p.level)}</b></div><div><span>GEAR</span><b>${num(c.gear||c.gear_level||p.gear_level)}</b></div><div><span>RELIC</span><b>${'R'+num(relicLevelFromTier(c.relic_tier??c.relicTier??p.relic_tier??0))}</b></div><div><span>ÉTOILES</span><b>${num(c.stars||c.rarity||p.rarity)}★</b></div><div><span>PUISSANCE</span><b>${num(c.power||c.power_rating||c.powerRating)}</b></div></div>
@@ -1229,7 +1229,6 @@ function renderCharacterReport(){
     <div class="report-section report-analysis-grid"><div><div class="report-section-title">ANALYSE SPEED</div><div class="report-list"><div><span>Speed secondaire</span><b>+${num(secSpeed)}</b></div><div><span>Speed primaire</span><b>${primarySpeed?'+'+num(primarySpeed):'Aucune'}</b></div><div><span>Speed totale apportée par les mods</span><b>+${num(secSpeed+primarySpeed)}</b></div><div><span>Meilleure Speed secondaire</span><b>+${num(cm.reduce((x,m)=>Math.max(x,modSpeedMetrics(m).secondary||0),0))}</b></div><div><span>Mods niveau 15</span><b>${cm.filter(m=>Number(m.level)===15).length}/6</b></div></div></div><div><div class="report-section-title">SETS</div><div class="report-list">${[...new Set(cm.map(m=>m.set_name).filter(Boolean))].map(set=>`<div><span>${esc(set)}</span><b>${cm.filter(m=>m.set_name===set).length}</b></div>`).join('')||'<div><span>Aucun set</span><b>—</b></div>'}</div></div></div>
     <div class="report-section"><div class="report-section-title">SECONDAIRES DES MODS</div><div class="report-secondary-list">${cm.map(m=>`<div class="report-secondary-row"><strong>${esc(m.slot)}</strong><span>${esc(modSecondaries(m)||'—')}</span></div>`).join('')||'<div>Aucun mod équipé.</div>'}</div></div>`;
   $('backToCharacterSelection')?.addEventListener('click',()=>setAnalysisTab('selection'));
-  $('reportInventoryBtn')?.addEventListener('click',()=>openCharacterInventory(c));
   box.querySelectorAll('[data-mod-index]').forEach(el=>el.addEventListener('click',()=>showModInventoryDetail(Number(el.dataset.modIndex))));
 }
 function renderReportModCard(m){

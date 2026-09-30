@@ -1115,3 +1115,112 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 
 /* V101.0 — le nom du joueur n'est pas affiché à côté du Holocron sur le dashboard. */
 .decision-status b#decisionProfileName, .decision-status b { display:none !important; }
+
+
+/* V101.1 — MOD VISUAL RESTORE
+   Rebuild the compact in-game mod glyph everywhere modIconHtml() is used.
+   5A = white rarity number + gold tier letter; the outer geometry identifies the slot. */
+.mod-visual{
+  --mod-size:56px;
+  position:relative;
+  display:inline-flex;
+  width:var(--mod-size);
+  height:var(--mod-size);
+  flex:0 0 var(--mod-size);
+  align-items:center;
+  justify-content:center;
+  vertical-align:middle;
+  isolation:isolate;
+  filter:drop-shadow(0 0 8px rgba(0,0,0,.22));
+  font-family:var(--font-display,Inter,sans-serif);
+}
+.mod-visual::before{
+  content:"";
+  position:absolute;
+  inset:3px;
+  z-index:-2;
+  background:linear-gradient(145deg,rgba(16,31,43,.98),rgba(3,12,20,.98));
+  border:1px solid rgba(103,157,183,.62);
+  box-shadow:inset 0 0 12px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.2);
+  clip-path:polygon(50% 0,100% 26%,100% 74%,50% 100%,0 74%,0 26%);
+}
+.mod-visual::after{
+  content:"";
+  position:absolute;
+  inset:8px;
+  z-index:-1;
+  border:1px solid rgba(255,255,255,.08);
+  clip-path:polygon(50% 0,100% 26%,100% 74%,50% 100%,0 74%,0 26%);
+}
+.mod-visual.slot-square::before{clip-path:polygon(12% 12%,88% 12%,88% 88%,12% 88%)}
+.mod-visual.slot-square::after{clip-path:polygon(19% 19%,81% 19%,81% 81%,19% 81%)}
+.mod-visual.slot-arrow::before{clip-path:polygon(8% 50%,50% 8%,92% 50%,50% 92%)}
+.mod-visual.slot-arrow::after{clip-path:polygon(16% 50%,50% 16%,84% 50%,50% 84%)}
+.mod-visual.slot-diamond::before{clip-path:polygon(50% 4%,96% 50%,50% 96%,4% 50%)}
+.mod-visual.slot-diamond::after{clip-path:polygon(50% 14%,86% 50%,50% 86%,14% 50%)}
+.mod-visual.slot-triangle::before{clip-path:polygon(50% 4%,96% 92%,4% 92%)}
+.mod-visual.slot-triangle::after{clip-path:polygon(50% 16%,80% 80%,20% 80%)}
+.mod-visual.slot-circle::before{border-radius:50%;clip-path:none}
+.mod-visual.slot-circle::after{border-radius:50%;clip-path:none}
+.mod-visual.slot-cross::before{clip-path:polygon(35% 4%,65% 4%,65% 35%,96% 35%,96% 65%,65% 65%,65% 96%,35% 96%,35% 65%,4% 65%,4% 35%,35% 35%)}
+.mod-visual.slot-cross::after{clip-path:polygon(41% 12%,59% 12%,59% 41%,88% 41%,88% 59%,59% 59%,59% 88%,41% 88%,41% 59%,12% 59%,12% 41%,41% 41%)}
+.mod-visual-grade{
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:1px;
+  line-height:1;
+  letter-spacing:-.08em;
+  transform:translateY(-1px);
+}
+.mod-visual-dots-number{
+  color:#f4f8fb;
+  font-size:calc(var(--mod-size) * .34);
+  font-weight:950;
+  text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 8px rgba(255,255,255,.08);
+}
+.mod-visual-dots-number.dots-white{color:#f4f8fb}
+.mod-visual-dots-number.dots-gold{color:#f4f8fb}
+.mod-visual-tier{
+  font-size:calc(var(--mod-size) * .31);
+  font-weight:950;
+  text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 7px currentColor;
+}
+.mod-visual-tier.tier-e{color:#9ca9b1}
+.mod-visual-tier.tier-d{color:#58cf76}
+.mod-visual-tier.tier-c{color:#5aa9ff}
+.mod-visual-tier.tier-b{color:#c174ff}
+.mod-visual-tier.tier-a{color:#ffd35a}
+.mod-visual-level{
+  position:absolute;
+  left:50%;
+  bottom:1px;
+  transform:translateX(-50%);
+  font:700 7px/1 var(--font-mono,monospace);
+  color:#7892a0;
+  letter-spacing:.02em;
+  white-space:nowrap;
+  text-shadow:0 1px 2px #000;
+}
+.mod-visual[data-tier="A"]::before{border-color:rgba(255,211,90,.55);box-shadow:inset 0 0 13px rgba(255,179,40,.08),0 0 10px rgba(255,194,67,.12)}
+.mod-visual[data-tier="B"]::before{border-color:rgba(193,116,255,.48)}
+.mod-visual[data-tier="C"]::before{border-color:rgba(90,169,255,.44)}
+.mod-visual[data-tier="D"]::before{border-color:rgba(88,207,118,.42)}
+.mod-visual[data-tier="E"]::before{border-color:rgba(156,169,177,.35)}
+.inventory-mod-icon{display:flex;align-items:center;justify-content:center;min-width:64px;min-height:60px}
+.report-mod-slot>.mod-visual,.mod-card-top>.mod-visual{margin-left:auto}
+.mod-detail-card .mod-card-top>.mod-visual{margin-left:auto}
+.mod-detail-card .mod-visual,.report-mod-card .mod-visual{--mod-size:52px}
+.reallocation-table .mod-visual,.inventory-mod-icon .mod-visual{--mod-size:48px}
+.mod-detail-modal .mod-visual{--mod-size:48px}
+@media(max-width:560px){
+  .mod-visual{--mod-size:50px}
+  .mod-detail-card .mod-visual,.report-mod-card .mod-visual{--mod-size:48px}
+}
+
+/* V101.1 — same mod glyph in ESSENTIEL transfer cards */
+.topchange-mods>span{position:relative;min-height:92px;padding-left:58px!important}
+.topchange-mods .topchange-mod-visual{position:absolute;left:10px;top:26px;display:flex;align-items:center;justify-content:center}
+.topchange-mods .topchange-mod-visual .mod-visual{--mod-size:42px}
+.topchange-mods>span>strong{display:block;margin-top:3px}
+@media(max-width:700px){.topchange-mods>span{padding-left:54px!important}.topchange-mods .topchange-mod-visual{left:7px}}
