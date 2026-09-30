@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="app.css?v=102.2">
+  <link rel="stylesheet" href="app.css?v=101.4">
 
 
 
 
-<title>Selimna’s Holocron — V102.1</title>
+<title>Selimna’s Holocron — V101.4</title>
 
 
 
@@ -86,7 +86,7 @@
     <section id="dashboard" class="page active decision-page">
       <div class="decision-header">
         <div class="decision-brand"><span class="eyebrow">SELIMNA’S HOLOCRON</span><h1>CENTRE DE DÉCISION</h1><p><span class="phase-inline acolyte">ACOLYTE // VOIR</span><span class="phase-inline disciple">DISCIPLE // COMPRENDRE</span><span class="phase-inline lord">SEIGNEUR SITH // MAÎTRISER</span></p></div>
-        <div class="decision-status"><span class="status-dot"></span><span>ROSTER SYNCHRONISÉ</span></div>
+        <div class="decision-status"><span class="status-dot"></span><span>ROSTER SYNCHRONISÉ</span><b id="decisionProfileName">—</b></div>
       </div>
 
       <div class="decision-stage" aria-label="Centre de décision Holocron">
@@ -111,9 +111,9 @@
           <div class="decision-holocron-glow"></div>
           <div class="decision-holocron">
             <img src="assets/backgrounds/holocron-cutout.png" alt="Holocron Selimna" class="decision-holocron-image">
-            <button class="holocron-face face-expert" data-page="optimizer" aria-label="Seigneur Sith"> <span>✦</span><b>SEIGNEUR SITH</b></button>
+            <button class="holocron-face face-expert" data-page="mods-analysis" aria-label="Seigneur Sith"> <span>✦</span><b>SEIGNEUR SITH</b></button>
             <button class="holocron-face face-essential" data-page="top-changes" aria-label="Acolyte"><span>⌁</span><b>ACOLYTE</b></button>
-            <button class="holocron-face face-understand" data-page="mods-analysis" aria-label="Disciple"><span>◌</span><b>DISCIPLE</b></button>
+            <button class="holocron-face face-understand" data-page="data" aria-label="Disciple"><span>◌</span><b>DISCIPLE</b></button>
           </div>
           <div class="decision-pedestal"></div>
         </div>
@@ -125,11 +125,6 @@
           <div class="decision-legend" id="modLegend"></div>
         </article>
 
-        <div class="holocron-verdict" id="holocronVerdict" aria-live="polite">
-          <div class="holocron-verdict-head"><span class="status-dot"></span><span>HOLOCRON // VERDICT</span><b id="holocronVerdictState">EN ATTENTE</b></div>
-          <div class="holocron-verdict-main"><strong id="holocronVerdictTitle">Le Holocron attend le scan du roster.</strong><small id="holocronVerdictAction">Charge le profil pour faire émerger les décisions.</small></div>
-          <div class="holocron-verdict-metrics"><span><b id="holocronVerdictCount">0</b> verdicts actifs</span><span><b id="holocronUrgentCount">0</b> actions urgentes</span><span><b id="holocronOpportunityCount">0</b> opportunités</span></div>
-        </div>
         <div class="decision-bottom-status"><span class="status-dot"></span><div><b>ROSTER SYNCHRONISÉ</b><small id="decisionLastUpdate">Données chargées depuis le profil</small></div></div>
         <div class="decision-slogan">DE MEILLEURES DÉCISIONS<br><span>POUR UNE GALAXIE PLUS FORTE</span></div>
       </div>
@@ -146,9 +141,9 @@
   <header class="essential-command panel">
     <div class="essential-command-mark">◈</div>
     <div class="essential-command-copy">
-      <div class="eyebrow">HOLOCRON // ACOLYTE · 10 MODIFICATIONS</div>
+      <div class="eyebrow">HOLOCRON // ACOLYTE</div>
       <h2>L’AVANTAGE NAÎT DE LA <em>VISION.</em></h2>
-      <p>VOIR → DÉCIDER → AGIR · 10 modifications prioritaires, pas plus.</p>
+      <p>Examine tes données. Découvre tes forces. Domine ton optimisation.</p>
     </div>
     <div class="essential-account">
       <span id="essentialProfileName">SELIMNA</span>
@@ -176,7 +171,7 @@
 
 <section id="optimizer" class="page">
       <div class="panel controls">
-        <div class="panel-title">SEIGNEUR SITH // FORGE D’OPTIMISATION</div>
+        <div class="panel-title">SEIGNEUR SITH // FORGE D’OPTIMISATION V176</div>
         <div class="form-grid">
           <label>Personnage<select id="character"></select></label>
           <label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="5"></label>

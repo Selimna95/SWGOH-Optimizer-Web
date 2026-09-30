@@ -473,7 +473,7 @@ async function loadRemotePlayer(){
     for(const m of apiMods){ if(!seenIds.has(m.game_id)){ merged.push(m); seenIds.add(m.game_id); } }
     const seen=new Set();mods=merged.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
     log(`Mods décodés : ${htmlMods.length} via pages publiques + ${Math.max(0,mods.length-htmlMods.length)} compléments API = ${mods.length}.`);
-    currentData={allyCode,name:title,characters:chars,ships,mods,galacticPower:accountGalacticPower};updateRosterCounts(chars,ships);renderGalacticPower();buildFactionMap();fillCharacters(chars);updateAccountSummary(title,fmt);renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();renderHolocronVerdict(holocronTopChangeCandidates().slice(0,10));
+    currentData={allyCode,name:title,characters:chars,ships,mods,galacticPower:accountGalacticPower};updateRosterCounts(chars,ships);renderGalacticPower();buildFactionMap();fillCharacters(chars);updateAccountSummary(title,fmt);renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();
     $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nUnités totales: ${chars.length+ships.length}\nMods: ${mods.length}\nProfils Kyber disponibles dans cette version: ${Object.keys(profiles).length}`;
     log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${mods.length} mods exploitables.`);if(!mods.length)log('Aucun mod lisible.');showPage('dashboard');
   }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, utilise l’import JSON.');}
@@ -1001,31 +1001,6 @@ function essentialPortraitHtml(character){
  const rest=JSON.stringify(encoded.slice(1)).replace(/"/g,'&quot;');
  return `<div class="topchange-portrait" data-essential-portrait-list="${rest}"><img src="${first}" alt="${esc(character?.name||'')}" loading="lazy" data-essential-portrait-index="0"></div>`;
 }
-function renderHolocronVerdict(rowsOverride){
- const title=$('holocronVerdictTitle'), action=$('holocronVerdictAction'), state=$('holocronVerdictState');
- const count=$('holocronVerdictCount'), urgent=$('holocronUrgentCount'), opp=$('holocronOpportunityCount');
- if(!title||!action||!state||!count||!urgent||!opp)return;
- const rows=Array.isArray(rowsOverride)?rowsOverride:(Array.isArray(rosterCharacters)&&rosterCharacters.length?holocronTopChangeCandidates():[]);
- if(!rows.length){
-   state.textContent=Array.isArray(rosterCharacters)&&rosterCharacters.length?'SCAN COMPLET':'EN ATTENTE';
-   title.textContent=Array.isArray(rosterCharacters)&&rosterCharacters.length?'Aucune modification prioritaire détectée.':'Le Holocron attend le scan du roster.';
-   action.textContent=Array.isArray(rosterCharacters)&&rosterCharacters.length?'Les données sont chargées ; aucun transfert ne franchit actuellement le seuil de décision.':'Charge le profil pour faire émerger les décisions.';
-   count.textContent='0'; urgent.textContent='0'; opp.textContent='0';
-   return;
- }
- const urgentCount=Math.min(3,rows.filter(r=>r.isGL || r.gain>=10 || r.kyberGain>=2).length);
- const opportunityCount=Math.max(0,Math.min(9,rows.length-urgentCount));
- state.textContent='VERDICT ACTIF';
- title.textContent=`${rows.length} modification${rows.length>1?'s':''} détectée${rows.length>1?'s':''}.`;
- const lead=rows[0];
- const recipient=String(lead?.recipient?.name||lead?.recipient?.baseId||'personnage cible');
- const donor=String(lead?.donor?.name||lead?.donor?.baseId||'donneur');
- const gain=Number(lead?.gain||0);
- action.textContent=`Priorité : ${recipient} ← ${donor}${gain>0?` · +${num(gain,1)} impact mod`:''}.`;
- count.textContent=String(rows.length);
- urgent.textContent=String(urgentCount);
- opp.textContent=String(opportunityCount);
-}
 function bindEssentialPortraits(){
  document.querySelectorAll('.topchange-portrait[data-essential-portrait-list] img').forEach(img=>{
    if(img.dataset.bound==='1')return;
@@ -1056,9 +1031,7 @@ function renderHolocronTopChanges(){
  box.className='topchanges-results essential-results-grid';
  const gacSeason=holocronLatestGacSeason();
  const note=gacSeason?`Saison GAC ${esc(gacSeason.season)} · priorité aux GL et aux usages de référence.`:'Priorité GL activée · données GAC de référence non disponibles.';
- const topTen=rows.slice(0,10);
- renderHolocronVerdict(topTen);
- box.innerHTML=`<div class="essential-inline-note">${note} · 10 MODIFICATIONS MAXIMUM</div>`+topTen.map((r,i)=>{
+ box.innerHTML=`<div class="essential-inline-note">${note}</div>`+rows.slice(0,10).map((r,i)=>{
    const delta=topChangeStatDelta(r.oldMod,r.newMod);
    const positive=delta.filter(x=>x.delta>0).slice(0,4);
    const stats=positive.length?positive.map(x=>`<span class="topchange-stat"><b>${esc(x.name)}</b><strong>+${topChangeStatValue(x.delta,x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucun gain secondaire net</span>';
@@ -1572,7 +1545,7 @@ async function boot(){
   }
 }
 
-$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();renderHolocronVerdict(holocronTopChangeCandidates().slice(0,10));$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
+$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
 
 $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
@@ -1603,82 +1576,38 @@ $('runOptimizer').addEventListener('click',async()=>{
     $('runOptimizer').textContent='LANCER L’OPTIMISATION';
   }
 });
-function optimizerStatLabel(key){
-  const labels={
-    Speed:'VITESSE',Health:'SANTÉ',Protection:'PROTECTION',
-    'Physical Damage':'DÉGÂTS PHYS.', 'Special Damage':'DÉGÂTS SPÉC.',
-    Potency:'PUISSANCE',Tenacity:'TÉNACITÉ',Armor:'ARMURE',Resistance:'RÉSISTANCE',
-    'Critical Damage':'DÉGÂTS CRIT.', 'Critical Chance':'CHANCE CRIT.',
-    'Special Critical Chance':'CRIT. SPÉC.', 'Physical Critical Chance':'CRIT. PHYS.',
-    'Armor Penetration':'PÉN. ARMURE','Resistance Penetration':'PÉN. RÉSIST.',
-    Accuracy:'PRÉCISION','Critical Avoidance':'ÉVITEMENT CRIT.',
-    'Dodge Chance':'ESQUIVE','Deflection Chance':'DÉVIATION','Mastery':'MAÎTRISE'
-  };
-  return labels[key]||String(key||'').replace(/_/g,' ').toUpperCase();
-}
-function optimizerStatValue(key,value){
-  if(typeof value!=='number') return esc(value);
-  if(['Potency','Tenacity','Critical Chance','Critical Avoidance','Critical Damage','Mastery'].includes(key)){
-    return num(value,3);
-  }
-  return num(value,1);
-}
-function optimizerModSecondaries(m){
-  const out=[];
-  for(let j=1;j<=4;j++){
-    const stat=m?.[`secondary_${j}_stat`];
-    if(!stat) continue;
-    const value=m?.[`secondary_${j}_value`];
-    out.push(displayModStat(stat,value));
-  }
-  return out;
-}
 function renderResults(data){
   if(!data.length){$('results').textContent='Aucun build.';return;}
-  $('results').innerHTML=`<div class="forge-results-intro">
-    <div><span class="forge-kicker">HOLOCRON // VERDICT</span><strong>Configurations calculées</strong><small>Chaque proposition conserve les 6 slots, les primaires, les secondaires et les statistiques finales.</small></div>
-    <div class="forge-result-count"><b>${data.length}</b><span>BUILDS</span></div>
-  </div>`+data.map((r,i)=>{
+  $('results').innerHTML=data.map((r,i)=>{
     const build=r.build||[];
     const setCounts={};
-    build.forEach(m=>{const set=String(m.set_name||m.set||'').trim();if(set)setCounts[set]=(setCounts[set]||0)+1;});
-    const setSummary=Object.entries(setCounts).map(([set,n])=>`${set} ×${n}`).join(' · ')||'Sets non renseignés';
+    build.forEach(m=>{const s=String(m.set_name||m.set||'').trim();if(s)setCounts[s]=(setCounts[s]||0)+1;});
+    const setSummary=Object.entries(setCounts).map(([s,n])=>`${s} ×${n}`).join(' · ')||'Sets non renseignés';
     const primarySummary=build.map(m=>`${m.slot||'?'} : ${m.primary_stat||'?'}`).join(' · ');
-    const statsEntries=Object.entries(r.stats||{});
-    const featured=['Speed','Health','Protection','Offense','Physical Damage','Special Damage'].filter(k=>Object.prototype.hasOwnProperty.call(r.stats||{},k));
-    const featuredStats=featured.map(k=>`<div class="forge-stat featured"><span>${optimizerStatLabel(k)}</span><b>${optimizerStatValue(k,r.stats[k])}</b></div>`).join('');
-    const otherStats=statsEntries.filter(([k])=>!featured.includes(k)).map(([k,v])=>`<span class="forge-stat-pill"><b>${optimizerStatLabel(k)}</b><em>${optimizerStatValue(k,v)}</em></span>`).join('');
-    const score=typeof r.score==='number'?r.score.toFixed(0):'—';
-    return `<article class="result forge-result">
-      <header class="forge-result-head">
-        <div class="forge-rank"><span>CONFIGURATION</span><b>${i+1}</b></div>
-        <div class="forge-result-title"><strong>Build ${i+1}</strong><small>${esc(setSummary)}</small></div>
-        <div class="forge-score"><span>SCORE HOLOCRON</span><b>${esc(score)}</b></div>
-      </header>
-      <div class="forge-build-meta">
-        <div><span>PRIMAIRES PAR SLOT</span><strong>${esc(primarySummary||'Non renseignées')}</strong></div>
-        <div><span>COMPOSITION</span><strong>6 MODS · ${Object.keys(setCounts).length} SET${Object.keys(setCounts).length>1?'S':''}</strong></div>
-      </div>
-      <section class="forge-stats-block">
-        <div class="forge-section-title"><span>STATISTIQUES FINALES</span><small>Après application des 6 mods</small></div>
-        <div class="forge-featured-stats">${featuredStats}</div>
-        ${otherStats?`<div class="forge-all-stats">${otherStats}</div>`:''}
-      </section>
-      <section class="forge-mods-block">
-        <div class="forge-section-title"><span>ARSENAL DE LA CONFIGURATION</span><small>6 slots · détails complets</small></div>
-        <div class="forge-mod-grid">${build.map((m,mi)=>{
+    const stats=Object.entries(r.stats||{}).map(([k,v])=>`${esc(k)}: ${typeof v==='number'?num(v,1):esc(v)}`).join(' · ');
+    return `<article class="result">
+      <div class="rank">BUILD ${i+1}</div>
+      <div>
+        <div class="result-head">
+          <strong>Configuration ${i+1}</strong>
+          <div class="result-summary">
+            <span><b>SETS</b> ${esc(setSummary)}</span>
+            <span><b>PRIMAIRES</b> ${esc(primarySummary)}</span>
+          </div>
+        </div>
+        <div class="stats">${stats}</div>
+        <div class="build-grid">${build.map(m=>{
           const primary=String(m.primary_stat||'?');
-          const primaryValue=m.primary_value!=null?` ${num(m.primary_value,1)}${String(primary).endsWith('%')?'':' '}`:'';
-          const secondaries=optimizerModSecondaries(m);
-          const owner=String(m.character||m.equippedTo||m.equipped_to||'').trim();
-          return `<article class="forge-mod-card">
-            <div class="forge-mod-top"><div class="forge-mod-icon">${modIconHtml(m,'52')}</div><div><span class="forge-slot-index">${mi+1}/6 · ${esc(m.slot||'?')}</span><strong>${esc(m.set_name||m.set||'SET INCONNU')}</strong></div></div>
-            <div class="forge-mod-primary"><span>PRIMAIRE</span><b>${esc(primary)}${esc(primaryValue)}</b></div>
-            <div class="forge-mod-secondaries"><span>SECONDAIRES</span>${secondaries.length?secondaries.map(x=>`<b>${esc(x)}</b>`).join(''):'<em>Aucune secondaire renseignée</em>'}</div>
-            ${owner?`<div class="forge-mod-owner"><span>ACTUELLEMENT</span><b>${esc(owner)}</b></div>`:''}
-          </article>`;
+          const primaryValue=m.primary_value!=null?` ${num(m.primary_value,1)}${primary.endsWith(' %')?'%':''}`:'';
+          const secondaries=[1,2,3,4].map(j=>m[`secondary_${j}_stat`]?displayModStat(m[`secondary_${j}_stat`],m[`secondary_${j}_value`]):'').filter(Boolean).join(' · ');
+          return `<div class="mod-card">
+            <strong class="mod-slot">${esc(m.slot||'?')}</strong>
+            <span class="mod-set"><b>SET</b> ${esc(m.set_name||m.set||'?')}</span>
+            <span class="mod-primary"><b>PRIMAIRE</b> ${esc(primary)}${primaryValue}</span>
+            <small>${esc(secondaries)}</small>
+          </div>`;
         }).join('')}</div>
-      </section>
+      </div>
     </article>`;
   }).join('');
 }
