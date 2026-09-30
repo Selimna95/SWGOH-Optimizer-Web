@@ -1301,3 +1301,49 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
   .phase-inline{display:block;margin:2px 0}
   .decision-stage:after{display:none}
 }
+
+/* ============================================================
+   V102.1 — HOLOCRON VIVANT / VERDICT
+   Présentation uniquement. Connexion, Worker et récupération inchangés.
+   ============================================================ */
+.decision-status b#decisionProfileName{display:none!important}
+.holocron-verdict{
+  position:absolute;z-index:8;right:2%;bottom:14.5%;width:min(300px,24%);
+  padding:12px 14px 11px;
+  background:linear-gradient(135deg,rgba(8,11,15,.72),rgba(16,6,10,.56));
+  border:1px solid rgba(255,52,68,.28);
+  clip-path:polygon(0 0,96% 0,100% 18%,100% 82%,96% 100%,0 100%,2% 12%);
+  box-shadow:0 0 24px rgba(255,20,34,.07),inset 0 0 18px rgba(255,20,34,.025);
+  backdrop-filter:blur(7px);
+}
+.holocron-verdict:after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:1px;background:linear-gradient(90deg,#ff3348,transparent)}
+.holocron-verdict-head{display:flex;align-items:center;gap:7px;color:#7e8991;font:800 7px/1 var(--font-display);letter-spacing:.18em}
+.holocron-verdict-head .status-dot{width:6px;height:6px;background:#ff4053;box-shadow:0 0 8px rgba(255,45,62,.55)}
+.holocron-verdict-head b{margin-left:auto;color:#ff5364;font-size:6px;letter-spacing:.16em}
+.holocron-verdict-main{margin-top:8px}
+.holocron-verdict-main strong{display:block;color:#edf0f3;font:600 13px/1.15 Inter,sans-serif;letter-spacing:.01em}
+.holocron-verdict-main small{display:block;margin-top:5px;color:#858c95;font:8px/1.4 Inter,sans-serif}
+.holocron-verdict-metrics{display:flex;gap:12px;margin-top:9px;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);color:#727a83;font:7px/1 Inter,sans-serif}
+.holocron-verdict-metrics span{white-space:nowrap}
+.holocron-verdict-metrics b{color:#d9dde1;font-size:10px;margin-right:3px}
+.holocron-verdict[data-state="scanning"] .holocron-verdict-head .status-dot{animation:verdictPulse 1s ease-in-out infinite}
+@keyframes verdictPulse{50%{transform:scale(1.65);opacity:.45}}
+
+/* L'ACOLYTE = exactement 10 modifications quand le moteur en trouve 10+. */
+.holocron-essential-page .essential-inline-note{font-weight:700;letter-spacing:.15em}
+.holocron-essential-page .essential-inline-note:after{content:"  //  ACOLYTE = VOIR → DÉCIDER → AGIR";color:rgba(255,64,81,.58)}
+
+/* Les trois faces racontent désormais le même parcours : Voir / Comprendre / Maîtriser. */
+.face-expert b:after{content:"  // FORGE";color:rgba(255,72,88,.55);font-size:6px;letter-spacing:.12em}
+.face-understand b:after{content:"  // COMMAND";color:rgba(110,220,250,.52);font-size:6px;letter-spacing:.12em}
+.face-essential b:after{content:"  // 10";color:rgba(255,255,255,.42);font-size:6px;letter-spacing:.12em}
+
+@media(max-width:1100px){
+  .holocron-verdict{width:29%;right:1.5%;bottom:15%}
+}
+@media(max-width:760px){
+  .holocron-verdict{position:relative;right:auto;bottom:auto;width:min(92vw,500px);order:5;margin-top:2px;clip-path:none}
+  .decision-bottom-status{order:6}
+  .decision-slogan{order:7}
+  .holocron-verdict-main strong{font-size:12px}
+}

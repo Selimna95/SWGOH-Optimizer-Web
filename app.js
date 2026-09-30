@@ -473,7 +473,7 @@ async function loadRemotePlayer(){
     for(const m of apiMods){ if(!seenIds.has(m.game_id)){ merged.push(m); seenIds.add(m.game_id); } }
     const seen=new Set();mods=merged.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
     log(`Mods décodés : ${htmlMods.length} via pages publiques + ${Math.max(0,mods.length-htmlMods.length)} compléments API = ${mods.length}.`);
-    currentData={allyCode,name:title,characters:chars,ships,mods,galacticPower:accountGalacticPower};updateRosterCounts(chars,ships);renderGalacticPower();buildFactionMap();fillCharacters(chars);updateAccountSummary(title,fmt);renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();
+    currentData={allyCode,name:title,characters:chars,ships,mods,galacticPower:accountGalacticPower};updateRosterCounts(chars,ships);renderGalacticPower();buildFactionMap();fillCharacters(chars);updateAccountSummary(title,fmt);renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();renderHolocronVerdict(holocronTopChangeCandidates().slice(0,10));
     $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nUnités totales: ${chars.length+ships.length}\nMods: ${mods.length}\nProfils Kyber disponibles dans cette version: ${Object.keys(profiles).length}`;
     log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${mods.length} mods exploitables.`);if(!mods.length)log('Aucun mod lisible.');showPage('dashboard');
   }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, utilise l’import JSON.');}
@@ -1001,6 +1001,31 @@ function essentialPortraitHtml(character){
  const rest=JSON.stringify(encoded.slice(1)).replace(/"/g,'&quot;');
  return `<div class="topchange-portrait" data-essential-portrait-list="${rest}"><img src="${first}" alt="${esc(character?.name||'')}" loading="lazy" data-essential-portrait-index="0"></div>`;
 }
+function renderHolocronVerdict(rowsOverride){
+ const title=$('holocronVerdictTitle'), action=$('holocronVerdictAction'), state=$('holocronVerdictState');
+ const count=$('holocronVerdictCount'), urgent=$('holocronUrgentCount'), opp=$('holocronOpportunityCount');
+ if(!title||!action||!state||!count||!urgent||!opp)return;
+ const rows=Array.isArray(rowsOverride)?rowsOverride:(Array.isArray(rosterCharacters)&&rosterCharacters.length?holocronTopChangeCandidates():[]);
+ if(!rows.length){
+   state.textContent=Array.isArray(rosterCharacters)&&rosterCharacters.length?'SCAN COMPLET':'EN ATTENTE';
+   title.textContent=Array.isArray(rosterCharacters)&&rosterCharacters.length?'Aucune modification prioritaire détectée.':'Le Holocron attend le scan du roster.';
+   action.textContent=Array.isArray(rosterCharacters)&&rosterCharacters.length?'Les données sont chargées ; aucun transfert ne franchit actuellement le seuil de décision.':'Charge le profil pour faire émerger les décisions.';
+   count.textContent='0'; urgent.textContent='0'; opp.textContent='0';
+   return;
+ }
+ const urgentCount=Math.min(3,rows.filter(r=>r.isGL || r.gain>=10 || r.kyberGain>=2).length);
+ const opportunityCount=Math.max(0,Math.min(9,rows.length-urgentCount));
+ state.textContent='VERDICT ACTIF';
+ title.textContent=`${rows.length} modification${rows.length>1?'s':''} détectée${rows.length>1?'s':''}.`;
+ const lead=rows[0];
+ const recipient=String(lead?.recipient?.name||lead?.recipient?.baseId||'personnage cible');
+ const donor=String(lead?.donor?.name||lead?.donor?.baseId||'donneur');
+ const gain=Number(lead?.gain||0);
+ action.textContent=`Priorité : ${recipient} ← ${donor}${gain>0?` · +${num(gain,1)} impact mod`:''}.`;
+ count.textContent=String(rows.length);
+ urgent.textContent=String(urgentCount);
+ opp.textContent=String(opportunityCount);
+}
 function bindEssentialPortraits(){
  document.querySelectorAll('.topchange-portrait[data-essential-portrait-list] img').forEach(img=>{
    if(img.dataset.bound==='1')return;
@@ -1031,7 +1056,9 @@ function renderHolocronTopChanges(){
  box.className='topchanges-results essential-results-grid';
  const gacSeason=holocronLatestGacSeason();
  const note=gacSeason?`Saison GAC ${esc(gacSeason.season)} · priorité aux GL et aux usages de référence.`:'Priorité GL activée · données GAC de référence non disponibles.';
- box.innerHTML=`<div class="essential-inline-note">${note}</div>`+rows.slice(0,10).map((r,i)=>{
+ const topTen=rows.slice(0,10);
+ renderHolocronVerdict(topTen);
+ box.innerHTML=`<div class="essential-inline-note">${note} · 10 MODIFICATIONS MAXIMUM</div>`+topTen.map((r,i)=>{
    const delta=topChangeStatDelta(r.oldMod,r.newMod);
    const positive=delta.filter(x=>x.delta>0).slice(0,4);
    const stats=positive.length?positive.map(x=>`<span class="topchange-stat"><b>${esc(x.name)}</b><strong>+${topChangeStatValue(x.delta,x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucun gain secondaire net</span>';
@@ -1545,7 +1572,7 @@ async function boot(){
   }
 }
 
-$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
+$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();renderHolocronVerdict(holocronTopChangeCandidates().slice(0,10));$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
 
 $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
