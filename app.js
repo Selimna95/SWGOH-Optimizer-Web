@@ -933,7 +933,7 @@ function holocronTopChangeCandidates(){
           const donorScore=holocronModScoreForCharacter(donorMod,d.c);
           const donorLoss=Math.max(0,donorBest-donorScore);
           if(donorLoss<1.5 && d.status!=='INCOMPLETS')continue;
-          const usagePriority=r.isGL?1000000000:(r.gacUses==null?0:r.gacUses*1000);
+          const usagePriority=(r.isGL?1000000000000:0)+(r.gacUses==null?0:r.gacUses*1000);
           const priority=usagePriority + (r.isGL?0:(recipientPriority[r.status]||0)*100) +
             (donorPriority[d.status]||0)*25 + Math.max(0,gain)*2 + Math.max(0,kyberGain)*12 - donorScore*0.03;
           out.push({donor:d.c,recipient:r.c,oldMod:currentMod,newMod:donorMod,gain,donorLoss,status:d.status,priority,recipientStatus:r.status,kyberGain,isGL:r.isGL,gacUses:r.gacUses,gacSeason:gacSeason?.season??null});
@@ -974,7 +974,7 @@ function renderHolocronTopChanges(){
  box.className='topchanges-results';
  const gacSeason=holocronLatestGacSeason();
  const note=gacSeason?`Saison GAC ${esc(gacSeason.season)} · priorité aux GL et aux usages de référence.`:'Priorité GL activée · données GAC de référence non disponibles.';
- box.innerHTML=`<div class="essential-inline-note">${note}</div>`+rows.slice(0,3).map((r,i)=>{
+ box.innerHTML=`<div class="essential-inline-note">${note}</div>`+rows.slice(0,10).map((r,i)=>{
    const delta=topChangeStatDelta(r.oldMod,r.newMod);
    const positive=delta.filter(x=>x.delta>0).slice(0,4);
    const stats=positive.length?positive.map(x=>`<span class="topchange-stat"><b>${esc(x.name)}</b><strong>+${topChangeStatValue(x.delta,x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucun gain secondaire net</span>';
