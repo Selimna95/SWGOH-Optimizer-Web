@@ -959,13 +959,66 @@ function topChangeStatValue(value,name){
  const percent=/%|potency|tenacity|critical|chance|avoidance/i.test(name);
  return `${num(value,percent?2:1)}${percent&&!String(name).includes('%')?' pt':''}${String(name).includes('%')?'%':''}`;
 }
-function essentialPortraitFor(character){
- const name=String(character?.name||character?.baseId||'').toLowerCase();
- if(name.includes('jedi knight luke skywalker')) return 'assets/backgrounds/essential-luke.jpg';
- if(name.includes('grand master yoda')) return 'assets/backgrounds/essential-yoda.jpg';
- if(name.includes('jedi knight anakin')) return 'assets/backgrounds/essential-anakin.jpg';
- return '';
+function essentialPortraitCandidates(character){
+ const name=String(character?.name||'').trim().toLowerCase();
+ const base=String(character?.baseId||character?.base_id||'').trim().toLowerCase();
+ const slug=name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');
+ const candidates=[];
+ const add=(id)=>{if(id&&!candidates.includes(id))candidates.push(id);};
+
+ // SWGOH.GG character texture naming. Keep several aliases because the
+ // game's baseId and its portrait texture key are not always identical.
+ add(base);
+ add(slug);
+
+ if(name.includes('jedi knight luke skywalker')){
+   add('jedilukeskywalker'); add('jediluke'); add('rebelhothluke');
+ }
+ if(name.includes('grand master yoda')){
+   add('yodagrandmaster');
+ }
+ if(name.includes('jedi knight anakin')){
+   add('anakinknight');
+ }
+ if(name.includes('rey (scavenger)') || name.includes('rey scavenger')){
+   add('reyjakku'); add('reyscavenger'); add('rey');
+ }
+ if(name.includes('starkiller')){
+   add('starkiller');
+ }
+
+ return candidates.map(id=>`https://swgoh.gg/static/img/assets/tex.charui_${id}.png`);
 }
+function essentialPortraitHtml(character){
+ const urls=essentialPortraitCandidates(character);
+ if(!urls.length)return `<div class="topchange-portrait topchange-portrait-fallback"><span>${esc(String(character?.name||character?.baseId||'?').slice(0,1))}</span></div>`;
+ const encoded=urls.map(u=>u.replace(/'/g,"\\'"));
+ const first=encoded[0];
+ const rest=JSON.stringify(encoded.slice(1)).replace(/"/g,'&quot;');
+ return `<div class="topchange-portrait" data-essential-portrait-list="${rest}"><img src="${first}" alt="${esc(character?.name||'')}" loading="lazy" data-essential-portrait-index="0"></div>`;
+}
+function bindEssentialPortraits(){
+ document.querySelectorAll('.topchange-portrait[data-essential-portrait-list] img').forEach(img=>{
+   if(img.dataset.bound==='1')return;
+   img.dataset.bound='1';
+   img.addEventListener('error',()=>{
+     const holder=img.closest('.topchange-portrait');
+     if(!holder)return;
+     let list=[];
+     try{list=JSON.parse(holder.dataset.essentialPortraitList||'[]');}catch(_){}
+     const next=Number(img.dataset.essentialPortraitIndex||0)+1;
+     if(next<list.length){
+       img.dataset.essentialPortraitIndex=String(next);
+       img.src=list[next];
+       return;
+     }
+     img.remove();
+     holder.classList.add('topchange-portrait-fallback');
+     holder.innerHTML='<span>✦</span>';
+   },{once:false});
+ });
+}
+
 function renderHolocronTopChanges(){
  const box=$('holocronTopChanges');if(!box)return;
  if(!Array.isArray(rosterCharacters)||!rosterCharacters.length){box.className='topchanges-empty';box.innerHTML='<strong>Profil requis</strong><span>Charge ton profil SWGOH pour analyser les mods réels.</span>';return;}
@@ -978,8 +1031,7 @@ function renderHolocronTopChanges(){
    const delta=topChangeStatDelta(r.oldMod,r.newMod);
    const positive=delta.filter(x=>x.delta>0).slice(0,4);
    const stats=positive.length?positive.map(x=>`<span class="topchange-stat"><b>${esc(x.name)}</b><strong>+${topChangeStatValue(x.delta,x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucun gain secondaire net</span>';
-   const portrait=essentialPortraitFor(r.recipient);
-   const portraitHtml=portrait?`<div class="topchange-portrait"><img src="${portrait}" alt="" loading="lazy"></div>`:`<div class="topchange-portrait topchange-portrait-fallback"><span>${esc(String(r.recipient.name||r.recipient.baseId||'?').slice(0,1))}</span></div>`;
+   const portraitHtml=essentialPortraitHtml(r.recipient);
    const recipient=esc(r.recipient.name||r.recipient.baseId);
    const donor=esc(r.donor.name||r.donor.baseId);
    const oldSpeed=num(modTotalSpeed(r.oldMod),1),newSpeed=num(modTotalSpeed(r.newMod),1);
@@ -1000,6 +1052,7 @@ function renderHolocronTopChanges(){
       <aside class="topchange-action"><span>OPÉRATION</span><strong>TRANSFÉRER</strong><small>${donor} → ${recipient}</small><i>↗</i></aside>
     </article>`;
  }).join('');
+ bindEssentialPortraits();
 }
 
 function showPage(page){

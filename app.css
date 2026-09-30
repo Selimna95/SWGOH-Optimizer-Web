@@ -1092,3 +1092,22 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
     min-height:62px !important;
   }
 }
+
+
+/* V100.8 — portraits officiels SWGOH.GG dans les opérations ESSENTIEL */
+.holocron-essential-page .essential-results-grid .topchange-portrait{
+  display:block !important;
+  position:relative !important;
+  background:#07090d !important;
+}
+.holocron-essential-page .essential-results-grid .topchange-portrait img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center top !important;
+  display:block !important;
+}
+.holocron-essential-page .essential-results-grid .topchange-portrait-fallback{
+  display:grid !important;
+  place-items:center !important;
+}
