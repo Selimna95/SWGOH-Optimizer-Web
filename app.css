@@ -1362,3 +1362,44 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 .forge-mod-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.forge-mod-card{min-width:0;border:1px solid rgba(67,155,197,.19);border-radius:7px;padding:9px;background:linear-gradient(145deg,rgba(7,28,43,.95),rgba(3,14,23,.98));position:relative}.forge-mod-top{display:flex;align-items:center;gap:8px;min-width:0}.forge-mod-icon{width:52px;min-width:52px;display:flex;justify-content:center}.forge-mod-top>div:last-child{min-width:0}.forge-slot-index{display:block;color:#668293;font-size:7px;letter-spacing:.08em;text-transform:uppercase}.forge-mod-top strong{display:block;color:#d9edf5;font-size:10px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.forge-mod-primary{margin-top:8px;padding-top:7px;border-top:1px solid rgba(73,154,192,.12)}.forge-mod-primary span,.forge-mod-secondaries>span,.forge-mod-owner span{display:block;font-size:7px;letter-spacing:.12em;color:#668393;margin-bottom:3px}.forge-mod-primary b{display:block;color:#5edbff;font-size:10px;line-height:1.25}.forge-mod-secondaries{margin-top:7px;display:grid;gap:3px}.forge-mod-secondaries b{font-size:8px;color:#b8cdd8;font-weight:600;line-height:1.25}.forge-mod-secondaries em{font-size:8px;color:#536d7c;font-style:normal}.forge-mod-owner{margin-top:7px;padding-top:6px;border-top:1px solid rgba(73,154,192,.09)}.forge-mod-owner b{display:block;color:#9db7c5;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:1000px){.forge-featured-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.forge-mod-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:680px){.forge-result-head{grid-template-columns:62px minmax(0,1fr)}.forge-score{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;border-left:0;border-top:1px solid rgba(67,150,190,.12);padding:7px 12px}.forge-build-meta{grid-template-columns:1fr}.forge-featured-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.forge-mod-grid{grid-template-columns:1fr}.forge-results-intro{align-items:flex-start}.forge-result-count{min-width:52px}}
+
+/* V102.3 — PRIORITÉS : placement propre de l'icône de mod.
+   Le pictogramme reste dans sa colonne gauche et ne recouvre plus les libellés. */
+.holocron-essential-page .essential-results-grid .topchange-mods > span{
+  position:relative !important;
+  min-height:92px !important;
+  padding:9px 10px 9px 62px !important;
+  display:grid !important;
+  align-content:start !important;
+  gap:3px !important;
+}
+.holocron-essential-page .essential-results-grid .topchange-mods .topchange-mod-visual{
+  position:absolute !important;
+  left:9px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  width:46px !important;
+  height:46px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  pointer-events:none !important;
+  z-index:1 !important;
+}
+.holocron-essential-page .essential-results-grid .topchange-mods .topchange-mod-visual .mod-visual{
+  --mod-size:46px !important;
+}
+.holocron-essential-page .essential-results-grid .topchange-mods > span > b,
+.holocron-essential-page .essential-results-grid .topchange-mods > span > strong,
+.holocron-essential-page .essential-results-grid .topchange-mods > span > small{
+  position:relative;
+  z-index:2;
+}
+@media(max-width:760px){
+  .holocron-essential-page .essential-results-grid .topchange-mods > span{
+    padding-left:58px !important;
+  }
+  .holocron-essential-page .essential-results-grid .topchange-mods .topchange-mod-visual{
+    left:7px !important;
+  }
+}
