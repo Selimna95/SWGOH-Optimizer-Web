@@ -959,16 +959,49 @@ function topChangeStatValue(value,name){
  const percent=/%|potency|tenacity|critical|chance|avoidance/i.test(name);
  return `${num(value,percent?2:1)}${percent&&!String(name).includes('%')?' pt':''}${String(name).includes('%')?'%':''}`;
 }
+function essentialPortraitFor(character){
+ const name=String(character?.name||character?.baseId||'').toLowerCase();
+ if(name.includes('jedi knight luke skywalker')) return 'assets/backgrounds/essential-luke.jpg';
+ if(name.includes('grand master yoda')) return 'assets/backgrounds/essential-yoda.jpg';
+ if(name.includes('jedi knight anakin')) return 'assets/backgrounds/essential-anakin.jpg';
+ return '';
+}
 function renderHolocronTopChanges(){
  const box=$('holocronTopChanges');if(!box)return;
  if(!Array.isArray(rosterCharacters)||!rosterCharacters.length){box.className='topchanges-empty';box.innerHTML='<strong>Profil requis</strong><span>Charge ton profil SWGOH pour analyser les mods réels.</span>';return;}
  const rows=holocronTopChangeCandidates();
- if(!rows.length){box.className='topchanges-empty';box.innerHTML='<strong>Aucun échange suffisamment pertinent détecté</strong><span>Le moteur n’a trouvé aucun échange répondant aux critères actuels. Vérifie que le profil contient les mods et réessaie après actualisation.</span>';return;}
+ if(!rows.length){box.className='topchanges-empty';box.innerHTML='<strong>Aucun échange suffisamment pertinent détecté</strong><span>Le moteur n’a trouvé aucun échange répondant aux critères actuels.</span>';return;}
  box.className='topchanges-results';
  const gacSeason=holocronLatestGacSeason();
- const seasonNote=gacSeason?`<div class=\"topchanges-gac-note\">Priorité GAC : saison ${esc(gacSeason.season)} · GL prioritaires · utilisations de la saison de référence.</div>`:'<div class=\"topchanges-gac-note\">Priorité GL activée. Statistiques GAC : aucune saison avec données intégrées ; le classement d’utilisation est en attente.</div>';
- box.innerHTML=seasonNote+rows.map((r,i)=>{const delta=topChangeStatDelta(r.oldMod,r.newMod);const stats=delta.length?delta.map(x=>`<span class="topchange-stat ${x.delta>0?'is-up':'is-down'}"><b>${esc(x.name)}</b><strong>${x.delta>0?'+':'−'}${topChangeStatValue(Math.abs(x.delta),x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucune secondaire différente détectée.</span>';return `<article class="topchange-result"><div class="topchange-rank">${String(i+1).padStart(2,'0')}</div><div class="topchange-main"><header class="topchange-heading"><div><span class="topchange-kicker">À AMÉLIORER</span><strong>${esc(r.recipient.name||r.recipient.baseId)}</strong></div><small>Donneur : <b>${esc(r.donor.name||r.donor.baseId)}</b> · emplacement ${esc(r.oldMod.slot)}</small></header><div class="topchange-mods"><span><b>MOD ACTUEL</b><strong>${esc(r.oldMod.set_name||'—')} · ${esc(r.oldMod.primary_stat||'—')}</strong><small>${num(r.oldMod.primary_value,1)} · ${num(modTotalSpeed(r.oldMod),1)} vit.</small></span><span class="is-received"><b>MOD REÇU</b><strong>${esc(r.newMod.set_name||'—')} · ${esc(r.newMod.primary_stat||'—')}</strong><small>${num(r.newMod.primary_value,1)} · ${num(modTotalSpeed(r.newMod),1)} vit.</small></span></div><section class="topchange-stat-panel"><div class="topchange-stat-title"><strong>APPORT DU MOD REÇU</strong><span>${delta.length} variation${delta.length>1?'s':''}</span></div><div class="topchange-stat-grid">${stats}</div></section><div class="topchange-actions"><strong>ÉCHANGE</strong><span>Transférer <b>${esc(r.donor.name||r.donor.baseId)}</b> → <b>${esc(r.recipient.name||r.recipient.baseId)}</b></span></div></div><aside class="topchange-gain"><span>GAIN POTENTIEL</span><strong>+${num(r.gain,1)}</strong><small>score d’optimisation</small><i>↗</i></aside></article>`}).join('');
+ const note=gacSeason?`Saison GAC ${esc(gacSeason.season)} · priorité aux GL et aux usages de référence.`:'Priorité GL activée · données GAC de référence non disponibles.';
+ box.innerHTML=`<div class="essential-inline-note">${note}</div>`+rows.slice(0,3).map((r,i)=>{
+   const delta=topChangeStatDelta(r.oldMod,r.newMod);
+   const positive=delta.filter(x=>x.delta>0).slice(0,4);
+   const stats=positive.length?positive.map(x=>`<span class="topchange-stat"><b>${esc(x.name)}</b><strong>+${topChangeStatValue(x.delta,x.name)}</strong></span>`).join(''):'<span class="topchange-no-stats">Aucun gain secondaire net</span>';
+   const portrait=essentialPortraitFor(r.recipient);
+   const portraitHtml=portrait?`<div class="topchange-portrait"><img src="${portrait}" alt="" loading="lazy"></div>`:`<div class="topchange-portrait topchange-portrait-fallback"><span>${esc(String(r.recipient.name||r.recipient.baseId||'?').slice(0,1))}</span></div>`;
+   const recipient=esc(r.recipient.name||r.recipient.baseId);
+   const donor=esc(r.donor.name||r.donor.baseId);
+   const oldSpeed=num(modTotalSpeed(r.oldMod),1),newSpeed=num(modTotalSpeed(r.newMod),1);
+   return `<article class="topchange-result">
+      <div class="topchange-rank">${String(i+1).padStart(2,'0')}</div>
+      ${portraitHtml}
+      <div class="topchange-main">
+        <header class="topchange-heading">
+          <div><span class="topchange-kicker">À AMÉLIORER</span><strong>${recipient}</strong></div>
+          <small>${esc(r.oldMod.slot||'—')} · Donneur <b>${donor}</b></small>
+        </header>
+        <div class="topchange-mods">
+          <span><b>MOD ACTUEL</b><strong>${esc(r.oldMod.set_name||'—')}</strong><small>${esc(r.oldMod.primary_stat||'—')} · ${oldSpeed} vit.</small></span>
+          <span class="is-received"><b>MOD REÇU</b><strong>${esc(r.newMod.set_name||'—')}</strong><small>${esc(r.newMod.primary_stat||'—')} · ${newSpeed} vit.</small></span>
+        </div>
+        <section class="topchange-stat-panel"><div class="topchange-stat-title"><strong>APPORT DES STATISTIQUES</strong><span>${positive.length} gain${positive.length>1?'s':''}</span></div><div class="topchange-stat-grid">${stats}</div></section>
+      </div>
+      <aside class="topchange-gain"><span>GAIN</span><strong>+${num(r.gain,1)}</strong><small>score</small><i>↗</i></aside>
+    </article>`;
+ }).join('');
 }
+
 function showPage(page){
   document.body.dataset.page=page;
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));

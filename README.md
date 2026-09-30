@@ -1,12 +1,14 @@
-# Selimna's Holocron V93.3 — RELAY STABILITY + MODS
+# SWGOH Optimizer Web V51 — Mod Visual propre
 
-Correctif prioritaire après l'écran « Failed to fetch ».
+- 1–5 dots : fond clair/blanc
+- 6 dots : fond doré
+- Tier E/D/C/B/A : couleur de l'icône
+- Niveau 1–15 : badge séparé
 
-- restauration des endpoints API Worker simples et éprouvés ;
-- conservation des routes unit/mod de la V93 ;
-- récupération tolérante si un ancien Worker est mémorisé dans localStorage ;
-- tentative directe de secours uniquement pour le profil ;
-- message d'erreur explicite si le relais Cloudflare est réellement inaccessible ;
-- pipeline mods V93 conservé.
+Exemples : 5E = blanc + E, 6E = doré + E, 5A = blanc + A, 6A = doré + A.
 
-Si le navigateur affiche encore « Relais Cloudflare inaccessible », le problème est alors l'URL/déploiement du Worker, pas le parsing des mods.
+Le parsing du HTML récupère aussi le fichier de texture réellement utilisé par SWGOH.GG pour déterminer le tier lorsqu'il est disponible.
+
+
+## V65 — visuels fournis
+Les visuels utilisateur sont recadrés/colorimétrés dans `assets/backgrounds/header-space.jpg`, `hero-space.jpg` et `sidebar-space.jpg`, pilotés par `visual-v65.css`.
