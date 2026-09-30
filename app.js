@@ -1320,7 +1320,8 @@ function showModInventoryDetail(index){
     <div><span>MOD</span><b>${modIconHtml(m,'48')}</b></div>
   </div><h3>SECONDAIRES</h3><ul>${[1,2,3,4].map(i=>m[`secondary_${i}_stat`]?`<li>${esc(m[`secondary_${i}_stat`])} : <strong>${num(m[`secondary_${i}_value`],1)}</strong></li>`:'').join('')||'<li>Aucune donnée secondaire.</li>'}</ul>`;
   modal.hidden=false;
-  $('modalReallocationBtn')?.addEventListener('click',(event)=>{
+  const reallocationButton=$('modDetailBody')?.querySelector('#modalReallocationBtn');
+  reallocationButton?.addEventListener('click',(event)=>{
     event.preventDefault();
     event.stopPropagation();
     closeModDetail();
