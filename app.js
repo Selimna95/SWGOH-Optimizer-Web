@@ -966,29 +966,31 @@ function essentialPortraitCandidates(character){
  const candidates=[];
  const add=(id)=>{if(id&&!candidates.includes(id))candidates.push(id);};
 
- // SWGOH.GG character texture naming. Keep several aliases because the
- // game's baseId and its portrait texture key are not always identical.
+ // SWGOH.GG / game-assets.swgoh.gg texture keys.
+ // Exact keys are used first; generic aliases remain as fallback.
+ const exact={
+   'jedi knight luke skywalker':['luke_jediknight'],
+   'grand master yoda':['yodagrandmaster'],
+   'jedi knight anakin':['anakinknight'],
+   'rey (scavenger)':['reyjakku'],
+   'rey scavenger':['reyjakku'],
+   'starkiller':['starkiller'],
+   'poe dameron':['poe'],
+   'resistance trooper':['resistancetrooper'],
+   'tusken warrior':['tuskenwarrior']
+ };
+ for(const [label,ids] of Object.entries(exact)){
+   if(name===label || name.includes(label)) ids.forEach(add);
+ }
+
+ // Common SWGOH.GG convention: the texture key often differs from the
+ // display-name slug, so keep both the baseId and normalized name as fallbacks.
  add(base);
  add(slug);
 
- if(name.includes('jedi knight luke skywalker')){
-   add('jedilukeskywalker'); add('jediluke'); add('rebelhothluke');
- }
- if(name.includes('grand master yoda')){
-   add('yodagrandmaster');
- }
- if(name.includes('jedi knight anakin')){
-   add('anakinknight');
- }
- if(name.includes('rey (scavenger)') || name.includes('rey scavenger')){
-   add('reyjakku'); add('reyscavenger'); add('rey');
- }
- if(name.includes('starkiller')){
-   add('starkiller');
- }
-
- return candidates.map(id=>`https://swgoh.gg/static/img/assets/tex.charui_${id}.png`);
+ return candidates.map(id=>`https://game-assets.swgoh.gg/textures/tex.charui_${id}.png`);
 }
+
 function essentialPortraitHtml(character){
  const urls=essentialPortraitCandidates(character);
  if(!urls.length)return `<div class="topchange-portrait topchange-portrait-fallback"><span>${esc(String(character?.name||character?.baseId||'?').slice(0,1))}</span></div>`;
