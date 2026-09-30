@@ -1320,7 +1320,12 @@ function showModInventoryDetail(index){
     <div><span>MOD</span><b>${modIconHtml(m,'48')}</b></div>
   </div><h3>SECONDAIRES</h3><ul>${[1,2,3,4].map(i=>m[`secondary_${i}_stat`]?`<li>${esc(m[`secondary_${i}_stat`])} : <strong>${num(m[`secondary_${i}_value`],1)}</strong></li>`:'').join('')||'<li>Aucune donnée secondaire.</li>'}</ul>`;
   modal.hidden=false;
-  $('modalReallocationBtn')?.addEventListener('click',()=>{closeModDetail();openReallocation(index);});
+  $('modalReallocationBtn')?.addEventListener('click',(event)=>{
+    event.preventDefault();
+    event.stopPropagation();
+    closeModDetail();
+    openReallocation(index);
+  });
 }
 function closeModDetail(){if($('modDetailModal'))$('modDetailModal').hidden=true;}
 function prepareV18Filters(){
@@ -1432,9 +1437,15 @@ function renderReallocationPanel(){
   renderReallocationResults();
 }
 function openReallocation(index){
-  setReallocationMod(index);
+  const n=Number(index);
+  if(!Number.isFinite(n) || !mods[n]) return;
+  setReallocationMod(n);
   showPage('mods-analysis');
-  setTimeout(()=>setAnalysisTab('reallocation'),0);
+  requestAnimationFrame(()=>{
+    setAnalysisTab('reallocation');
+    const target=$('reallocationSelectedModBtn');
+    target?.scrollIntoView({behavior:'smooth',block:'start'});
+  });
 }
 
 function renderModsAnalysis(){
