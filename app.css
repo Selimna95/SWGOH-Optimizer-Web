@@ -745,3 +745,350 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
     margin:0 0 0 auto!important;
   }
 }
+
+
+/* =========================================================
+   V100.7 — ESSENTIEL / 10 OPÉRATIONS
+   Présentation uniquement. Moteur données/connexion inchangé.
+   ========================================================= */
+
+.holocron-essential-page .essential-results-shell{
+  width:100%;
+  position:relative;
+  z-index:3;
+}
+
+.holocron-essential-page .essential-results-grid{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  gap:16px !important;
+  width:82% !important;
+  max-width:none !important;
+  padding:0 0 24px 18px !important;
+  box-sizing:border-box !important;
+}
+
+.holocron-essential-page .essential-results-grid .essential-inline-note{
+  order:-1;
+  width:100%;
+  box-sizing:border-box;
+  padding:8px 12px;
+  border-left:2px solid #ff3048;
+  background:rgba(0,0,0,.42);
+  color:#747b86;
+  font-size:8px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+/* Une opération = une vraie zone autonome */
+.holocron-essential-page .essential-results-grid .topchange-result{
+  position:relative !important;
+  display:grid !important;
+  grid-template-columns:44px 74px minmax(0,1fr) 150px !important;
+  align-items:stretch !important;
+  width:100% !important;
+  min-height:158px !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+  background:linear-gradient(105deg,rgba(3,5,8,.98),rgba(9,10,14,.96) 74%,rgba(25,5,9,.93)) !important;
+  border:1px solid rgba(255,48,65,.34) !important;
+  border-left:3px solid #ff263e !important;
+  clip-path:none !important;
+  box-shadow:0 8px 25px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-result:hover{
+  border-color:rgba(255,65,80,.62) !important;
+  box-shadow:0 10px 30px rgba(0,0,0,.42),0 0 20px rgba(255,25,42,.07) !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-result:before,
+.holocron-essential-page .essential-results-grid .topchange-result:after{
+  display:none !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-rank{
+  position:relative !important;
+  left:auto !important;
+  top:auto !important;
+  padding:18px 0 0 14px !important;
+  color:#ff5362 !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+  letter-spacing:.14em !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-portrait{
+  align-self:center !important;
+  width:62px !important;
+  height:108px !important;
+  margin:0 !important;
+  border:1px solid rgba(255,48,65,.5) !important;
+  background:#07090d !important;
+  overflow:hidden !important;
+  clip-path:none !important;
+  box-shadow:0 0 18px rgba(255,20,35,.08) !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-portrait img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  display:block !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-portrait-fallback{
+  display:grid !important;
+  place-items:center !important;
+  color:#ff4557 !important;
+  font-size:24px !important;
+  font-weight:800 !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-main{
+  min-width:0 !important;
+  padding:16px 16px 15px 0 !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-heading{
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:space-between !important;
+  gap:18px !important;
+  margin:0 0 10px !important;
+  padding:0 0 9px !important;
+  border-bottom:1px solid rgba(255,255,255,.08) !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-heading > div{
+  min-width:0 !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-kicker{
+  display:block !important;
+  margin-bottom:4px !important;
+  color:#ff4354 !important;
+  font-size:7px !important;
+  font-weight:800 !important;
+  letter-spacing:.2em !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-heading > div > strong{
+  display:block !important;
+  color:#f0f2f5 !important;
+  font-size:15px !important;
+  line-height:1.15 !important;
+  font-weight:700 !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  text-transform:none !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-heading > small{
+  flex:0 0 auto !important;
+  color:#8a9099 !important;
+  font-size:8px !important;
+  line-height:1.4 !important;
+  white-space:nowrap !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-heading > small b{
+  color:#d5d8dd !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-mods{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:8px !important;
+  margin:0 0 8px !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-mods > span{
+  display:grid !important;
+  grid-template-rows:auto auto auto !important;
+  gap:3px !important;
+  min-width:0 !important;
+  padding:8px 10px !important;
+  box-sizing:border-box !important;
+  background:rgba(255,255,255,.025) !important;
+  border:1px solid rgba(255,255,255,.08) !important;
+  color:#d5d8dd !important;
+  font-size:9px !important;
+  line-height:1.25 !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-mods > span.is-received{
+  background:rgba(255,35,50,.055) !important;
+  border-color:rgba(255,48,65,.28) !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-mods b{
+  color:#8c929b !important;
+  font-size:7px !important;
+  letter-spacing:.15em !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-mods .is-received b{
+  color:#ff4858 !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-mods strong{
+  color:#e8eaed !important;
+  font-size:10px !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-mods small{
+  color:#8e949d !important;
+  font-size:8px !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-stat-panel{
+  margin:0 !important;
+  padding:7px 9px !important;
+  background:rgba(0,0,0,.2) !important;
+  border:1px solid rgba(255,255,255,.065) !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-stat-title{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-stat-title > strong{
+  color:#aeb3bb !important;
+  font-size:7px !important;
+  letter-spacing:.15em !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-stat-title > span{
+  color:#686f79 !important;
+  font-size:7px !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-stat-grid{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:4px !important;
+  margin-top:5px !important;
+  max-height:none !important;
+  overflow:visible !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-stat{
+  display:inline-flex !important;
+  gap:5px !important;
+  padding:3px 6px !important;
+  background:rgba(255,34,48,.055) !important;
+  border-left:2px solid #ff3449 !important;
+  color:#cdd1d7 !important;
+  font-size:7px !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-stat b{
+  color:#cfd3d9 !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-stat strong{
+  color:#ff5a68 !important;
+  font-size:7px !important;
+}
+
+/* Zone opération : plus aucun chiffre de score */
+.holocron-essential-page .essential-results-grid .topchange-action{
+  align-self:stretch !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  gap:7px !important;
+  margin:10px !important;
+  padding:12px !important;
+  box-sizing:border-box !important;
+  border:1px solid rgba(255,48,65,.24) !important;
+  border-left:2px solid #ff3047 !important;
+  background:rgba(255,25,40,.035) !important;
+  text-align:left !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-action span{
+  color:#ff4a59 !important;
+  font-size:7px !important;
+  font-weight:800 !important;
+  letter-spacing:.18em !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-action strong{
+  color:#f0f2f5 !important;
+  font-size:11px !important;
+  letter-spacing:.1em !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-action small{
+  color:#a1a6ae !important;
+  font-size:8px !important;
+  line-height:1.45 !important;
+  white-space:normal !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-action i{
+  align-self:flex-end !important;
+  margin:3px 0 0 !important;
+  color:#ff4b5a !important;
+  font-size:14px !important;
+  font-style:normal !important;
+}
+
+.holocron-essential-page .essential-results-grid .topchange-gain{
+  display:none !important;
+}
+
+/* Responsive */
+@media(max-width:1050px){
+  .holocron-essential-page .essential-results-grid{
+    width:100% !important;
+    padding:0 8px 20px 8px !important;
+  }
+  .holocron-essential-page .essential-results-grid .topchange-result{
+    grid-template-columns:38px 66px minmax(0,1fr) 128px !important;
+  }
+}
+
+@media(max-width:760px){
+  .holocron-essential-page .essential-results-grid{
+    gap:12px !important;
+    padding:0 4px 18px !important;
+  }
+  .holocron-essential-page .essential-results-grid .topchange-result{
+    grid-template-columns:34px 56px minmax(0,1fr) !important;
+    min-height:0 !important;
+  }
+  .holocron-essential-page .essential-results-grid .topchange-portrait{
+    width:50px !important;
+    height:78px !important;
+  }
+  .holocron-essential-page .essential-results-grid .topchange-main{
+    padding:14px 10px 12px 0 !important;
+  }
+  .holocron-essential-page .essential-results-grid .topchange-heading{
+    display:block !important;
+  }
+  .holocron-essential-page .essential-results-grid .topchange-heading > small{
+    display:block !important;
+    margin-top:5px !important;
+  }
+  .holocron-essential-page .essential-results-grid .topchange-mods{
+    grid-template-columns:1fr !important;
+  }
+  .holocron-essential-page .essential-results-grid .topchange-action{
+    grid-column:3 !important;
+    margin:0 10px 10px 0 !important;
+    min-height:62px !important;
+  }
+}

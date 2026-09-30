@@ -971,7 +971,7 @@ function renderHolocronTopChanges(){
  if(!Array.isArray(rosterCharacters)||!rosterCharacters.length){box.className='topchanges-empty';box.innerHTML='<strong>Profil requis</strong><span>Charge ton profil SWGOH pour analyser les mods réels.</span>';return;}
  const rows=holocronTopChangeCandidates();
  if(!rows.length){box.className='topchanges-empty';box.innerHTML='<strong>Aucun échange suffisamment pertinent détecté</strong><span>Le moteur n’a trouvé aucun échange répondant aux critères actuels.</span>';return;}
- box.className='topchanges-results';
+ box.className='topchanges-results essential-results-grid';
  const gacSeason=holocronLatestGacSeason();
  const note=gacSeason?`Saison GAC ${esc(gacSeason.season)} · priorité aux GL et aux usages de référence.`:'Priorité GL activée · données GAC de référence non disponibles.';
  box.innerHTML=`<div class="essential-inline-note">${note}</div>`+rows.slice(0,10).map((r,i)=>{
