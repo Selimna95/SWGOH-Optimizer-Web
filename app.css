@@ -1111,3 +1111,7 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
   display:grid !important;
   place-items:center !important;
 }
+
+
+/* V101.0 — le nom du joueur n'est pas affiché à côté du Holocron sur le dashboard. */
+.decision-status b#decisionProfileName, .decision-status b { display:none !important; }

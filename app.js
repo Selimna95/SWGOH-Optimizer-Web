@@ -972,6 +972,8 @@ function essentialPortraitCandidates(character){
    'jedi knight luke skywalker':['luke_jediknight'],
    'grand master yoda':['yodagrandmaster'],
    'jedi knight anakin':['anakinknight'],
+   'sith eternal emperor':['espalpatine_post'],
+   'sith eternal emperor (restored)':['espalpatine_post'],
    'rey (scavenger)':['reyjakku'],
    'rey scavenger':['reyjakku'],
    'starkiller':['starkiller'],
