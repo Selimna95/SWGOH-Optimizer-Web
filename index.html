@@ -60,7 +60,7 @@
 
 <div id="appShell" class="app-shell" hidden>
 <header class="topbar">
-  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V102</span></div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V104</span></div>
   <div class="top-status-group">
     <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
     <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
@@ -78,6 +78,8 @@
     <button class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>COMMAND TACTIQUE</span></button>
 
     <div class="phase-nav-label lord"><span>Ⅲ</span> SEIGNEUR SITH <small>MAÎTRISER</small></div>
+    <div class="phase-nav-label sithari"><span>✧</span> SITH’ARI <small>TRANSCENDER</small></div>
+    <button class="nav nav-sithari" data-page="sithari"><span class="nav-icon">◈</span><span>NEXUS // SITH’ARI</span></button>
     <button class="nav" data-page="optimizer"><span class="nav-icon">✦</span><span>FORGE D’OPTIMISATION</span></button>
     <button class="nav" data-page="data"><span class="nav-icon">▦</span><span>ARCHIVES / DONNÉES</span></button>
     <div class="side-note">100% navigateur<br>aucun PC serveur</div>
@@ -85,7 +87,7 @@
   <section class="content">
     <section id="dashboard" class="page active decision-page">
       <div class="decision-header">
-        <div class="decision-brand"><span class="eyebrow">SELIMNA’S HOLOCRON</span><h1>CENTRE DE DÉCISION</h1><p><span class="phase-inline acolyte">ACOLYTE // VOIR</span><span class="phase-inline disciple">DISCIPLE // COMPRENDRE</span><span class="phase-inline lord">SEIGNEUR SITH // MAÎTRISER</span></p></div>
+        <div class="decision-brand"><span class="eyebrow">SELIMNA’S HOLOCRON</span><h1>CENTRE DE DÉCISION</h1><p><span class="phase-inline acolyte">ACOLYTE // VOIR</span><span class="phase-inline disciple">DISCIPLE // COMPRENDRE</span><span class="phase-inline lord">SEIGNEUR SITH // MAÎTRISER</span><span class="phase-inline sithari">SITH’ARI // TRANSCENDER</span></p></div>
         <div class="decision-status"><span class="status-dot"></span><span>ROSTER SYNCHRONISÉ</span></div>
       </div>
 
@@ -114,6 +116,9 @@
             <button class="holocron-face face-expert" data-page="optimizer" aria-label="Seigneur Sith"> <span>✦</span><b>SEIGNEUR SITH</b></button>
             <button class="holocron-face face-essential" data-page="top-changes" aria-label="Acolyte"><span>⌁</span><b>ACOLYTE</b></button>
             <button class="holocron-face face-understand" data-page="mods-analysis" aria-label="Disciple"><span>◌</span><b>DISCIPLE</b></button>
+            <button class="sithari-core" id="sithariAccess" type="button" aria-label="Accéder au SITH’ARI">
+              <span class="sithari-core-rune">✧</span><strong>SITH’ARI</strong><small>TRANSCENDER</small>
+            </button>
           </div>
           <div class="decision-pedestal"></div>
         </div>
@@ -140,6 +145,64 @@
         <div id="v18DashboardSpeed"></div><div id="log"></div>
       </div>
     </section>
+
+<section id="sithari" class="page sithari-page">
+  <div class="sithari-visual-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <header class="sithari-header">
+    <div class="sithari-kicker">HOLOCRON // SITH’ARI</div>
+    <div class="sithari-title-row">
+      <div><h2>LE NEXUS</h2><p>TRANSCENDER LES LIMITES. LIRE LE ROSTER COMME UN SEUL SYSTÈME.</p></div>
+      <div class="sithari-state"><span class="status-dot"></span><span id="sithariState">EN ATTENTE DU SCAN</span></div>
+    </div>
+    <div class="sithari-thesis"><span>ACOLYTE</span><b>VOIR</b><i>→</i><span>DISCIPLE</span><b>COMPRENDRE</b><i>→</i><span>SEIGNEUR SITH</span><b>MAÎTRISER</b><i>→</i><strong>SITH’ARI</strong><b>TRANSCENDER</b></div>
+  </header>
+
+  <section class="sithari-command-grid">
+    <article class="sithari-command-card sithari-global">
+      <div class="sithari-card-head"><span>01</span><div><small>LECTURE GLOBALE</small><h3>ÉTAT DU ROSTER</h3></div><em>NEXUS</em></div>
+      <div class="sithari-metric-grid">
+        <div><small>UNITÉS</small><strong id="sithariUnits">0</strong></div>
+        <div><small>MODS</small><strong id="sithariMods">0</strong></div>
+        <div><small>PUISSANCE</small><strong id="sithariGp">0</strong></div>
+        <div><small>VITESSE MOY.</small><strong id="sithariAvgSpeed">0</strong></div>
+      </div>
+    </article>
+
+    <article class="sithari-command-card sithari-verdict-card">
+      <div class="sithari-card-head"><span>02</span><div><small>DÉCISION GLOBALE</small><h3>VERDICT DU NEXUS</h3></div><em id="sithariVerdictTag">SCAN</em></div>
+      <div class="sithari-verdict" id="sithariVerdict">Le Nexus attend les données du roster.</div>
+      <div class="sithari-verdict-detail" id="sithariVerdictDetail">Synchronisez le profil pour faire émerger les priorités globales.</div>
+    </article>
+
+    <article class="sithari-command-card sithari-opportunity-card">
+      <div class="sithari-card-head"><span>03</span><div><small>COÛT D’OPPORTUNITÉ</small><h3>CONFLITS DE RESSOURCES</h3></div><em id="sithariConflictCount">0</em></div>
+      <div id="sithariConflicts" class="sithari-list empty">Aucun conflit calculé.</div>
+    </article>
+
+    <article class="sithari-command-card sithari-priority-card">
+      <div class="sithari-card-head"><span>04</span><div><small>DESTINS À MODIFIER</small><h3>PRIORITÉS SYSTÉMIQUES</h3></div><em id="sithariPriorityCount">0</em></div>
+      <div id="sithariPriorities" class="sithari-list empty">Aucune priorité détectée.</div>
+    </article>
+  </section>
+
+  <section class="sithari-analysis-grid">
+    <article class="panel sithari-decision-panel">
+      <div class="sithari-panel-title"><span>✧</span><div><small>SITH’ARI // DÉCISION</small><strong>CE QUE LE NEXUS PROPOSE</strong></div></div>
+      <div id="sithariActions" class="sithari-action-stack"></div>
+    </article>
+    <article class="panel sithari-rules-panel">
+      <div class="sithari-panel-title"><span>◈</span><div><small>RÈGLES DE L’ASCENSION</small><strong>NE PAS OPTIMISER EN SILO</strong></div></div>
+      <div class="sithari-rules">
+        <div><b>01</b><span>Une amélioration locale ne vaut que si elle reste cohérente avec le roster.</span></div>
+        <div><b>02</b><span>Un excellent mod peut avoir une meilleure destination ailleurs.</span></div>
+        <div><b>03</b><span>Les équipes prioritaires passent avant le gain individuel.</span></div>
+        <div><b>04</b><span>Le verdict reste explicable et peut être contesté dans la Forge.</span></div>
+      </div>
+    </article>
+  </section>
+
+  <footer class="sithari-footer"><span>SITH’ARI // LE NEXUS</span><strong>VOIR → COMPRENDRE → MAÎTRISER → TRANSCENDER</strong><small>La puissance n’est plus évaluée personnage par personnage.</small></footer>
+</section>
 
     <section id="top-changes" class="page holocron-essential-page">
   <div class="essential-visual-bg" aria-hidden="true"></div>

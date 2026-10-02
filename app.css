@@ -1284,7 +1284,7 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 .phase-inline{display:inline-block;margin-right:12px;font-weight:900;letter-spacing:.13em}
 .phase-inline.acolyte{color:#c7d0d5}.phase-inline.disciple{color:#6ed5f5}.phase-inline.lord{color:#ff4053}
 .decision-header .decision-brand p{display:flex;flex-wrap:wrap;gap:4px 0;margin-top:8px}
-.decision-stage:after{content:"VOIR  →  COMPRENDRE  →  MAÎTRISER";position:absolute;left:50%;bottom:7px;transform:translateX(-50%);color:rgba(134,171,186,.38);font:900 7px var(--font-display);letter-spacing:.22em;white-space:nowrap;pointer-events:none}
+.decision-stage:after{content:"VOIR  →  COMPRENDRE  →  MAÎTRISER  →  TRANSCENDER";position:absolute;left:50%;bottom:7px;transform:translateX(-50%);color:rgba(134,171,186,.38);font:900 7px var(--font-display);letter-spacing:.22em;white-space:nowrap;pointer-events:none}
 .holocron-essential-page:before{content:"ACOLYTE // VOIR";position:absolute;right:30px;top:7px;color:rgba(255,63,82,.38);font:900 8px var(--font-display);letter-spacing:.24em;z-index:4;pointer-events:none}
 #mods-analysis:before{content:"DISCIPLE // COMPRENDRE & AGIR";position:absolute;right:22px;top:8px;color:rgba(83,208,246,.38);font:900 8px var(--font-display);letter-spacing:.22em;z-index:4;pointer-events:none}
 #optimizer:before,#data:before{content:"SEIGNEUR SITH // MAÎTRISER";position:absolute;right:22px;top:8px;color:rgba(255,63,82,.4);font:900 8px var(--font-display);letter-spacing:.22em;z-index:4;pointer-events:none}
@@ -1696,3 +1696,63 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 .forge-score small{display:block;color:#607988;font-size:7px;margin-top:2px;white-space:nowrap}
 @media(max-width:1000px){#optimizer .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.forge-reasoning-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:680px){#optimizer .form-grid{grid-template-columns:1fr}.forge-reasoning-grid{grid-template-columns:1fr}.forge-score small{white-space:normal}.forge-score b{font-size:16px}}
+
+
+/* ============================================================
+   V104 // SITH'ARI — NEXUS CENTRAL
+   Présentation uniquement. Les moteurs de connexion/récupération
+   et le parsing existants ne sont pas modifiés.
+   ============================================================ */
+.phase-nav-label.sithari{color:#d8c7a1;text-shadow:0 0 10px rgba(224,194,119,.16)}
+.phase-nav-label.sithari span{color:#f4d98b;text-shadow:0 0 12px rgba(255,207,92,.48)}
+.phase-nav-label.sithari small{color:#a58d60}
+.nav-sithari{border-color:rgba(224,194,119,.2)!important;color:#e2d2ad!important}
+.nav-sithari .nav-icon{color:#f0cc6e;text-shadow:0 0 10px rgba(240,204,110,.5)}
+.nav-sithari:hover{background:rgba(154,110,22,.1)!important;border-color:rgba(240,204,110,.45)!important}
+.nav-sithari.active{background:linear-gradient(90deg,rgba(132,88,14,.34),rgba(48,35,13,.12))!important;border-color:rgba(240,204,110,.6)!important;box-shadow:inset 3px 0 0 #e9bd55,0 0 24px rgba(218,167,52,.1)!important}
+.nav-sithari.active:before{background:#e9bd55!important;box-shadow:0 0 14px #e9bd55!important}
+.phase-inline.sithari{color:#e9ca78;text-shadow:0 0 10px rgba(226,181,66,.22)}
+
+.sithari-core{position:absolute;z-index:9;left:50%;top:50%;transform:translate(-50%,-50%);width:92px;height:92px;border-radius:50%;border:1px solid rgba(241,204,105,.72);background:radial-gradient(circle,rgba(45,29,8,.98) 0,rgba(11,9,8,.94) 55%,rgba(0,0,0,.18) 100%);box-shadow:0 0 0 4px rgba(229,188,78,.08),0 0 22px rgba(234,191,72,.3),inset 0 0 24px rgba(255,201,76,.13);color:#f5df9c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;overflow:hidden;transition:.2s ease}
+.sithari-core:before,.sithari-core:after{content:"";position:absolute;inset:8px;border:1px solid rgba(242,207,122,.22);border-radius:50%;pointer-events:none}
+.sithari-core:after{inset:16px;border-style:dashed;opacity:.55;animation:sithariOrbit 8s linear infinite}
+.sithari-core:hover{transform:translate(-50%,-50%) scale(1.08);box-shadow:0 0 0 5px rgba(229,188,78,.1),0 0 38px rgba(234,191,72,.48),inset 0 0 28px rgba(255,201,76,.2);filter:brightness(1.14)}
+.sithari-core-rune{position:relative;z-index:1;font-size:20px;line-height:1;color:#ffe49a;text-shadow:0 0 12px rgba(255,211,90,.8)}
+.sithari-core strong{position:relative;z-index:1;font:800 8px/1 var(--font-display);letter-spacing:.16em}
+.sithari-core small{position:relative;z-index:1;color:#a58f67;font:700 5px/1 var(--font-display);letter-spacing:.18em}
+@keyframes sithariOrbit{to{transform:rotate(360deg)}}
+
+.decision-holocron:has(.sithari-core):after{content:"SITH’ARI // NEXUS";position:absolute;left:50%;top:calc(50% + 58px);transform:translateX(-50%);color:rgba(232,201,121,.5);font:800 5px/1 var(--font-display);letter-spacing:.22em;white-space:nowrap;pointer-events:none}
+
+.sithari-page{position:relative;min-height:calc(100vh - 70px);padding:26px 30px 30px;overflow:hidden;background:radial-gradient(circle at 50% 20%,rgba(199,151,42,.075),transparent 35%),linear-gradient(145deg,#09090b,#0c0b0d 55%,#070708)}
+.sithari-page:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 49.9%,rgba(231,194,91,.055) 50%,transparent 50.1%),linear-gradient(0deg,transparent 49.9%,rgba(231,194,91,.04) 50%,transparent 50.1%);background-size:100% 100%,100% 100%;pointer-events:none}
+.sithari-visual-grid{position:absolute;inset:-20%;pointer-events:none;opacity:.25}
+.sithari-visual-grid i{position:absolute;border:1px solid rgba(224,187,84,.2);transform:rotate(45deg);width:30vw;height:30vw;left:10%;top:20%}
+.sithari-visual-grid i:nth-child(2){left:auto;right:8%;top:8%;width:22vw;height:22vw}
+.sithari-visual-grid i:nth-child(3){left:38%;top:55%;width:18vw;height:18vw}
+.sithari-visual-grid i:nth-child(4){left:55%;top:5%;width:8vw;height:8vw;border-color:rgba(255,72,88,.24)}
+.sithari-header,.sithari-command-grid,.sithari-analysis-grid,.sithari-footer{position:relative;z-index:2;max-width:1450px;margin-left:auto;margin-right:auto}
+.sithari-kicker{font:900 8px/1 var(--font-display);letter-spacing:.3em;color:#bba56f;margin-bottom:8px}
+.sithari-title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;border-bottom:1px solid rgba(232,198,104,.15);padding-bottom:17px}
+.sithari-title-row h2{margin:0;color:#f3e2b4;font:300 clamp(30px,4vw,52px)/.95 Inter,sans-serif;letter-spacing:.12em;text-shadow:0 0 24px rgba(231,190,74,.14)}
+.sithari-title-row p{margin:10px 0 0;color:#8f887a;font:8px/1.5 var(--font-display);letter-spacing:.18em}
+.sithari-state{display:flex;align-items:center;gap:8px;color:#9c9075;font:800 7px var(--font-display);letter-spacing:.16em;white-space:nowrap}
+.sithari-state .status-dot{width:6px;height:6px;background:#e3bc57;box-shadow:0 0 10px rgba(227,188,87,.65)}
+.sithari-thesis{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px 11px;margin:16px 0 20px;color:#706b62;font:700 7px var(--font-display);letter-spacing:.15em}
+.sithari-thesis b{color:#a19a8a;font-size:6px}.sithari-thesis i{color:#645a46;font-style:normal}.sithari-thesis strong{color:#e8c96f;text-shadow:0 0 12px rgba(232,201,111,.3)}
+.sithari-command-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.sithari-command-card{position:relative;min-height:178px;padding:17px 18px;background:linear-gradient(145deg,rgba(18,16,13,.94),rgba(8,8,9,.92));border:1px solid rgba(222,188,91,.2);clip-path:polygon(0 7%,2% 2%,93% 0,100% 10%,100% 90%,97% 98%,7% 100%,0 92%);box-shadow:inset 0 0 28px rgba(228,185,64,.025),0 12px 30px rgba(0,0,0,.18)}
+.sithari-command-card:before{content:"";position:absolute;inset:7px;border:1px solid rgba(235,202,116,.06);clip-path:inherit;pointer-events:none}
+.sithari-card-head{display:flex;align-items:flex-start;gap:11px;position:relative;z-index:1}.sithari-card-head>span{color:#b38f44;font:800 8px var(--font-display);padding-top:2px}.sithari-card-head div{display:flex;flex-direction:column;gap:3px}.sithari-card-head small{color:#7d776c;font:800 6px var(--font-display);letter-spacing:.18em}.sithari-card-head h3{margin:0;color:#e9e4d8;font:600 12px/1.1 Inter,sans-serif;letter-spacing:.08em}.sithari-card-head em{margin-left:auto;color:#d4b45f;font:800 7px var(--font-display);font-style:normal;letter-spacing:.12em}
+.sithari-metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:24px}.sithari-metric-grid div{padding:10px 7px;border-top:1px solid rgba(231,198,100,.15);background:rgba(255,255,255,.015)}.sithari-metric-grid small{display:block;color:#777167;font:700 6px var(--font-display);letter-spacing:.13em}.sithari-metric-grid strong{display:block;margin-top:5px;color:#f1eee8;font:300 21px/1 Inter,sans-serif}
+.sithari-verdict{margin-top:23px;color:#f1dfac;font:600 18px/1.15 Inter,sans-serif;letter-spacing:.02em}.sithari-verdict-detail{margin-top:9px;max-width:80%;color:#8e897e;font:8px/1.55 Inter,sans-serif}
+.sithari-list{margin-top:17px;display:grid;gap:7px}.sithari-list.empty{color:#68645d;font:8px var(--font-display);letter-spacing:.08em}.sithari-list-row{display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;padding:8px 9px;background:rgba(255,255,255,.018);border-left:2px solid rgba(224,188,79,.5)}.sithari-list-row b{color:#d5b560;font:800 7px var(--font-display)}.sithari-list-row span{color:#bdb7a9;font:8px Inter,sans-serif}.sithari-list-row strong{color:#e8dfca;font:700 8px Inter,sans-serif}
+.sithari-analysis-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:13px;margin-top:13px}.sithari-decision-panel,.sithari-rules-panel{background:linear-gradient(145deg,rgba(16,15,13,.96),rgba(8,8,9,.94));border-color:rgba(224,188,79,.2)}
+.sithari-panel-title{display:flex;align-items:center;gap:10px;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.06)}.sithari-panel-title>span{color:#e5c568;font-size:17px}.sithari-panel-title div{display:flex;flex-direction:column;gap:4px}.sithari-panel-title small{color:#7d776b;font:800 6px var(--font-display);letter-spacing:.18em}.sithari-panel-title strong{color:#e6e1d5;font:600 11px Inter,sans-serif;letter-spacing:.08em}
+.sithari-action-stack{display:grid;gap:8px;margin-top:12px}.sithari-action{display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;padding:11px 12px;border:1px solid rgba(226,190,86,.11);background:rgba(255,255,255,.018)}.sithari-action>span{display:grid;place-items:center;width:28px;height:28px;border:1px solid rgba(225,191,87,.28);border-radius:50%;color:#e3c46d;font:800 8px var(--font-display)}.sithari-action div{display:flex;flex-direction:column;gap:4px}.sithari-action strong{color:#ddd7c9;font:700 9px Inter,sans-serif}.sithari-action small{color:#777268;font:7px/1.4 Inter,sans-serif}.sithari-action button{border:1px solid rgba(226,190,86,.32);background:rgba(183,142,38,.08);color:#e4c36a;padding:7px 9px;font:800 6px var(--font-display);letter-spacing:.13em;cursor:pointer}.sithari-action button:hover{background:rgba(183,142,38,.16);border-color:rgba(226,190,86,.55)}
+.sithari-rules{display:grid;gap:8px;margin-top:13px}.sithari-rules div{display:grid;grid-template-columns:25px 1fr;gap:9px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.045)}.sithari-rules b{color:#bd9b4e;font:800 7px var(--font-display)}.sithari-rules span{color:#8b867b;font:8px/1.45 Inter,sans-serif}
+.sithari-footer{display:flex;align-items:center;gap:16px;justify-content:space-between;margin-top:16px;padding:11px 2px;color:#625d54;font:700 6px var(--font-display);letter-spacing:.15em}.sithari-footer strong{color:#a99260}.sithari-footer small{letter-spacing:.05em;color:#5d5952}
+#sithari.active~*{}
+#sithari:after{content:"SITH’ARI // NEXUS CENTRAL";position:absolute;right:24px;top:12px;color:rgba(229,197,105,.25);font:900 7px var(--font-display);letter-spacing:.22em}
+@media(max-width:900px){.sithari-command-grid,.sithari-analysis-grid{grid-template-columns:1fr}.sithari-page{padding:20px 16px}.sithari-title-row{align-items:flex-start;flex-direction:column}.sithari-metric-grid{grid-template-columns:repeat(2,1fr)}.sithari-footer{flex-direction:column;align-items:flex-start;gap:7px}.decision-holocron:has(.sithari-core):after{display:none}}
+@media(max-width:680px){.sithari-core{width:72px;height:72px}.sithari-core strong{font-size:6px}.sithari-core-rune{font-size:15px}.sithari-title-row h2{font-size:30px}.sithari-thesis{justify-content:flex-start}.sithari-verdict{font-size:15px}}

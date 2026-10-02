@@ -473,7 +473,7 @@ async function loadRemotePlayer(){
     for(const m of apiMods){ if(!seenIds.has(m.game_id)){ merged.push(m); seenIds.add(m.game_id); } }
     const seen=new Set();mods=merged.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
     log(`Mods décodés : ${htmlMods.length} via pages publiques + ${Math.max(0,mods.length-htmlMods.length)} compléments API = ${mods.length}.`);
-    currentData={allyCode,name:title,characters:chars,ships,mods,galacticPower:accountGalacticPower};updateRosterCounts(chars,ships);renderGalacticPower();buildFactionMap();fillCharacters(chars);updateAccountSummary(title,fmt);renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();renderHolocronVerdict(holocronTopChangeCandidates().slice(0,10));
+    currentData={allyCode,name:title,characters:chars,ships,mods,galacticPower:accountGalacticPower};updateRosterCounts(chars,ships);renderGalacticPower();buildFactionMap();fillCharacters(chars);updateAccountSummary(title,fmt);renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();renderHolocronVerdict(holocronTopChangeCandidates().slice(0,10));renderSithariNexus();
     $('dataInfo').textContent=`Source: SWGOH.GG public pages${workerUrl()?' + Cloudflare Worker relay':''}\nJoueur: ${title}\nAlly Code: ${fmt}\nPersonnages: ${chars.length}\nVaisseaux: ${ships.length}\nUnités totales: ${chars.length+ships.length}\nMods: ${mods.length}\nProfils Kyber disponibles dans cette version: ${Object.keys(profiles).length}`;
     log(`TERMINÉ : ${chars.length} personnages, ${ships.length} vaisseaux, ${mods.length} mods exploitables.`);if(!mods.length)log('Aucun mod lisible.');showPage('dashboard');
   }catch(e){log(`Échec du chargement : ${e.message||e}`);log('Si le relais est configuré et renvoie une erreur HTTP, utilise l’import JSON.');}
@@ -1086,12 +1086,54 @@ function renderHolocronTopChanges(){
  bindEssentialPortraits();
 }
 
+
+
+/* V104 — SITH'ARI / NEXUS. UI-only aggregation over data already loaded. */
+function renderSithariNexus(){
+  const chars=Array.isArray(rosterCharacters)?rosterCharacters:[];
+  const equipped=Array.isArray(mods)?mods:[];
+  const units=$('sithariUnits'), modsEl=$('sithariMods'), gpEl=$('sithariGp'), avgEl=$('sithariAvgSpeed');
+  if(!units)return;
+  units.textContent=num(chars.length); modsEl.textContent=num(equipped.length); gpEl.textContent=accountGalacticPower?.total?num(accountGalacticPower.total):'—';
+  const speeds=chars.map(c=>Number(c?.stats?.Speed ?? c?.speed ?? c?.current_stats?.Speed ?? 0)).filter(Number.isFinite).filter(x=>x>0);
+  const avg=speeds.length?speeds.reduce((a,b)=>a+b,0)/speeds.length:0; avgEl.textContent=avg?num(avg,1):'—';
+  const conflicts=$('sithariConflicts'), priorities=$('sithariPriorities'), actions=$('sithariActions');
+  const candidates=chars.length?holocronTopChangeCandidates():[];
+  const weak=chars.map(c=>({c,mods:getCharacterMods(c)})).map(x=>({ ...x,status:v176ModStatus(x.mods)})).filter(x=>['SANS MODS','INCOMPLETS','TRÈS FAIBLES','FAIBLES'].includes(x.status.status));
+  const recipientMap=new Map();
+  candidates.forEach(r=>{const key=r.recipient?.baseId||r.recipient?.name||'unknown';const prev=recipientMap.get(key)||{r,count:0};prev.count++;recipientMap.set(key,prev)});
+  const topRecipients=[...recipientMap.values()].sort((a,b)=>b.count-a.count).slice(0,4);
+  const donorMap=new Map(); candidates.forEach(r=>{const key=r.donor?.baseId||r.donor?.name||'unknown'; donorMap.set(key,(donorMap.get(key)||0)+1)});
+  const conflictsRows=[...donorMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3);
+  $('sithariConflictCount').textContent=String(conflictsRows.length);
+  conflicts.classList.toggle('empty',!conflictsRows.length);
+  conflicts.innerHTML=conflictsRows.length?conflictsRows.map((x,i)=>`<div class="sithari-list-row"><b>0${i+1}</b><span>${esc((chars.find(c=>(c.baseId||c.id)===x[0])?.name)||x[0])}</span><strong>${x[1]} destination${x[1]>1?'s':''}</strong></div>`).join(''):'Aucun conflit calculé.';
+  const priorityRows=topRecipients.length?topRecipients:weak.slice(0,4).map(x=>({r:{recipient:x.c},count:1}));
+  $('sithariPriorityCount').textContent=String(priorityRows.length);
+  priorities.classList.toggle('empty',!priorityRows.length);
+  priorities.innerHTML=priorityRows.length?priorityRows.map((x,i)=>`<div class="sithari-list-row"><b>0${i+1}</b><span>${esc(x.r.recipient?.name||x.r.recipient?.baseId||'—')}</span><strong>${x.count} signal${x.count>1?'s':''}</strong></div>`).join(''):'Aucune priorité détectée.';
+  const urgent=candidates.filter(r=>Number(r?.gain?.speed||0)>=10).length;
+  const verdict=$('sithariVerdict'), detail=$('sithariVerdictDetail'), tag=$('sithariVerdictTag'), state=$('sithariState');
+  if(!chars.length){tag.textContent='ATTENTE';state.textContent='EN ATTENTE DU SCAN';verdict.textContent='Le Nexus attend les données du roster.';detail.textContent='Synchronisez le profil pour faire émerger les priorités globales.';actions.innerHTML='<div class="sithari-action"><span>✧</span><div><strong>Synchroniser le roster</strong><small>Le SITH’ARI travaille uniquement sur les données déjà chargées par le moteur existant.</small></div></div>';return;}
+  tag.textContent=candidates.length?'VERDICT':'STABLE'; state.textContent=candidates.length?'NEXUS ACTIF':'NEXUS // AUCUNE ALERTE MAJEURE';
+  verdict.textContent=candidates.length?`${candidates.length} décision${candidates.length>1?'s':''} émergent du roster.`:'Le Nexus ne détecte pas de transfert prioritaire.';
+  detail.textContent=candidates.length?`${topRecipients.length} personnage${topRecipients.length>1?'s':''} concentre${topRecipients.length>1?'nt':''} les principaux signaux ; ${urgent} opportunité${urgent>1?'s':''} à forte variation de vitesse.`:'La lecture globale reste cohérente avec les données actuellement chargées.';
+  const rows=[];
+  if(topRecipients[0]) rows.push({title:`Examiner ${topRecipients[0].r.recipient?.name||topRecipients[0].r.recipient?.baseId}`,desc:`${topRecipients[0].count} signal${topRecipients[0].count>1?'s':''} de réallocation converge${topRecipients[0].count>1?'nt':''} vers cette unité.`,page:'top-changes',label:'VOIR'});
+  if(candidates[0]) rows.push({title:`Étudier le transfert ${candidates[0].donor?.name||'du donneur'}`,desc:`${candidates[0].donor?.name||'Donneur'} → ${candidates[0].recipient?.name||'Cible'} · ${num(modTotalSpeed(candidates[0].oldMod),0)} → ${num(modTotalSpeed(candidates[0].newMod),0)} Speed`,page:'mods-analysis',label:'ANALYSER'});
+  if(weak.length) rows.push({title:`Auditer ${weak.length} unité${weak.length>1?'s':''} fragilisée${weak.length>1?'s':''}`,desc:'Le Nexus repère des personnages sans mods, incomplets ou faibles.',page:'mods-analysis',label:'AUDITER'});
+  rows.push({title:'Lancer une optimisation contextualisée',desc:'Le SITH’ARI transmet le contexte à la Forge V2 pour l’analyse détaillée.',page:'optimizer',label:'OUVRIR LA FORGE'});
+  actions.innerHTML=rows.map((r,i)=>`<div class="sithari-action"><span>${String(i+1).padStart(2,'0')}</span><div><strong>${esc(r.title)}</strong><small>${esc(r.desc)}</small></div><button type="button" data-sithari-page="${esc(r.page)}">${esc(r.label)}</button></div>`).join('');
+  actions.querySelectorAll('[data-sithari-page]').forEach(btn=>btn.addEventListener('click',()=>showPage(btn.dataset.sithariPage)));
+}
+
 function showPage(page){
   document.body.dataset.page=page;
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page));
   if(page==='mods-analysis') renderModsAnalysis();
   if(page==='top-changes') renderHolocronTopChanges();
+  if(page==='sithari') renderSithariNexus();
 }
 function setAnalysisTab(tab){
   document.querySelectorAll('.analysis-tab').forEach(x=>x.classList.toggle('active',x.dataset.analysisTab===tab));
@@ -1572,7 +1614,7 @@ async function boot(){
   }
 }
 
-$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();renderHolocronVerdict(holocronTopChangeCandidates().slice(0,10));$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
+$('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();renderHolocronVerdict(holocronTopChangeCandidates().slice(0,10));renderSithariNexus();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
 
 $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
@@ -1707,7 +1749,7 @@ $('unlockMediumSearch')?.addEventListener('click',()=>{
   if(ok){reallocationMediumUnlocked=true;const cb=$('reallocationMedium');if(cb)cb.disabled=false;const b=$('unlockMediumSearch');if(b){b.textContent='🔓 MOYENS AUTORISÉS';b.disabled=true;} }
 });
 
-$('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';analysisSide='ALL';analysisStatus='TOUS';analysisAuditSpeed='TOUS';analysisAuditSort='priority';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';if($('playerName'))$('playerName').textContent='Profil non chargé';if($('playerAlly'))$('playerAlly').textContent='—';if($('heroPlayerName'))$('heroPlayerName').textContent='Profil non chargé';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent='—';if($('heroProfileState'))$('heroProfileState').textContent='EN ATTENTE';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';});
+$('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';analysisSide='ALL';analysisStatus='TOUS';analysisAuditSpeed='TOUS';analysisAuditSort='priority';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';if($('playerName'))$('playerName').textContent='Profil non chargé';if($('playerAlly'))$('playerAlly').textContent='—';if($('heroPlayerName'))$('heroPlayerName').textContent='Profil non chargé';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent='—';if($('heroProfileState'))$('heroProfileState').textContent='EN ATTENTE';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';renderSithariNexus();});
 
 document.querySelectorAll('.analysis-tab').forEach(btn=>btn.addEventListener('click',()=>setAnalysisTab(btn.dataset.analysisTab)));
 $('analysisFaction')?.addEventListener('change',()=>{analysisFaction=$('analysisFaction').value;analysisSelectedCharacter='';renderSelectionPanel();});
@@ -1723,5 +1765,7 @@ $('modDetailModal')?.addEventListener('click',e=>{if(e.target.id==='modDetailMod
 
 document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{showPage(btn.dataset.page);if(btn.dataset.page==='data')renderDataTable();}));
 
+document.getElementById('sithariAccess')?.addEventListener('click',()=>showPage('sithari'));
 renderGalacticPower();
+renderSithariNexus();
 boot();
