@@ -1786,3 +1786,75 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
   padding-left:10px;
 }
 .reallocation-scope .roster-option input{accent-color:#e3bf55}
+
+/* V2.0.2 — SEIGNEUR SITH / FORGE : commandes compactes en 3 colonnes. */
+#optimizer .forge-control-group{
+  margin:12px 0 0;
+  padding:11px 12px 12px;
+  border:1px solid rgba(58,151,191,.18);
+  border-radius:7px;
+  background:linear-gradient(145deg,rgba(5,20,32,.78),rgba(3,12,20,.62));
+}
+#optimizer .forge-control-title{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:9px;
+}
+#optimizer .forge-control-title span{
+  color:#62d8ff;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.15em;
+}
+#optimizer .forge-control-title small{
+  color:#627f90;
+  font-size:8px;
+  text-align:right;
+}
+#optimizer .forge-control-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  align-items:end;
+}
+#optimizer .forge-control-grid label{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+  color:#7ea2b4;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.04em;
+}
+#optimizer .forge-control-grid input,
+#optimizer .forge-control-grid select{
+  width:100%;
+  min-width:0;
+  min-height:38px;
+}
+#optimizer .forge-primary-group .forge-control-title span{color:#e8c866}
+#optimizer .forge-primary-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+#optimizer .forge-primary-grid select:disabled{opacity:.58}
+#optimizer .forge-run-group .primary{width:100%;min-height:38px;margin:0}
+
+/* Aucun déplacement des fenêtres/cartes de mods au survol. */
+#optimizer .forge-mod-card:hover,
+.mod-card:hover,
+.mod-detail-card:hover,
+.report-mod-card:hover{
+  transform:none!important;
+}
+
+@media(max-width:1000px){
+  #optimizer .forge-control-grid,
+  #optimizer .forge-primary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #optimizer .forge-control-title{display:block}
+  #optimizer .forge-control-title small{display:block;text-align:left;margin-top:4px}
+}
+@media(max-width:680px){
+  #optimizer .forge-control-grid,
+  #optimizer .forge-primary-grid{grid-template-columns:1fr}
+}

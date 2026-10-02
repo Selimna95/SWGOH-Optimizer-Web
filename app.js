@@ -337,15 +337,36 @@ function optimizerRecommendationSummary(profile){
     return `${parts}${Number.isFinite(Number(s.weight))?' ('+(Number(s.weight)*100).toFixed(1)+'%)':''}`;
   }).join(' · ') || (Array.isArray(profile.sets)?profile.sets.slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0)).slice(0,4).map(s=>`${s.name||'?'} ×${Number(s.count||0)}`).join(' · '):'') || 'Non disponible';
   const slots=profile.slots||{};
-  const fixed={Square:'Offense',Diamond:'Defense'};
-  const ordered=['Square','Arrow','Diamond','Triangle','Circle','Cross'];
+  // Carré (Offense) et Diamant (Defense) sont des primaires fixes du jeu,
+  // pas des recommandations character-specific : ne pas les mélanger aux choix recommandés.
+  const ordered=['Arrow','Triangle','Circle','Cross'];
   const primaries=ordered.map(slot=>{
-    if(fixed[slot]) return `${slot} : ${fixed[slot]}`;
     const p=slots?.[slot]?.primaries||{};
     const best=Object.entries(p).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0))[0];
     return best ? `${slot} : ${best[0]}` : null;
   }).filter(Boolean);
-  return {sets:setText,primaries:primaries.join(' · ')||'Non disponible'};
+  return {sets:setText,primaries:primaries.join(' · ')||'Référence des primaires variables indisponible'};
+}
+function renderOptimizerPrimaryControls(profile){
+  const slots={Arrow:'optimizerPrimaryArrow',Triangle:'optimizerPrimaryTriangle',Circle:'optimizerPrimaryCircle',Cross:'optimizerPrimaryCross'};
+  for(const [slot,id] of Object.entries(slots)){
+    const el=$(id); if(!el) continue;
+    const data=profile?.slots?.[slot]?.primaries||{};
+    const entries=Object.entries(data).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0));
+    el.innerHTML=entries.length
+      ? entries.map(([name,weight],index)=>`<option value="${esc(name)}">${index===0?'Recommandée · ':''}${esc(name)} · ${(Number(weight||0)*100).toFixed(1)}%</option>`).join('')+'<option value="">Toutes les primaires</option>'
+      : '<option value="">Toutes les primaires · référence indisponible</option>';
+    el.disabled=!entries.length;
+    if(entries.length) el.value=entries[0][0];
+  }
+}
+function optimizerPrimaryFilters(){
+  return {
+    Arrow:String($('optimizerPrimaryArrow')?.value||''),
+    Triangle:String($('optimizerPrimaryTriangle')?.value||''),
+    Circle:String($('optimizerPrimaryCircle')?.value||''),
+    Cross:String($('optimizerPrimaryCross')?.value||'')
+  };
 }
 function updateCharacterInfo() {
   const c=selectedCharacter();
@@ -355,6 +376,7 @@ function updateCharacterInfo() {
   const ref=p?'profil Kyber disponible':(local?'référence Optimizer locale disponible':'référence indisponible');
   const refProfile=p || null;
   const rec=optimizerRecommendationSummary(refProfile);
+  renderOptimizerPrimaryControls(refProfile);
   $('characterInfo').innerHTML=`
     <div class="optimizer-character-main">
       <span class="tag">${esc(c.baseId||c.base_id||'')}</span>
@@ -654,7 +676,8 @@ function renderDataTable(){
   }
 }
 
-$('loadPlayer').addEventListener('click',loadRemotePlayer);$('allyCode').addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay').addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||'';$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});$('dataSearch').addEventListener('input',renderDataTable);['dataFactionFilter','dataSideFilter','modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
+$('loadPlayer').addEventListener('click',loadRemotePlayer);$('allyCode').addEventListener('keydown',e=>{if(e.key==='Enter')loadRemotePlayer();});$('saveRelay').addEventListener('click',saveWorkerUrl);$('relayUrl').value=localStorage.getItem('swgohRelayUrl')||'';$('relayState').textContent=workerUrl()?'RELAIS CONFIGURÉ':'RELAIS NON CONFIGURÉ';$('character').addEventListener('change',()=>{updateCharacterInfo();ensureSelectedKyberProfile();});
+['optimizerPrimaryArrow','optimizerPrimaryTriangle','optimizerPrimaryCircle','optimizerPrimaryCross'].forEach(id=>$(id)?.addEventListener('change',()=>{}));$('dataSearch').addEventListener('input',renderDataTable);['dataFactionFilter','dataSideFilter','modSetFilter','modSlotFilter','modOwnerFilter','modLevelFilter'].forEach(id=>$(id)?.addEventListener('input',renderDataTable));
 document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.data-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');currentDataset=btn.dataset.dataset;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=currentDataset!=='mods';if(ms)ms.hidden=currentDataset!=='mods';renderDataCharacterFilters();renderDataTable();}));
 
 
@@ -1636,7 +1659,8 @@ $('runOptimizer').addEventListener('click',async()=>{
     target_speed:String($('optimizerTargetSpeed')?.value||''),
     opponent_speed:String($('optimizerOpponentSpeed')?.value||''),
     target_potency:String($('optimizerTargetPotency')?.value||''),
-    target_tenacity:String($('optimizerTargetTenacity')?.value||'')
+    target_tenacity:String($('optimizerTargetTenacity')?.value||''),
+    primary_filters:optimizerPrimaryFilters()
   };
   $('runOptimizer').disabled=true;
   $('runOptimizer').textContent='CALCUL EN COURS…';

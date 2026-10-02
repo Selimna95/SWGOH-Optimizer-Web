@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="app.css?v=2.0.2">
+  <link rel="stylesheet" href="app.css?v=2.0.2-fix2">
 
 
 
@@ -244,28 +244,50 @@
 <section id="optimizer" class="page">
       <div class="panel controls">
         <div class="panel-title">SEIGNEUR SITH // FORGE D’OPTIMISATION</div>
-        <div class="form-grid">
-          <label>Personnage<select id="character"></select></label>
-          <label>Objectif<select id="optimizerObjective">
-            <option value="balanced">Équilibre</option>
-            <option value="initiative">Prendre le premier tour</option>
-            <option value="damage">Maximiser les dégâts</option>
-            <option value="survival">Maximiser la survie</option>
-            <option value="control">Contrôle / debuffs</option>
-          </select></label>
-          <label>Mode<select id="optimizerMode">
-            <option value="general">Général</option>
-            <option value="gac">GAC</option>
-            <option value="tw">Territory Wars</option>
-            <option value="tb">Territory Battles</option>
-          </select></label>
-          <label>Cible Speed<input id="optimizerTargetSpeed" type="number" min="0" placeholder="Auto"></label>
-          <label>Speed adverse<input id="optimizerOpponentSpeed" type="number" min="0" placeholder="Optionnel"></label>
-          <label>Cible Potency<input id="optimizerTargetPotency" type="number" min="0" max="2" step="0.01" placeholder="Optionnel"></label>
-          <label>Cible Tenacity<input id="optimizerTargetTenacity" type="number" min="0" max="2" step="0.01" placeholder="Optionnel"></label>
-          <label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="5"></label>
-          <label>Limite / slot<input id="limitPerSlot" type="number" min="5" max="150" value="80"></label>
-          <button id="runOptimizer" class="primary">LANCER LA FORGE V2</button>
+        <div class="forge-control-group">
+          <div class="forge-control-title"><span>01 // CIBLAGE</span><small>Définir ce que le Seigneur Sith doit optimiser</small></div>
+          <div class="forge-control-grid">
+            <label>Personnage<select id="character"></select></label>
+            <label>Objectif<select id="optimizerObjective">
+              <option value="balanced">Équilibre</option>
+              <option value="initiative">Prendre le premier tour</option>
+              <option value="damage">Maximiser les dégâts</option>
+              <option value="survival">Maximiser la survie</option>
+              <option value="control">Contrôle / debuffs</option>
+            </select></label>
+            <label>Mode<select id="optimizerMode">
+              <option value="general">Général</option>
+              <option value="gac">GAC</option>
+              <option value="tw">Territory Wars</option>
+              <option value="tb">Territory Battles</option>
+            </select></label>
+          </div>
+        </div>
+        <div class="forge-control-group">
+          <div class="forge-control-title"><span>02 // CARACTÉRISTIQUES</span><small>Les seuils restent facultatifs et s'adaptent au personnage sélectionné</small></div>
+          <div class="forge-control-grid">
+            <label>Cible Speed<input id="optimizerTargetSpeed" type="number" min="0" placeholder="Auto"></label>
+            <label>Speed adverse<input id="optimizerOpponentSpeed" type="number" min="0" placeholder="Optionnel"></label>
+            <label>Cible Potency<input id="optimizerTargetPotency" type="number" min="0" max="2" step="0.01" placeholder="Optionnel"></label>
+            <label>Cible Tenacity<input id="optimizerTargetTenacity" type="number" min="0" max="2" step="0.01" placeholder="Optionnel"></label>
+          </div>
+        </div>
+        <div class="forge-control-group forge-primary-group">
+          <div class="forge-control-title"><span>03 // PRIMAIRES RECOMMANDÉES</span><small>Choix variables issus de la référence du personnage · Carré / Diamant ne sont pas présentés comme des recommandations</small></div>
+          <div class="forge-control-grid forge-primary-grid">
+            <label>Flèche<select id="optimizerPrimaryArrow"><option value="">Automatique</option></select></label>
+            <label>Triangle<select id="optimizerPrimaryTriangle"><option value="">Automatique</option></select></label>
+            <label>Cercle<select id="optimizerPrimaryCircle"><option value="">Automatique</option></select></label>
+            <label>Croix<select id="optimizerPrimaryCross"><option value="">Automatique</option></select></label>
+          </div>
+        </div>
+        <div class="forge-control-group forge-run-group">
+          <div class="forge-control-title"><span>04 // PROFONDEUR DE RECHERCHE</span><small>Maîtriser le nombre de candidats et de configurations explorées</small></div>
+          <div class="forge-control-grid">
+            <label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="5"></label>
+            <label>Limite / slot<input id="limitPerSlot" type="number" min="5" max="150" value="80"></label>
+            <button id="runOptimizer" class="primary">LANCER LA FORGE V2</button>
+          </div>
         </div>
         <div id="characterInfo" class="character-info">Aucun personnage sélectionné.</div>
         <div id="optimizerError" class="error"></div>
@@ -446,7 +468,7 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <!-- V100: interface nouvelle / moteur technique V90 conservé intégralement. -->
 <script src="gac-usage.js?v=89"></script>
-<script src="app.js?v=2.0.2"></script>
-<script src="interface-adapter.js?v=2.0.2"></script>
+<script src="app.js?v=2.0.2-fix2"></script>
+<script src="interface-adapter.js?v=2.0.2-fix2"></script>
 </body>
 </html>
