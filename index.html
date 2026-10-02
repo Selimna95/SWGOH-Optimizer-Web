@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="app.css?v=2.1.0">
+  <link rel="stylesheet" href="app.css?v=2.1.1">
 
 
 
 
-<title>Selimna’s Holocron — V2.1.0</title>
+<title>Selimna’s Holocron — V2.1.1</title>
 
 
 
@@ -60,7 +60,7 @@
 
 <div id="appShell" class="app-shell" hidden>
 <header class="topbar">
-  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V2.1.0</span></div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V2.1.1</span></div>
   <div class="top-status-group">
     <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
     <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
@@ -244,24 +244,24 @@
 <section id="optimizer" class="page">
       <div class="panel controls">
         <div class="panel-title">SEIGNEUR SITH // FORGE D’OPTIMISATION</div>
-        <div class="forge-control-group">
-          <div class="forge-control-title"><span>01 // PERSONNAGE</span><small>Le Seigneur Sith travaille personnage par personnage à partir de la référence Kyber SWGOH.GG.</small></div>
-          <div class="forge-control-grid">
+        <div class="forge-control-group forge-character-group">
+          <div class="forge-control-title"><span>01 // PERSONNAGE</span><small>Le Seigneur Sith travaille personnage par personnage. La doctrine de recherche est dictée par la référence Kyber.</small></div>
+          <div class="forge-character-select-row">
             <label>Personnage<select id="character"></select></label>
-            <div class="forge-reference-card" id="optimizerKyberReference"><span>RÉFÉRENCE</span><strong>KYBER // SWGOH.GG</strong><small>Sets + primaires de référence appliqués automatiquement.</small></div>
+            <div class="forge-reference-stamp"><span>RÉFÉRENCE ACTIVE</span><strong>KYBER // SWGOH.GG</strong><small>Top 1000 GAC · sets · primaires · secondaires</small></div>
           </div>
         </div>
         <div class="forge-control-group forge-scope-group">
-          <div class="forge-control-title"><span>02 // PERSONNAGES À ANALYSER</span><small>Par défaut, les mods sont recherchés uniquement sur les personnages très faibles et faibles. Les moyens sont une extension volontaire. Les GL restent hors périmètre à ce niveau.</small></div>
+          <div class="forge-control-title"><span>02 // PERSONNAGES À ANALYSER</span><small>Le périmètre des mods sources reste volontairement séparé de la référence du personnage.</small></div>
           <div class="forge-control-grid forge-scope-grid">
             <label class="scope-choice"><input type="checkbox" id="optimizerVeryLow" checked><b>TRÈS FAIBLES</b><small>source prioritaire</small></label>
             <label class="scope-choice"><input type="checkbox" id="optimizerLow" checked><b>FAIBLES</b><small>source prioritaire</small></label>
-            <label class="scope-choice"><input type="checkbox" id="optimizerMedium"><b>MOYENS</b><small>optionnel</small></label>
+            <label class="scope-choice"><input type="checkbox" id="optimizerMedium"><b>MOYENS</b><small>extension volontaire</small></label>
             <label class="scope-choice scope-all"><input type="checkbox" id="optimizerAllRoster"><b>TOUT LE ROSTER</b><small>sans GL à ce niveau</small></label>
           </div>
         </div>
         <div class="forge-control-group forge-run-group">
-          <div class="forge-control-title"><span>03 // PROFONDEUR DE RECHERCHE</span><small>La Forge respecte automatiquement les sets et primaires de référence Kyber du personnage.</small></div>
+          <div class="forge-control-title"><span>03 // PROFONDEUR DE RECHERCHE</span><small>La Forge ne remplace pas la référence : elle cherche dans ton arsenal ce qui s'en approche le mieux.</small></div>
           <div class="forge-control-grid">
             <label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="5"></label>
             <label>Limite / slot<input id="limitPerSlot" type="number" min="5" max="150" value="80"></label>
@@ -447,7 +447,7 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <!-- V100: interface nouvelle / moteur technique V90 conservé intégralement. -->
 <script src="gac-usage.js?v=89"></script>
-<script src="app.js?v=2.1.0"></script>
-<script src="interface-adapter.js?v=2.1.0"></script>
+<script src="app.js?v=2.1.1"></script>
+<script src="interface-adapter.js?v=2.1.1"></script>
 </body>
 </html>

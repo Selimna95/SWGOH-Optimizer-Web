@@ -329,23 +329,58 @@ function selectedCharacter() {
   return rosterCharacters.find(c=>String(c.name||c.character||c.baseId||'')===value) || null;
 }
 function optimizerRecommendationSummary(profile){
-  if(!profile || typeof profile!=='object') return {sets:'Référence de sets indisponible', primaries:'Référence de primaires indisponible'};
+  const out={sets:[],primaries:[],secondaries:[],source:'Référence Kyber détaillée indisponible'};
+  if(!profile || typeof profile!=='object') return out;
+  out.source=profile.source||'SWGOH.GG Kyber / Top 1000 GAC';
   const specific=Array.isArray(profile.specific_sets)?profile.specific_sets:[];
-  const setText=specific.slice(0,4).map(s=>{
+  out.sets=(specific.length?specific:((Array.isArray(profile.sets)?profile.sets:[]).slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0)))).slice(0,5).map(s=>{
     const counts=s.counts||{};
-    const parts=Object.entries(counts).map(([name,n])=>`${name} ×${n}`).join(' + ');
-    return `${parts}${Number.isFinite(Number(s.weight))?' ('+(Number(s.weight)*100).toFixed(1)+'%)':''}`;
-  }).join(' · ') || (Array.isArray(profile.sets)?profile.sets.slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0)).slice(0,4).map(s=>`${s.name||'?'} ×${Number(s.count||0)}`).join(' · '):'') || 'Non disponible';
+    const label=s.name||Object.entries(counts).map(([name,n])=>`${name} ×${n}`).join(' + ')||'Set non renseigné';
+    const weight=Number(s.weight);
+    return {label,weight:Number.isFinite(weight)?weight:null};
+  });
   const slots=profile.slots||{};
-  // Carré (Offense) et Diamant (Defense) sont des primaires fixes du jeu,
-  // pas des recommandations character-specific : ne pas les mélanger aux choix recommandés.
-  const ordered=['Arrow','Triangle','Circle','Cross'];
-  const primaries=ordered.map(slot=>{
-    const p=slots?.[slot]?.primaries||{};
-    const best=Object.entries(p).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0))[0];
-    return best ? `${slot} : ${best[0]}` : null;
+  const slotLabels={Square:'Carré',Arrow:'Flèche',Diamond:'Diamant',Triangle:'Triangle',Circle:'Cercle',Cross:'Croix'};
+  const order=['Square','Arrow','Diamond','Triangle','Circle','Cross'];
+  out.primaries=order.map(slot=>{
+    const data=slots?.[slot]?.primaries||{};
+    const entries=Object.entries(data).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0));
+    if(!entries.length)return null;
+    const [name,weight]=entries[0];
+    return {slot,label:slotLabels[slot]||slot,name,weight:Number(weight||0),fixed:slot==='Square'||slot==='Diamond'};
   }).filter(Boolean);
-  return {sets:setText,primaries:primaries.join(' · ')||'Référence des primaires variables indisponible'};
+  const focus=profile.secondary_focus||{};
+  out.secondaries=Object.entries(focus).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)).slice(0,6).map(([name,avg])=>({name,avg:Number(avg)}));
+  return out;
+}
+function optimizerReferenceMarkup(profile, character){
+  const rec=optimizerRecommendationSummary(profile);
+  const name=character?.name||character?.character||character?.baseId||'Personnage';
+  const valid=!!profile && typeof profile==='object';
+  const source=profile?.source||'SWGOH.GG Kyber / Top 1000 GAC';
+  const url=profile?.url||'';
+  const sets=rec.sets.length?rec.sets.map((x,i)=>`<div class="forge-ref-row"><span>${String(i+1).padStart(2,'0')}</span><b>${esc(x.label)}</b>${x.weight!=null?`<em>${(x.weight*100).toFixed(1)} %</em>`:''}</div>`).join(''):'<div class="forge-ref-empty">Référence de sets non disponible.</div>';
+  const primaries=rec.primaries.length?rec.primaries.map(x=>`<div class="forge-ref-row"><span>${esc(x.label)}</span><b>${esc(x.name)}</b><em>${x.fixed?'FIXE':(x.weight*100).toFixed(1)+' %'}</em></div>`).join(''):'<div class="forge-ref-empty">Référence des primaires variables non disponible.</div>';
+  const secondaries=rec.secondaries.length?rec.secondaries.map((x,i)=>`<div class="forge-ref-row"><span>${String(i+1).padStart(2,'0')}</span><b>${esc(x.name)}</b>${Number.isFinite(x.avg)&&x.avg>0?`<em>moy. ${num(x.avg,1)}</em>`:''}</div>`).join(''):'<div class="forge-ref-empty">Référence des secondaires non disponible.</div>';
+  return `<div class="forge-reference-panel ${valid?'is-live':'is-fallback'}">
+    <div class="forge-reference-head">
+      <div class="forge-reference-identity">
+        <span class="forge-kicker">RÉFÉRENCE DE FORGE</span>
+        <strong>${esc(name)}</strong>
+        <small>${esc(source)}</small>
+      </div>
+      <div class="forge-reference-status"><i></i><span>${valid?'RÉFÉRENCE CHARGÉE':'RÉFÉRENCE EN ATTENTE'}</span>${url?`<a href="${esc(url)}" target="_blank" rel="noopener">SWGOH.GG ↗</a>`:''}</div>
+    </div>
+    <div class="forge-reference-columns">
+      <section class="forge-reference-column"><header><span>SETS</span><small>distribution Kyber</small></header>${sets}</section>
+      <section class="forge-reference-column"><header><span>PRIMAIRES PAR SLOT</span><small>Kyber · carrée/diamant fixes</small></header>${primaries}</section>
+      <section class="forge-reference-column"><header><span>SECONDAIRES PRIORITAIRES</span><small>focus Kyber</small></header>${secondaries}</section>
+      <section class="forge-reference-column forge-reference-scope"><header><span>CRITÈRES ACTIFS</span><small>recherche Seigneur Sith</small></header>
+        <div class="forge-scope-badges"><b class="active">✓ TRÈS FAIBLES</b><b class="active">✓ FAIBLES</b><b class="optional">□ MOYENS</b><b class="optional">□ TOUT LE ROSTER</b></div>
+        <div class="forge-reference-note"><strong>GL</strong><span>Exclues à ce niveau · elles appartiennent au choix SITH’ARI.</span></div>
+      </section>
+    </div>
+  </div>`;
 }
 function renderOptimizerPrimaryControls(profile){
   const slots={Arrow:'optimizerPrimaryArrow',Triangle:'optimizerPrimaryTriangle',Circle:'optimizerPrimaryCircle',Cross:'optimizerPrimaryCross'};
@@ -360,38 +395,23 @@ function renderOptimizerPrimaryControls(profile){
     if(entries.length) el.value=entries[0][0];
   }
 }
-function optimizerPrimaryFilters(){
-  return {
-    Arrow:String($('optimizerPrimaryArrow')?.value||''),
-    Triangle:String($('optimizerPrimaryTriangle')?.value||''),
-    Circle:String($('optimizerPrimaryCircle')?.value||''),
-    Cross:String($('optimizerPrimaryCross')?.value||'')
-  };
+function optimizerSourceScopeSummary(){
+  if($('optimizerAllRoster')?.checked===true)return ['TOUT LE ROSTER','GL exclues'];
+  const out=[];
+  if($('optimizerVeryLow')?.checked!==false)out.push('TRÈS FAIBLES');
+  if($('optimizerLow')?.checked!==false)out.push('FAIBLES');
+  if($('optimizerMedium')?.checked===true)out.push('MOYENS');
+  return [out.join(' + ')||'AUCUNE SOURCE','GL exclues'];
 }
 function updateCharacterInfo() {
   const c=selectedCharacter();
   if(!c){$('characterInfo').textContent='Aucun personnage sélectionné.';return;}
   const p=profileForCharacter(c);
   const local=optimizerProfileForCharacter(c);
-  const ref=p?'profil Kyber disponible':(local?'référence Optimizer locale disponible':'référence indisponible');
-  const refProfile=p || null;
-  const rec=optimizerRecommendationSummary(refProfile);
-  renderOptimizerPrimaryControls(refProfile);
-  $('characterInfo').innerHTML=`
-    <div class="optimizer-character-main">
-      <span class="tag">${esc(c.baseId||c.base_id||'')}</span>
-      <strong>${esc(c.name||c.character||c.baseId||'')}</strong>
-      <span>Niveau ${num(c.level)} · Gear ${num(c.gear)} · ${num(c.stars)}★ · Puissance ${num(c.power)}</span>
-      <span class="optimizer-reference">${esc(ref)}</span>
-    </div>
-    <div class="optimizer-character-recommendations">
-      <div class="optimizer-recommendation-block sets">
-        <b>SETS RECOMMANDÉS</b><span>${esc(rec.sets)}</span>
-      </div>
-      <div class="optimizer-recommendation-block primaries">
-        <b>PRIMAIRES RECOMMANDÉES</b><span>${esc(rec.primaries)}</span>
-      </div>
-    </div>`;
+  const ref=p || null;
+  const fallback=local&&!p;
+  $('characterInfo').innerHTML=optimizerReferenceMarkup(ref,c)+`<div class="forge-active-rulebar"><span><b>PERSONNAGE</b> ${esc(c.name||c.character||c.baseId||'—')}</span><span><b>SOURCE MODS</b> ${esc(optimizerSourceScopeSummary()[0])}</span><span><b>GL</b> EXCLUES</span><span><b>LOGIQUE</b> KYBER → FILTRE → ARSENAL → BUILDS</span></div>`;
+  if(fallback) log(`Profil local disponible pour ${c.name||c.baseId}, mais les critères Kyber détaillés restent à récupérer.`);
 }
 
 const DEFAULT_WORKER_URL = 'https://swgoh-optimizer-relay.lorg75017.workers.dev';
@@ -1740,42 +1760,86 @@ function optimizerModSecondaries(m){
   }
   return out;
 }
+function optimizerBuildReferenceAudit(build, profile){
+  const rec=optimizerRecommendationSummary(profile);
+  const setNames=rec.sets.map(x=>String(x.label||'').toLowerCase());
+  const primaryBySlot=Object.fromEntries(rec.primaries.map(x=>[x.slot,String(x.name||'').toLowerCase()]));
+  const buildSets={};
+  build.forEach(m=>{
+    const set=String(m.set_name||m.set||'').trim().toLowerCase();
+    if(set)buildSets[set]=(buildSets[set]||0)+1;
+  });
+  const topSet=rec.sets[0]?.label||'';
+  const topSetNames=String(topSet).replace(/^triple\s+/i,'').split(/\s*\+\s*/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+  const setMatch=topSetNames.length?topSetNames.reduce((n,set)=>n+Math.min(buildSets[set]||0, topSetNames.length===1?6:4),0):0;
+  let primaryHits=0,primaryKnown=0;
+  build.forEach(m=>{
+    const slot=String(m.slot||''); const expected=primaryBySlot[slot]; if(!expected)return;
+    primaryKnown++; if(String(m.primary_stat||'').toLowerCase()===expected)primaryHits++;
+  });
+  const focus=rec.secondaries.map(x=>String(x.name||'').toLowerCase().replace(/[^a-z0-9%]/g,''));
+  let secondaryHits=0;
+  build.forEach(m=>{
+    for(let i=1;i<=4;i++){
+      const stat=String(m[`secondary_${i}_stat`]||'').toLowerCase().replace(/[^a-z0-9%]/g,'');
+      if(stat && focus.some(f=>f===stat || stat.includes(f) || f.includes(stat))){secondaryHits++;break;}
+    }
+  });
+  return {topSet, setMatch, primaryHits, primaryKnown, secondaryHits, focusCount:focus.length};
+}
 function renderResults(data){
   if(!data.length){$('results').textContent='Aucun build.';return;}
-  $('results').innerHTML=`<div class="forge-results-intro">
-    <div><span class="forge-kicker">HOLOCRON // VERDICT V2</span><strong>Configurations contextualisées</strong><small>Utilité réelle · breakpoints · interactions · front de Pareto. Le score Kyber reste une référence secondaire.</small></div>
+  const character=selectedCharacter();
+  const profile=profileForCharacter(character);
+  const scope=optimizerSourceScopeSummary()[0];
+  const rec=optimizerRecommendationSummary(profile);
+  const refSets=rec.sets.slice(0,3).map(x=>`${x.label}${x.weight!=null?' · '+(x.weight*100).toFixed(1)+' %':''}`).join(' · ')||'Référence Kyber non détaillée';
+  const refSecondaries=rec.secondaries.slice(0,4).map(x=>x.name).join(' · ')||'Secondaires Kyber non détaillées';
+  $('results').innerHTML=`<div class="forge-results-intro forge-results-command">
+    <div class="forge-results-heading"><span class="forge-kicker">RÉSULTATS // SEIGNEUR SITH</span><strong>Configurations optimisées</strong><small>${esc(character?.name||'Personnage')} · recherche guidée par la référence Kyber et limitée à <b>${esc(scope)}</b>.</small></div>
     <div class="forge-result-count"><b>${data.length}</b><span>BUILDS</span></div>
+  </div>
+  <div class="forge-result-reference-strip">
+    <div><span>RÉFÉRENCE KYBER</span><b>${esc(refSets)}</b></div>
+    <div><span>SECONDAIRES PRIORITAIRES</span><b>${esc(refSecondaries)}</b></div>
+    <div><span>SOURCE MODS</span><b>${esc(scope)} · GL EXCLUES</b></div>
   </div>`+data.map((r,i)=>{
     const build=r.build||[];
     const setCounts={};
     build.forEach(m=>{const set=String(m.set_name||m.set||'').trim();if(set)setCounts[set]=(setCounts[set]||0)+1;});
     const setSummary=Object.entries(setCounts).map(([set,n])=>`${set} ×${n}`).join(' · ')||'Sets non renseignés';
-    const primarySummary=build.map(m=>`${m.slot||'?'} : ${m.primary_stat||'?'}`).join(' · ');
+    const audit=optimizerBuildReferenceAudit(build,profile);
     const statsEntries=Object.entries(r.stats||{});
-    const featured=['Speed','Health','Protection','Offense','Physical Damage','Special Damage'].filter(k=>Object.prototype.hasOwnProperty.call(r.stats||{},k));
+    const featured=['Speed','Health','Protection','Physical Damage','Special Damage','Potency'].filter(k=>Object.prototype.hasOwnProperty.call(r.stats||{},k));
     const featuredStats=featured.map(k=>`<div class="forge-stat featured"><span>${optimizerStatLabel(k)}</span><b>${optimizerStatValue(k,r.stats[k])}</b></div>`).join('');
     const otherStats=statsEntries.filter(([k])=>!featured.includes(k)).map(([k,v])=>`<span class="forge-stat-pill"><b>${optimizerStatLabel(k)}</b><em>${optimizerStatValue(k,v)}</em></span>`).join('');
     const score=typeof r.score==='number'?r.score.toFixed(0):'—';
     const utility=typeof r.utility==='number'?r.utility.toFixed(3):'—';
     const pareto=r.pareto_rank==='PARETO';
+    const compliance=Math.round(((audit.primaryKnown?audit.primaryHits/audit.primaryKnown:0)*50)+Math.min(50,audit.secondaryHits*8));
+    const complianceLabel=compliance>=80?'FORTE':compliance>=55?'SOLIDE':'À AFFINER';
     return `<article class="result forge-result">
       <header class="forge-result-head">
         <div class="forge-rank"><span>CONFIGURATION</span><b>${i+1}</b></div>
-        <div class="forge-result-title"><strong>Build ${i+1}</strong><small>${esc(setSummary)}</small></div>
-        <div class="forge-score"><span>${pareto?'PARETO // UTILITÉ':'UTILITÉ CONTEXTUELLE'}</span><b>${esc(utility)}</b><small>${pareto?'FRONT DE PARETO':'Kyber '+esc(score)}</small></div>
+        <div class="forge-result-title"><strong>${i===0?'Configuration principale':'Configuration '+String(i+1).padStart(2,'0')}</strong><small>${esc(setSummary)}</small></div>
+        <div class="forge-score"><span>ADÉQUATION À LA RÉFÉRENCE</span><b>${compliance}%</b><small>${esc(complianceLabel)} · Kyber ${esc(score)}</small></div>
       </header>
-      <div class="forge-build-meta">
-        <div><span>PRIMAIRES PAR SLOT</span><strong>${esc(primarySummary||'Non renseignées')}</strong></div>
-        <div><span>COMPOSITION</span><strong>6 MODS · ${Object.keys(setCounts).length} SET${Object.keys(setCounts).length>1?'S':''}</strong></div>
+      <div class="forge-build-meta forge-build-doctrine">
+        <div><span>DOCTRINE</span><strong>${audit.topSet?`✓ Set dominant : ${esc(audit.topSet)}`:'Référence de set non détaillée'}</strong></div>
+        <div><span>PRIMAIRES</span><strong>${audit.primaryKnown?`${audit.primaryHits}/${audit.primaryKnown} conformes`:'Référence indisponible'}</strong></div>
+        <div><span>SECONDAIRES</span><strong>${audit.secondaryHits} slot${audit.secondaryHits>1?'s':''} avec focus Kyber</strong></div>
       </div>
       <section class="forge-reasoning-block">
-        <div class="forge-section-title"><span>POURQUOI CETTE CONFIGURATION</span><small>${pareto?'Solution non dominée':'Candidate contextualisée'}</small></div>
-        <div class="forge-reasoning-grid">
-          ${r.utility_components?Object.entries(r.utility_components).filter(([k,v])=>Math.abs(Number(v))>0.001).slice(0,6).map(([k,v])=>`<span><b>${esc(optimizerStatLabel(k))}</b><em>${Number(v).toFixed(3)}</em></span>`).join(''):''}
+        <div class="forge-section-title"><span>POURQUOI CETTE CONFIGURATION</span><small>${pareto?'FRONT DE PARETO':'CANDIDAT RETENU'}</small></div>
+        <div class="forge-verdict-list">
+          <span class="ok"><b>✓</b> Référence de set prise en compte</span>
+          <span class="${audit.primaryKnown&&audit.primaryHits===audit.primaryKnown?'ok':'warn'}"><b>${audit.primaryKnown&&audit.primaryHits===audit.primaryKnown?'✓':'!'}</b> Primaires : ${audit.primaryKnown?`${audit.primaryHits}/${audit.primaryKnown} conformes à la référence`:'données Kyber non disponibles'}</span>
+          <span class="${audit.secondaryHits?'ok':'warn'}"><b>${audit.secondaryHits?'✓':'!'}</b> Secondaires prioritaires : ${audit.secondaryHits} mod${audit.secondaryHits>1?'s':''} avec focus Kyber</span>
+          <span class="ok"><b>✓</b> Mods recherchés sur : ${esc(scope)}</span>
         </div>
       </section>
       <section class="forge-stats-block">
-        <div class="forge-section-title"><span>STATISTIQUES FINALES</span><small>Après application des 6 mods</small></div>
+        <div class="forge-section-title"><span>ÉTAT APRÈS APPLICATION</span><small>6 mods · comparaison immédiate</small></div>
         <div class="forge-featured-stats">${featuredStats}</div>
         ${otherStats?`<div class="forge-all-stats">${otherStats}</div>`:''}
       </section>
@@ -1801,6 +1865,7 @@ function renderResults(data){
 ['optimizerVeryLow','optimizerLow','optimizerMedium','optimizerAllRoster'].forEach(id=>$(id)?.addEventListener('change',()=>{
   const all=$('optimizerAllRoster')?.checked===true;
   ['optimizerVeryLow','optimizerLow','optimizerMedium'].forEach(x=>{const el=$(x);if(el)el.disabled=all;});
+  updateCharacterInfo();
 }));
 
 $('reallocationSecondary')?.addEventListener('change',renderReallocationResults);
