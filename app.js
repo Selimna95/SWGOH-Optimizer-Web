@@ -1453,10 +1453,12 @@ function setReallocationMod(index){
   if(info)info.textContent=`Mod sélectionné : ${selected.slot||'—'} · ${selected.set_name||'—'} · ${selected.primary_stat||'—'} ${num(selected.primary_value,1)} · ${modSecondaries(selected)||'Aucune secondaire'}`;
 }
 function reallocationStatusAllowed(status){
-  if(status==='INCOMPLETS')return $('reallocationIncomplete')?.checked!==false;
+  // Par défaut : uniquement les personnages très faibles / faibles.
+  // Les moyens sont optionnels. Le mode Tout le roster contourne ce filtre.
+  if($('reallocationAllRoster')?.checked===true)return true;
   if(status==='TRÈS FAIBLES')return $('reallocationVeryLow')?.checked!==false;
   if(status==='FAIBLES')return $('reallocationLow')?.checked!==false;
-  if(status==='MOYENS')return reallocationMediumUnlocked && $('reallocationMedium')?.checked===true;
+  if(status==='MOYENS')return $('reallocationMedium')?.checked===true;
   return false;
 }
 function renderReallocationResults(){
@@ -1742,13 +1744,15 @@ function renderResults(data){
 }
 
 $('reallocationSecondary')?.addEventListener('change',renderReallocationResults);
-$('runReallocation')?.addEventListener('click',renderReallocationResults);
-$('unlockMediumSearch')?.addEventListener('click',()=>{
-  if(reallocationMediumUnlocked)return;
-  const ok=window.confirm('ATTENTION : vous allez autoriser la recherche de mods actuellement équipés sur des personnages classés MOYENS. Ces mods peuvent être utiles à leur propriétaire actuel. Voulez-vous vraiment élargir la recherche ?');
-  if(ok){reallocationMediumUnlocked=true;const cb=$('reallocationMedium');if(cb)cb.disabled=false;const b=$('unlockMediumSearch');if(b){b.textContent='🔓 MOYENS AUTORISÉS';b.disabled=true;} }
+$('reallocationVeryLow')?.addEventListener('change',renderReallocationResults);
+$('reallocationLow')?.addEventListener('change',renderReallocationResults);
+$('reallocationMedium')?.addEventListener('change',renderReallocationResults);
+$('reallocationAllRoster')?.addEventListener('change',()=>{
+  const all=$('reallocationAllRoster')?.checked===true;
+  ['reallocationVeryLow','reallocationLow','reallocationMedium'].forEach(id=>{const el=$(id);if(el)el.disabled=all;});
+  renderReallocationResults();
 });
-
+$('runReallocation')?.addEventListener('click',renderReallocationResults);
 $('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';analysisSide='ALL';analysisStatus='TOUS';analysisAuditSpeed='TOUS';analysisAuditSort='priority';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';if($('playerName'))$('playerName').textContent='Profil non chargé';if($('playerAlly'))$('playerAlly').textContent='—';if($('heroPlayerName'))$('heroPlayerName').textContent='Profil non chargé';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent='—';if($('heroProfileState'))$('heroProfileState').textContent='EN ATTENTE';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';renderSithariNexus();});
 
 document.querySelectorAll('.analysis-tab').forEach(btn=>btn.addEventListener('click',()=>setAnalysisTab(btn.dataset.analysisTab)));

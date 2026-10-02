@@ -334,7 +334,7 @@
         <div class="reallocation-header">
           <div>
             <div class="panel-title">RÉAFFECTATION INTELLIGENTE D’UN MOD</div>
-            <p class="reallocation-intro">Sélectionnez un mod, choisissez la secondaire recherchée et trouvez les mods actuellement équipés sur les personnages très faibles, faibles ou incomplets.</p>
+            <p class="reallocation-intro">Par défaut, la recherche récupère uniquement les mods équipés sur les personnages très faibles ou faibles. Les personnages moyens sont optionnels. Pour élargir la recherche, activez <strong>TOUT LE ROSTER</strong>.</p>
           </div>
           <button type="button" class="detail-mods-btn" id="reallocationSelectedModBtn">AUCUN MOD SÉLECTIONNÉ</button>
         </div>
@@ -344,11 +344,10 @@
           </label>
           <div class="reallocation-scope">
             <span>PERSONNAGES À ANALYSER</span>
-            <label><input type="checkbox" id="reallocationIncomplete" checked disabled> Incomplets</label>
-            <label><input type="checkbox" id="reallocationVeryLow" checked disabled> Très faibles</label>
-            <label><input type="checkbox" id="reallocationLow" checked disabled> Faibles</label>
-            <button type="button" class="medium-lock" id="unlockMediumSearch">🔒 AUTORISER LES MOYENS</button>
-            <label class="medium-option"><input type="checkbox" id="reallocationMedium" disabled> Moyens</label>
+            <label><input type="checkbox" id="reallocationVeryLow" checked> Très faibles</label>
+            <label><input type="checkbox" id="reallocationLow" checked> Faibles</label>
+            <label class="medium-option"><input type="checkbox" id="reallocationMedium"> Moyens</label>
+            <label class="roster-option"><input type="checkbox" id="reallocationAllRoster"> Tout le roster</label>
           </div>
           <button type="button" class="primary" id="runReallocation">RECHERCHER LES MODS</button>
         </div>

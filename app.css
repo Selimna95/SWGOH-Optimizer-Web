@@ -1764,3 +1764,25 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 .dashboard-info-note{display:block;margin-top:9px;font-size:8px;letter-spacing:.14em;font-weight:900;color:rgba(143,217,247,.62);}
 .nav-phase-entry{border-color:rgba(255,211,90,.24)!important;background:linear-gradient(90deg,rgba(255,211,90,.08),transparent)!important;}
 .nav-phase-entry small{margin-left:auto;font-size:7px;letter-spacing:.12em;color:rgba(255,211,90,.58);}
+
+
+/* V2.0.2 — MODAL MOD STABLE : aucun déplacement au survol. */
+.modal-box{
+  transform:none!important;
+  transition:none!important;
+  will-change:auto;
+  flex:0 0 auto;
+}
+.modal-box:hover{
+  transform:none!important;
+}
+.modal-box *{
+  transform-origin:center;
+}
+.reallocation-scope .roster-option{
+  color:#e7c96d!important;
+  font-weight:800!important;
+  border-left:1px solid rgba(230,197,102,.28);
+  padding-left:10px;
+}
+.reallocation-scope .roster-option input{accent-color:#e3bf55}
