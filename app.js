@@ -1088,7 +1088,7 @@ function renderHolocronTopChanges(){
 
 
 
-/* V104 — SITH'ARI / NEXUS. UI-only aggregation over data already loaded. */
+/* V2.0.2 — SITH'ARI / NEXUS. UI-only aggregation over data already loaded. */
 function renderSithariNexus(){
   const chars=Array.isArray(rosterCharacters)?rosterCharacters:[];
   const equipped=Array.isArray(mods)?mods:[];

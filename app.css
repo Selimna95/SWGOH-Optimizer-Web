@@ -1756,3 +1756,11 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 #sithari:after{content:"SITH’ARI // NEXUS CENTRAL";position:absolute;right:24px;top:12px;color:rgba(229,197,105,.25);font:900 7px var(--font-display);letter-spacing:.22em}
 @media(max-width:900px){.sithari-command-grid,.sithari-analysis-grid{grid-template-columns:1fr}.sithari-page{padding:20px 16px}.sithari-title-row{align-items:flex-start;flex-direction:column}.sithari-metric-grid{grid-template-columns:repeat(2,1fr)}.sithari-footer{flex-direction:column;align-items:flex-start;gap:7px}.decision-holocron:has(.sithari-core):after{display:none}}
 @media(max-width:680px){.sithari-core{width:72px;height:72px}.sithari-core strong{font-size:6px}.sithari-core-rune{font-size:15px}.sithari-title-row h2{font-size:30px}.sithari-thesis{justify-content:flex-start}.sithari-verdict{font-size:15px}}
+
+
+/* V2.0.2 — dashboard : les indicateurs sont informatifs, aucun clic implicite. */
+.dashboard-info-card{cursor:default!important;user-select:text;}
+.dashboard-info-card:hover{transform:none!important;}
+.dashboard-info-note{display:block;margin-top:9px;font-size:8px;letter-spacing:.14em;font-weight:900;color:rgba(143,217,247,.62);}
+.nav-phase-entry{border-color:rgba(255,211,90,.24)!important;background:linear-gradient(90deg,rgba(255,211,90,.08),transparent)!important;}
+.nav-phase-entry small{margin-left:auto;font-size:7px;letter-spacing:.12em;color:rgba(255,211,90,.58);}
