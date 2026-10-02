@@ -660,14 +660,14 @@ document.querySelectorAll('.data-tab').forEach(btn=>btn.addEventListener('click'
 
 function getOptimizerWorker() {
   if (optimizerWorker) return optimizerWorker;
-  optimizerWorker = new Worker('./optimizer-worker.mjs?v=49', { type: 'module' });
+  optimizerWorker = new Worker('./optimizer-worker.mjs?v=50', { type: 'module' });
   optimizerWorker.addEventListener('error', (event) => {
     log('Erreur du Worker Python : ' + (event.message || 'erreur inconnue'));
   });
   return optimizerWorker;
 }
 
-function runOptimizationInWorker(character, profile, nBuilds, limitSlot) {
+function runOptimizationInWorker(character, profile, nBuilds, limitSlot, context) {
   const worker = getOptimizerWorker();
   const id = ++optimizerRequestId;
   return new Promise((resolve, reject) => {
@@ -687,7 +687,7 @@ function runOptimizationInWorker(character, profile, nBuilds, limitSlot) {
       }
     };
     worker.addEventListener('message', onMessage);
-    worker.postMessage({ id, mods, profile, base_stats: baseStatsForCharacter(character), n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '', character_base_id: character.baseId || character.base_id || '' });
+    worker.postMessage({ id, mods, profile, base_stats: baseStatsForCharacter(character), n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '', character_base_id: character.baseId || character.base_id || '', context });
   });
 }
 
@@ -1586,12 +1586,20 @@ $('runOptimizer').addEventListener('click',async()=>{
 
   const nBuilds=Math.min(50,Math.max(1,Number($('buildCount').value)||10));
   const limitSlot=Math.min(150,Math.max(5,Number($('limitPerSlot').value)||80));
+  const context={
+    mode:String($('optimizerMode')?.value||'general'),
+    objective:String($('optimizerObjective')?.value||'balanced'),
+    target_speed:String($('optimizerTargetSpeed')?.value||''),
+    opponent_speed:String($('optimizerOpponentSpeed')?.value||''),
+    target_potency:String($('optimizerTargetPotency')?.value||''),
+    target_tenacity:String($('optimizerTargetTenacity')?.value||'')
+  };
   $('runOptimizer').disabled=true;
   $('runOptimizer').textContent='CALCUL EN COURS…';
-  const baseStats=baseStatsForCharacter(character); log(`Optimisation lancée pour ${character.name||character.baseId} · ${nBuilds} builds · ${limitSlot} candidats/slot · stats de base ${Object.keys(baseStats).length ? 'chargées' : 'indisponibles'}.`);
+  const baseStats=baseStatsForCharacter(character); log(`Forge V2 · ${character.name||character.baseId} · objectif ${context.objective} · mode ${context.mode} · ${nBuilds} builds · ${limitSlot} candidats/slot.`);
   const started=performance.now();
   try {
-    const data=await runOptimizationInWorker(character,profile,nBuilds,limitSlot);
+    const data=await runOptimizationInWorker(character,profile,nBuilds,limitSlot,context);
     renderResults(data);
     log(`Optimisation terminée en ${((performance.now()-started)/1000).toFixed(1)} s · ${data.length} build(s).`);
   } catch(e) {
@@ -1636,7 +1644,7 @@ function optimizerModSecondaries(m){
 function renderResults(data){
   if(!data.length){$('results').textContent='Aucun build.';return;}
   $('results').innerHTML=`<div class="forge-results-intro">
-    <div><span class="forge-kicker">HOLOCRON // VERDICT</span><strong>Configurations calculées</strong><small>Chaque proposition conserve les 6 slots, les primaires, les secondaires et les statistiques finales.</small></div>
+    <div><span class="forge-kicker">HOLOCRON // VERDICT V2</span><strong>Configurations contextualisées</strong><small>Utilité réelle · breakpoints · interactions · front de Pareto. Le score Kyber reste une référence secondaire.</small></div>
     <div class="forge-result-count"><b>${data.length}</b><span>BUILDS</span></div>
   </div>`+data.map((r,i)=>{
     const build=r.build||[];
@@ -1649,16 +1657,24 @@ function renderResults(data){
     const featuredStats=featured.map(k=>`<div class="forge-stat featured"><span>${optimizerStatLabel(k)}</span><b>${optimizerStatValue(k,r.stats[k])}</b></div>`).join('');
     const otherStats=statsEntries.filter(([k])=>!featured.includes(k)).map(([k,v])=>`<span class="forge-stat-pill"><b>${optimizerStatLabel(k)}</b><em>${optimizerStatValue(k,v)}</em></span>`).join('');
     const score=typeof r.score==='number'?r.score.toFixed(0):'—';
+    const utility=typeof r.utility==='number'?r.utility.toFixed(3):'—';
+    const pareto=r.pareto_rank==='PARETO';
     return `<article class="result forge-result">
       <header class="forge-result-head">
         <div class="forge-rank"><span>CONFIGURATION</span><b>${i+1}</b></div>
         <div class="forge-result-title"><strong>Build ${i+1}</strong><small>${esc(setSummary)}</small></div>
-        <div class="forge-score"><span>SCORE HOLOCRON</span><b>${esc(score)}</b></div>
+        <div class="forge-score"><span>${pareto?'PARETO // UTILITÉ':'UTILITÉ CONTEXTUELLE'}</span><b>${esc(utility)}</b><small>${pareto?'FRONT DE PARETO':'Kyber '+esc(score)}</small></div>
       </header>
       <div class="forge-build-meta">
         <div><span>PRIMAIRES PAR SLOT</span><strong>${esc(primarySummary||'Non renseignées')}</strong></div>
         <div><span>COMPOSITION</span><strong>6 MODS · ${Object.keys(setCounts).length} SET${Object.keys(setCounts).length>1?'S':''}</strong></div>
       </div>
+      <section class="forge-reasoning-block">
+        <div class="forge-section-title"><span>POURQUOI CETTE CONFIGURATION</span><small>${pareto?'Solution non dominée':'Candidate contextualisée'}</small></div>
+        <div class="forge-reasoning-grid">
+          ${r.utility_components?Object.entries(r.utility_components).filter(([k,v])=>Math.abs(Number(v))>0.001).slice(0,6).map(([k,v])=>`<span><b>${esc(optimizerStatLabel(k))}</b><em>${Number(v).toFixed(3)}</em></span>`).join(''):''}
+        </div>
+      </section>
       <section class="forge-stats-block">
         <div class="forge-section-title"><span>STATISTIQUES FINALES</span><small>Après application des 6 mods</small></div>
         <div class="forge-featured-stats">${featuredStats}</div>

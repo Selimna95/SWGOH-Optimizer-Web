@@ -2,19 +2,19 @@ import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodi
 
 let pyodideReadyPromise = (async () => {
   const pyodide = await loadPyodide();
-  const optimizerResponse = await fetch(new URL("./python/optimizer.py?v=47", import.meta.url), { cache: "no-store" });
+  const optimizerResponse = await fetch(new URL("./python/optimizer.py?v=50", import.meta.url), { cache: "no-store" });
   if (!optimizerResponse.ok) throw new Error(`Impossible de charger optimizer.py (HTTP ${optimizerResponse.status})`);
   const optimizerSource = await optimizerResponse.text();
   pyodide.FS.writeFile("/home/pyodide/optimizer.py", optimizerSource);
 
-  const kyberResponse = await fetch(new URL("./python/kyber_data.py?v=47", import.meta.url), { cache: "no-store" });
+  const kyberResponse = await fetch(new URL("./python/kyber_data.py?v=50", import.meta.url), { cache: "no-store" });
   if (kyberResponse.ok) {
     pyodide.FS.writeFile("/home/pyodide/kyber_data.py", await kyberResponse.text());
   }
 
   // The optimizer reference data is loaded by the Worker itself.
   // This removes the fragile dependency on a browser-side script tag.
-  const profilesResponse = await fetch(new URL("./python/optimizer_profiles.json?v=47", import.meta.url), { cache: "no-store" });
+  const profilesResponse = await fetch(new URL("./python/optimizer_profiles.json?v=50", import.meta.url), { cache: "no-store" });
   if (!profilesResponse.ok) throw new Error(`Impossible de charger optimizer_profiles.json (HTTP ${profilesResponse.status})`);
   const profilesText = await profilesResponse.text();
   pyodide.FS.writeFile("/home/pyodide/optimizer_profiles.json", profilesText);
@@ -43,6 +43,7 @@ self.onmessage = async (event) => {
     pyodide.globals.set("limit_slot", Number(data.limit_slot || 80));
     pyodide.globals.set("character_name", String(data.character_name || ""));
     pyodide.globals.set("character_base_id", String(data.character_base_id || ""));
+    pyodide.globals.set("context_json", JSON.stringify(data.context || {}));
 
     self.postMessage({ id, type: "status", message: "Recherche des candidats par slot…" });
 
@@ -51,6 +52,7 @@ import json
 mods = json.loads(mods_json)
 profile = json.loads(profile_json)
 base_stats = json.loads(base_stats_json)
+context = json.loads(context_json)
 
 # Resolve base stats inside the Worker when the browser did not provide them.
 if not base_stats:
@@ -82,6 +84,7 @@ r = optimizer.find_top_builds(
     limit_per_slot=limit_slot,
     kyber=profile,
     character=character_name,
+    context=context,
 )
 json.dumps(r)
 `);

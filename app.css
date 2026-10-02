@@ -1684,3 +1684,15 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
   #dashboard .decision-card-title{font-size:6px!important}
   #dashboard .decision-slogan{font-size:6px!important;letter-spacing:.12em!important}
 }
+
+/* ================= FORGE V2 — CONTEXT / PARETO ================= */
+#optimizer .form-grid{grid-template-columns:repeat(4,minmax(150px,1fr));align-items:end}
+#optimizer .form-grid label{min-width:0}
+.forge-reasoning-block{padding:12px 14px;border-top:1px solid rgba(67,150,190,.14);background:rgba(4,17,27,.42)}
+.forge-reasoning-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.forge-reasoning-grid span{display:flex;justify-content:space-between;gap:8px;padding:7px 8px;border:1px solid rgba(255,64,84,.14);background:rgba(13,18,24,.75);min-width:0}
+.forge-reasoning-grid b{font-size:7px;letter-spacing:.08em;color:#8fa8b6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.forge-reasoning-grid em{font-size:9px;color:#ff6673;font-style:normal;font-weight:800}
+.forge-score small{display:block;color:#607988;font-size:7px;margin-top:2px;white-space:nowrap}
+@media(max-width:1000px){#optimizer .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.forge-reasoning-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){#optimizer .form-grid{grid-template-columns:1fr}.forge-reasoning-grid{grid-template-columns:1fr}.forge-score small{white-space:normal}.forge-score b{font-size:16px}}
