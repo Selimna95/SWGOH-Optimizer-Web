@@ -236,37 +236,37 @@ function parseKyberProfileHTML(text,character,kyberSlug){
     }
   }
 
-  // Primary distributions for all variable slots. SWGOH.GG currently renders
-  // these as HTML table cells (Stat / Count / Percentage), so the text parser
-  // must support both compact "Speed 77.3%" lines and the separated-cell form.
+  // Primary distributions for all variable slots. Square and Diamond are fixed
+  // in SWGOH and are always shown in the recommendation header.
   const sections=[['Arrow','Best Arrow Mod '],['Triangle','Best Triangle Mod '],['Circle','Best Circle Mod '],['Cross','Best Cross Mod ']];
-  const isPctLine=(line)=>/^[0-9]+(?:[.,][0-9]+)?%$/.test(String(line||'').trim());
-  const isCountLine=(line)=>/^[0-9][0-9,]*$/.test(String(line||'').trim());
-  const parsePrimaryRows=(rows)=>{
-    const prim={};
-    for(let n=0;n<rows.length;n++){
-      const line=String(rows[n]||'').trim();
-      if(!line || /^(Primary Stat|Count|Percentage)$/i.test(line)) continue;
-      const compact=line.match(/^(.+?)\s+([0-9]+(?:[.,][0-9]+)?)%$/);
-      if(compact && !/^Primary Stat$/i.test(compact[1])){
-        prim[compact[1].trim()]=number(compact[2])/100;
-        continue;
-      }
-      if(n+2<rows.length && isCountLine(rows[n+1]) && isPctLine(rows[n+2])){
-        const stat=line.replace(/\s+/g,' ').trim();
-        if(stat && !/^(Primary Stat|Count|Percentage)$/i.test(stat)){
-          prim[stat]=number(String(rows[n+2]).replace('%','').replace(',','.'))/100;
-          n+=2;
-        }
-      }
-    }
-    return prim;
-  };
+  // Keep the original lightweight text parser as the first path. SWGOH.GG
+  // currently also exposes these distributions as real HTML tables, so use a
+  // small, isolated DOM-table fallback only when the compact text form is absent.
   for(const [slot,prefix] of sections){
     const k=nextIndex(x=>x.startsWith(prefix),0); if(k<0)continue;
     const end=nextIndex(x=>x.startsWith('Best ') && !x.startsWith(prefix),k+1);
-    const block=normalized.slice(k+1,end>=0?end:normalized.length);
-    const prim=parsePrimaryRows(block);
+    const prim={};
+    for(const line of normalized.slice(k+1,end>=0?end:normalized.length)){
+      const m=pctLine(line); if(m&&m[1]!=='Primary Stat')prim[m[1].trim()]=number(m[2])/100;
+    }
+    if(!Object.keys(prim).length){
+      try{
+        const heading=[...doc.querySelectorAll('h1,h2,h3,h4,h5,h6')].find(el=>String(el.textContent||'').trim().startsWith(prefix));
+        let node=heading;
+        for(let depth=0;depth<4 && node && !Object.keys(prim).length;depth++,node=node.parentElement){
+          const table=node.querySelector?.('table');
+          if(!table)continue;
+          const rows=[...table.querySelectorAll('tr')];
+          for(const row of rows){
+            const cells=[...row.querySelectorAll('th,td')].map(c=>String(c.textContent||'').replace(/\s+/g,' ').trim()).filter(Boolean);
+            if(cells.length>=3 && !/^Primary Stat$/i.test(cells[0])){
+              const pct=cells.find(v=>/^[0-9]+(?:[.,][0-9]+)?%$/.test(v));
+              if(pct)prim[cells[0]]=number(pct.replace('%','').replace(',','.'))/100;
+            }
+          }
+        }
+      }catch(_e){}
+    }
     if(Object.keys(prim).length)profile.slots[slot]={primaries:prim};
   }
   profile.slots.Square={primaries:{Offense:1}};
@@ -436,12 +436,7 @@ function optimizerReferenceMarkup(profile, character){
       <section class="forge-reference-column"><header><span>PRIMAIRES PAR SLOT</span><small>Kyber · Carré / Diamant fixes</small></header>${primaries}</section>
       <section class="forge-reference-column"><header><span>SECONDAIRES PRIORITAIRES</span><small>focus Kyber</small></header>${secondaries}</section>
       <section class="forge-reference-column forge-reference-scope"><header><span>CRITÈRES ACTIFS</span><small>recherche Seigneur Sith</small></header>
-        <div class="forge-scope-badges">
-          <b class="${$('optimizerVeryLow')?.checked!==false?'active':'optional'}">${$('optimizerVeryLow')?.checked!==false?'✓':'□'} TRÈS FAIBLES</b>
-          <b class="${$('optimizerLow')?.checked!==false?'active':'optional'}">${$('optimizerLow')?.checked!==false?'✓':'□'} FAIBLES</b>
-          <b class="${$('optimizerMedium')?.checked===true?'active':'optional'}">${$('optimizerMedium')?.checked===true?'✓':'□'} MOYENS</b>
-          <b class="${$('optimizerAllRoster')?.checked===true?'active':'optional'}">${$('optimizerAllRoster')?.checked===true?'✓':'□'} TOUT LE ROSTER</b>
-        </div>
+        <div class="forge-scope-badges"><b class="active">✓ TRÈS FAIBLES</b><b class="active">✓ FAIBLES</b><b class="optional">□ MOYENS</b><b class="optional">□ TOUT LE ROSTER</b></div>
         <div class="forge-reference-note"><strong>GL</strong><span>Exclues à ce niveau · elles appartiennent au choix SITH’ARI.</span></div>
       </section>
     </div>
@@ -1878,7 +1873,6 @@ function renderResults(data){
   </div>
   <div class="forge-result-reference-strip">
     <div><span>RÉFÉRENCE KYBER</span><b>${esc(refSets)}</b></div>
-    <div><span>PRIMAIRES KYBER</span><b>${esc(rec.primaries.filter(x=>x.entries?.length).map(x=>`${x.label}: ${x.entries[0][0]}`).join(' · ')||'Référence indisponible')}</b></div>
     <div><span>SECONDAIRES PRIORITAIRES</span><b>${esc(refSecondaries)}</b></div>
     <div><span>SOURCE MODS</span><b>${esc(scope)} · GL EXCLUES</b></div>
   </div>`+data.map((r,i)=>{
