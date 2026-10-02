@@ -1403,3 +1403,141 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
     left:7px !important;
   }
 }
+
+
+/* V102.4 — DASHBOARD MOBILE / suppression du fallback "Holocron Selimna"
+   Présentation uniquement. Worker, connexion et récupération des données inchangés. */
+.decision-holocron-image[aria-hidden="true"]{outline:0}
+
+@media(max-width:760px){
+  /* Le canvas desktop ne doit plus imposer ses 980px sur téléphone. */
+  .decision-stage{
+    min-width:0 !important;
+    width:100% !important;
+    max-width:none !important;
+    box-sizing:border-box !important;
+    overflow:visible !important;
+    padding:16px 10px 58px !important;
+  }
+  .decision-header{
+    padding:16px 12px 0 !important;
+  }
+  .decision-brand .eyebrow{
+    font-size:8px;
+    letter-spacing:.25em;
+  }
+  .decision-brand h1{
+    font-size:clamp(18px,6vw,25px) !important;
+    letter-spacing:.10em;
+    line-height:1.15;
+  }
+  .decision-brand p{
+    font-size:9px;
+    line-height:1.45;
+  }
+  .decision-status{
+    width:max-content;
+    max-width:100%;
+    box-sizing:border-box;
+    overflow:hidden;
+  }
+  .decision-holocron-wrap{
+    width:min(88vw,430px) !important;
+    height:min(88vw,430px) !important;
+    min-width:0 !important;
+    min-height:0 !important;
+    flex:0 0 auto;
+  }
+  .decision-holocron{
+    width:88% !important;
+    height:88% !important;
+  }
+  .decision-holocron-image{
+    width:100% !important;
+    height:100% !important;
+  }
+  .holocron-face b{
+    font-size:clamp(7px,2.1vw,9px) !important;
+    letter-spacing:.16em;
+    white-space:nowrap;
+  }
+  .holocron-face span{font-size:18px}
+  .unit-card,.gp-card,.mod-card{
+    width:100% !important;
+    max-width:520px !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+    padding:13px 14px 12px !important;
+  }
+  .decision-card-head{gap:9px}
+  .decision-card-head .card-icon{
+    width:32px;height:32px;font-size:15px;
+  }
+  .decision-card-head strong{
+    font-size:clamp(22px,7vw,28px) !important;
+  }
+  .decision-card-head div>span{
+    font-size:8px;
+    letter-spacing:.14em;
+  }
+  .decision-card-head small{
+    font-size:6px;
+    letter-spacing:.12em;
+  }
+  .decision-card-head em{font-size:8px;padding-top:7px}
+  .decision-card-title{
+    margin:10px 0 7px;
+    font-size:7px;
+    letter-spacing:.13em;
+  }
+  .decision-bars{height:12px !important}
+  .decision-legend{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:5px 10px !important;
+    font-size:8px !important;
+  }
+  .decision-legend span{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .decision-detail-list{gap:7px}
+  .decision-detail-list div{grid-template-columns:minmax(0,1fr) auto 38px;gap:7px}
+  .decision-detail-list span{font-size:8px}
+  .decision-detail-list strong{font-size:12px}
+  .decision-detail-list i{font-size:7px}
+  .decision-gp-track{height:7px;margin-top:9px}
+  .holocron-verdict{
+    width:100% !important;
+    max-width:520px !important;
+    box-sizing:border-box !important;
+    padding:11px 12px 10px;
+  }
+  .holocron-verdict-main strong{font-size:12px}
+  .holocron-verdict-metrics{
+    gap:8px;
+    flex-wrap:wrap;
+    line-height:1.4;
+  }
+  .decision-bottom-status,.decision-slogan{
+    max-width:calc(100% - 10px);
+  }
+}
+
+@media(max-width:420px){
+  .decision-stage{padding-left:8px !important;padding-right:8px !important}
+  .decision-holocron-wrap{
+    width:min(84vw,360px) !important;
+    height:min(84vw,360px) !important;
+  }
+  .unit-card,.gp-card,.mod-card{padding:12px !important}
+  .decision-legend{
+    grid-template-columns:1fr !important;
+    gap:4px !important;
+  }
+  .decision-card-head strong{font-size:23px !important}
+  .decision-card-head em{display:none}
+  .decision-card:after{right:11px;bottom:9px;font-size:10px}
+  .decision-slogan{font-size:7px;letter-spacing:.14em}
+  .decision-slogan span{font-size:6px}
+}
