@@ -333,26 +333,59 @@ function optimizerRecommendationSummary(profile){
   if(!profile || typeof profile!=='object') return out;
   out.source=profile.source||'SWGOH.GG Kyber / Top 1000 GAC';
   const specific=Array.isArray(profile.specific_sets)?profile.specific_sets:[];
-  out.sets=(specific.length?specific:((Array.isArray(profile.sets)?profile.sets:[]).slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0)))).slice(0,5).map(s=>{
+  const generic=Array.isArray(profile.sets)?profile.sets:[];
+  const rawSets=(specific.length?specific:generic.slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0)));
+  const uniqueSets=[]; const seenSets=new Set();
+  for(const s of rawSets){
     const counts=s.counts||{};
     const label=s.name||Object.entries(counts).map(([name,n])=>`${name} ×${n}`).join(' + ')||'Set non renseigné';
+    const key=String(label).toLowerCase().replace(/\s+/g,' ').trim();
+    if(seenSets.has(key))continue;
+    seenSets.add(key);
     const weight=Number(s.weight);
-    return {label,weight:Number.isFinite(weight)?weight:null};
-  });
+    uniqueSets.push({label,weight:Number.isFinite(weight)?weight:null});
+  }
+  out.sets=uniqueSets.slice(0,5);
   const slots=profile.slots||{};
   const slotLabels={Square:'Carré',Arrow:'Flèche',Diamond:'Diamant',Triangle:'Triangle',Circle:'Cercle',Cross:'Croix'};
   const order=['Square','Arrow','Diamond','Triangle','Circle','Cross'];
   out.primaries=order.map(slot=>{
     const data=slots?.[slot]?.primaries||{};
-    const entries=Object.entries(data).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0));
+    const entries=Object.entries(data).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)).map(([name,weight])=>({name,weight:Number(weight||0)}));
     if(!entries.length)return null;
-    const [name,weight]=entries[0];
-    return {slot,label:slotLabels[slot]||slot,name,weight:Number(weight||0),fixed:slot==='Square'||slot==='Diamond'};
+    return {slot,label:slotLabels[slot]||slot,entries,fixed:slot==='Square'||slot==='Diamond'};
   }).filter(Boolean);
   const focus=profile.secondary_focus||{};
   out.secondaries=Object.entries(focus).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0)).slice(0,6).map(([name,avg])=>({name,avg:Number(avg)}));
   return out;
 }
+function optimizerSlotKey(slot){
+  const k=String(slot||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');
+  const map={square:'Square',carre:'Square',arrow:'Arrow',fleche:'Arrow',diamond:'Diamond',diamant:'Diamond',triangle:'Triangle',circle:'Circle',cercle:'Circle',cross:'Cross',croix:'Cross'};
+  return map[k]||String(slot||'');
+}
+function optimizerPrimaryReference(profile, slot){
+  const key=optimizerSlotKey(slot);
+  return profile?.slots?.[key]?.primaries||{};
+}
+function optimizerPrimaryConformity(build, profile){
+  let known=0,hits=0,details=[];
+  const slots=['Square','Arrow','Diamond','Triangle','Circle','Cross'];
+  for(const slot of slots){
+    const expected=optimizerPrimaryReference(profile,slot);
+    const entries=Object.entries(expected).sort((a,b)=>Number(b[1]||0)-Number(a[1]||0));
+    if(!entries.length)continue;
+    const mod=build.find(m=>optimizerSlotKey(m?.slot)===slot);
+    if(!mod)continue;
+    known++;
+    const actual=String(mod.primary_stat||'').trim().toLowerCase();
+    const match=entries.some(([name])=>actual===String(name).trim().toLowerCase());
+    if(match)hits++;
+    details.push({slot,actual,expected:entries[0][0],match,weight:Number(entries[0][1]||0)});
+  }
+  return {known,hits,details};
+}
+
 function optimizerReferenceMarkup(profile, character){
   const rec=optimizerRecommendationSummary(profile);
   const name=character?.name||character?.character||character?.baseId||'Personnage';
@@ -360,7 +393,13 @@ function optimizerReferenceMarkup(profile, character){
   const source=profile?.source||'SWGOH.GG Kyber / Top 1000 GAC';
   const url=profile?.url||'';
   const sets=rec.sets.length?rec.sets.map((x,i)=>`<div class="forge-ref-row"><span>${String(i+1).padStart(2,'0')}</span><b>${esc(x.label)}</b>${x.weight!=null?`<em>${(x.weight*100).toFixed(1)} %</em>`:''}</div>`).join(''):'<div class="forge-ref-empty">Référence de sets non disponible.</div>';
-  const primaries=rec.primaries.length?rec.primaries.map(x=>`<div class="forge-ref-row"><span>${esc(x.label)}</span><b>${esc(x.name)}</b><em>${x.fixed?'FIXE':(x.weight*100).toFixed(1)+' %'}</em></div>`).join(''):'<div class="forge-ref-empty">Référence des primaires variables non disponible.</div>';
+  const primaries=rec.primaries.length?rec.primaries.map(x=>{
+    if(x.fixed){
+      return `<div class="forge-primary-slot"><span>${esc(x.label)}</span><b>${esc(x.entries[0]?.name||'—')}</b><em>FIXE</em></div>`;
+    }
+    const top=x.entries.slice(0,3).map(([name,weight])=>`<span class="forge-primary-option"><b>${esc(name)}</b><em>${(Number(weight||0)*100).toFixed(1)} %</em></span>`).join('');
+    return `<div class="forge-primary-slot"><span>${esc(x.label)}</span><div class="forge-primary-options">${top||'<span class="forge-primary-option"><b>Référence indisponible</b></span>'}</div></div>`;
+  }).join(''):'<div class="forge-ref-empty">Référence des primaires variables non disponible.</div>';
   const secondaries=rec.secondaries.length?rec.secondaries.map((x,i)=>`<div class="forge-ref-row"><span>${String(i+1).padStart(2,'0')}</span><b>${esc(x.name)}</b>${Number.isFinite(x.avg)&&x.avg>0?`<em>moy. ${num(x.avg,1)}</em>`:''}</div>`).join(''):'<div class="forge-ref-empty">Référence des secondaires non disponible.</div>';
   return `<div class="forge-reference-panel ${valid?'is-live':'is-fallback'}">
     <div class="forge-reference-head">
@@ -373,15 +412,17 @@ function optimizerReferenceMarkup(profile, character){
     </div>
     <div class="forge-reference-columns">
       <section class="forge-reference-column"><header><span>SETS</span><small>distribution Kyber</small></header>${sets}</section>
-      <section class="forge-reference-column"><header><span>PRIMAIRES PAR SLOT</span><small>Kyber · carrée/diamant fixes</small></header>${primaries}</section>
+      <section class="forge-reference-column"><header><span>PRIMAIRES PAR SLOT</span><small>Kyber · Carré / Diamant fixes</small></header>${primaries}</section>
       <section class="forge-reference-column"><header><span>SECONDAIRES PRIORITAIRES</span><small>focus Kyber</small></header>${secondaries}</section>
       <section class="forge-reference-column forge-reference-scope"><header><span>CRITÈRES ACTIFS</span><small>recherche Seigneur Sith</small></header>
         <div class="forge-scope-badges"><b class="active">✓ TRÈS FAIBLES</b><b class="active">✓ FAIBLES</b><b class="optional">□ MOYENS</b><b class="optional">□ TOUT LE ROSTER</b></div>
         <div class="forge-reference-note"><strong>GL</strong><span>Exclues à ce niveau · elles appartiennent au choix SITH’ARI.</span></div>
       </section>
     </div>
+    <div class="forge-reference-doctrine"><span>DOCTRINE ACTIVE</span><b>La Forge cherche les mods disponibles qui s'approchent le plus des distributions Kyber, sans remplacer la référence.</b></div>
   </div>`;
 }
+
 function renderOptimizerPrimaryControls(profile){
   const slots={Arrow:'optimizerPrimaryArrow',Triangle:'optimizerPrimaryTriangle',Circle:'optimizerPrimaryCircle',Cross:'optimizerPrimaryCross'};
   for(const [slot,id] of Object.entries(slots)){
@@ -1762,31 +1803,41 @@ function optimizerModSecondaries(m){
 }
 function optimizerBuildReferenceAudit(build, profile){
   const rec=optimizerRecommendationSummary(profile);
-  const setNames=rec.sets.map(x=>String(x.label||'').toLowerCase());
-  const primaryBySlot=Object.fromEntries(rec.primaries.map(x=>[x.slot,String(x.name||'').toLowerCase()]));
-  const buildSets={};
-  build.forEach(m=>{
-    const set=String(m.set_name||m.set||'').trim().toLowerCase();
-    if(set)buildSets[set]=(buildSets[set]||0)+1;
-  });
   const topSet=rec.sets[0]?.label||'';
   const topSetNames=String(topSet).replace(/^triple\s+/i,'').split(/\s*\+\s*/).map(x=>x.trim().toLowerCase()).filter(Boolean);
-  const setMatch=topSetNames.length?topSetNames.reduce((n,set)=>n+Math.min(buildSets[set]||0, topSetNames.length===1?6:4),0):0;
-  let primaryHits=0,primaryKnown=0;
-  build.forEach(m=>{
-    const slot=String(m.slot||''); const expected=primaryBySlot[slot]; if(!expected)return;
-    primaryKnown++; if(String(m.primary_stat||'').toLowerCase()===expected)primaryHits++;
-  });
+  const buildSets={};
+  build.forEach(m=>{const set=String(m.set_name||m.set||'').trim().toLowerCase();if(set)buildSets[set]=(buildSets[set]||0)+1;});
+  let setHits=0;
+  if(topSetNames.length===1) setHits=Math.min(buildSets[topSetNames[0]]||0,6);
+  else if(topSetNames.length===2) setHits=Math.min(buildSets[topSetNames[0]]||0,4)+Math.min(buildSets[topSetNames[1]]||0,2);
+  const primary=optimizerPrimaryConformity(build,profile);
   const focus=rec.secondaries.map(x=>String(x.name||'').toLowerCase().replace(/[^a-z0-9%]/g,''));
   let secondaryHits=0;
   build.forEach(m=>{
     for(let i=1;i<=4;i++){
       const stat=String(m[`secondary_${i}_stat`]||'').toLowerCase().replace(/[^a-z0-9%]/g,'');
-      if(stat && focus.some(f=>f===stat || stat.includes(f) || f.includes(stat))){secondaryHits++;break;}
+      if(stat && focus.some(f=>stat===f || stat.includes(f) || f.includes(stat))){secondaryHits++;break;}
     }
   });
-  return {topSet, setMatch, primaryHits, primaryKnown, secondaryHits, focusCount:focus.length};
+  const secondaryTotal=build.length;
+  const setPct=topSetNames.length?Math.round((setHits/6)*100):0;
+  const primaryPct=primary.known?Math.round((primary.hits/primary.known)*100):0;
+  const secondaryPct=secondaryTotal?Math.round((secondaryHits/secondaryTotal)*100):0;
+  const compliance=Math.round(setPct*.4+primaryPct*.4+secondaryPct*.2);
+  return {topSet,setHits,setPct,primaryHits:primary.hits,primaryKnown:primary.known,primaryPct,primaryDetails:primary.details,secondaryHits,secondaryTotal,secondaryPct,focusCount:focus.length,compliance};
 }
+function optimizerVerdictForBuild(audit, scope, index){
+  const gaps=[];
+  if(audit.setPct<100)gaps.push(`Set dominant : ${audit.setHits}/6 emplacements conformes`);
+  if(audit.primaryKnown && audit.primaryPct<100)gaps.push(`Primaires : ${audit.primaryHits}/${audit.primaryKnown} conformes à Kyber`);
+  if(audit.secondaryTotal && audit.secondaryPct<70)gaps.push(`Secondaires : ${audit.secondaryHits}/${audit.secondaryTotal} mods portent un focus Kyber`);
+  const canBroaden=!/MOYENS|TOUT LE ROSTER/.test(scope);
+  if(canBroaden && audit.compliance<75) return {kind:'action',title:'Élargir le périmètre',text:'Le meilleur candidat reste éloigné de la doctrine Kyber dans le périmètre actuel. Active MOYENS pour donner à la Forge davantage de choix.'};
+  if(audit.compliance>=90) return {kind:'strong',title:'Configuration proche de la doctrine',text:'Le candidat respecte fortement la référence Kyber tout en restant dans l’arsenal disponible.'};
+  if(gaps.length) return {kind:'warn',title:'Compromis identifié',text:`La Forge retient ce candidat avec ${audit.compliance}% d’adéquation. ${gaps.slice(0,2).join(' · ')}.`};
+  return {kind:'neutral',title:`Candidat ${index+1} analysé`,text:'La configuration est évaluée par rapport aux sets, primaires et secondaires de référence Kyber.'};
+}
+
 function renderResults(data){
   if(!data.length){$('results').textContent='Aucun build.';return;}
   const character=selectedCharacter();
@@ -1816,8 +1867,9 @@ function renderResults(data){
     const score=typeof r.score==='number'?r.score.toFixed(0):'—';
     const utility=typeof r.utility==='number'?r.utility.toFixed(3):'—';
     const pareto=r.pareto_rank==='PARETO';
-    const compliance=Math.round(((audit.primaryKnown?audit.primaryHits/audit.primaryKnown:0)*50)+Math.min(50,audit.secondaryHits*8));
-    const complianceLabel=compliance>=80?'FORTE':compliance>=55?'SOLIDE':'À AFFINER';
+    const compliance=audit.compliance;
+    const complianceLabel=compliance>=90?'FORTE':compliance>=75?'SOLIDE':compliance>=55?'PARTIELLE':'À AFFINER';
+    const verdict=optimizerVerdictForBuild(audit,scope,i);
     return `<article class="result forge-result">
       <header class="forge-result-head">
         <div class="forge-rank"><span>CONFIGURATION</span><b>${i+1}</b></div>
@@ -1830,11 +1882,12 @@ function renderResults(data){
         <div><span>SECONDAIRES</span><strong>${audit.secondaryHits} slot${audit.secondaryHits>1?'s':''} avec focus Kyber</strong></div>
       </div>
       <section class="forge-reasoning-block">
-        <div class="forge-section-title"><span>POURQUOI CETTE CONFIGURATION</span><small>${pareto?'FRONT DE PARETO':'CANDIDAT RETENU'}</small></div>
+        <div class="forge-section-title"><span>VERDICT DE L’HOLOCRON</span><small>${pareto?'FRONT DE PARETO':'CANDIDAT RETENU'}</small></div>
+        <div class="forge-verdict-main ${verdict.kind}"><div class="forge-verdict-mark">${verdict.kind==='strong'?'✓':verdict.kind==='action'?'→':'!'}</div><div><strong>${esc(verdict.title)}</strong><p>${esc(verdict.text)}</p></div></div>
         <div class="forge-verdict-list">
-          <span class="ok"><b>✓</b> Référence de set prise en compte</span>
+          <span class="${audit.setPct===100?'ok':'warn'}"><b>${audit.setPct===100?'✓':'!'}</b> Set dominant : ${audit.setHits}/6 emplacements conformes</span>
           <span class="${audit.primaryKnown&&audit.primaryHits===audit.primaryKnown?'ok':'warn'}"><b>${audit.primaryKnown&&audit.primaryHits===audit.primaryKnown?'✓':'!'}</b> Primaires : ${audit.primaryKnown?`${audit.primaryHits}/${audit.primaryKnown} conformes à la référence`:'données Kyber non disponibles'}</span>
-          <span class="${audit.secondaryHits?'ok':'warn'}"><b>${audit.secondaryHits?'✓':'!'}</b> Secondaires prioritaires : ${audit.secondaryHits} mod${audit.secondaryHits>1?'s':''} avec focus Kyber</span>
+          <span class="${audit.secondaryHits?'ok':'warn'}"><b>${audit.secondaryHits?'✓':'!'}</b> Secondaires : ${audit.secondaryHits}/${audit.secondaryTotal} mods avec focus Kyber</span>
           <span class="ok"><b>✓</b> Mods recherchés sur : ${esc(scope)}</span>
         </div>
       </section>

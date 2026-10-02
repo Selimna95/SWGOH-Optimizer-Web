@@ -1948,3 +1948,28 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 #optimizer .forge-mod-card{transition:none!important;}
 @media(max-width:1100px){#optimizer .forge-reference-columns{grid-template-columns:repeat(2,minmax(0,1fr));}#optimizer .forge-reference-column:nth-child(2){border-right:0;}#optimizer .forge-reference-column:nth-child(-n+2){border-bottom:1px solid rgba(67,150,190,.12);}#optimizer .forge-build-doctrine{grid-template-columns:1fr 1fr;}}
 @media(max-width:760px){#optimizer .forge-character-select-row{grid-template-columns:1fr;}#optimizer .forge-reference-columns{grid-template-columns:1fr;}#optimizer .forge-reference-column{border-right:0!important;border-bottom:1px solid rgba(67,150,190,.12);}#optimizer .forge-reference-column:last-child{border-bottom:0;}#optimizer .forge-reference-head{display:block;}#optimizer .forge-reference-status{margin-top:8px;}#optimizer .forge-result-reference-strip{grid-template-columns:1fr;}#optimizer .forge-build-doctrine{grid-template-columns:1fr;}#optimizer .forge-verdict-list{grid-template-columns:1fr;}}
+
+/* V2.1.2 — doctrine Kyber complète + verdict Holocron */
+#optimizer .forge-primary-slot{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:7px;align-items:center;min-height:29px;border-bottom:1px solid rgba(67,150,190,.08);padding:3px 0;}
+#optimizer .forge-primary-slot:last-child{border-bottom:0;}
+#optimizer .forge-primary-slot>span{font-size:7px;color:#83a4b5;text-transform:none;}
+#optimizer .forge-primary-slot>b{font-size:9px;color:#dcecf3;white-space:nowrap;}
+#optimizer .forge-primary-slot>em{font-size:7px;color:#62d8ff;font-style:normal;letter-spacing:.08em;}
+#optimizer .forge-primary-options{display:flex;flex-wrap:wrap;gap:4px 8px;min-width:0;}
+#optimizer .forge-primary-option{display:inline-flex;gap:4px;align-items:baseline;white-space:nowrap;}
+#optimizer .forge-primary-option b{font-size:8px;color:#dcecf3;font-weight:800;}
+#optimizer .forge-primary-option em{font-size:7px;color:#f0d36a;font-style:normal;}
+#optimizer .forge-reference-doctrine{display:flex;align-items:center;gap:10px;padding:8px 13px;border-top:1px solid rgba(67,150,190,.12);background:rgba(3,13,22,.5);}
+#optimizer .forge-reference-doctrine span{font-size:7px;letter-spacing:.14em;color:#ff5262;font-weight:900;white-space:nowrap;}
+#optimizer .forge-reference-doctrine b{font-size:8px;color:#88a6b5;font-weight:600;line-height:1.4;}
+#optimizer .forge-verdict-main{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center;padding:10px 11px;margin-bottom:7px;border:1px solid rgba(72,151,184,.16);border-radius:6px;background:linear-gradient(90deg,rgba(5,22,34,.82),rgba(4,15,24,.58));}
+#optimizer .forge-verdict-mark{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;font-size:16px;font-weight:900;color:#55dcff;border:1px solid rgba(85,220,255,.32);background:rgba(18,68,89,.2);}
+#optimizer .forge-verdict-main strong{font-size:10px;letter-spacing:.06em;color:#dff5ff;text-transform:uppercase;}
+#optimizer .forge-verdict-main p{margin:3px 0 0;font-size:8px;line-height:1.45;color:#89a6b5;}
+#optimizer .forge-verdict-main.action{border-color:rgba(255,181,74,.28);}
+#optimizer .forge-verdict-main.action .forge-verdict-mark{color:#ffb54a;border-color:rgba(255,181,74,.4);}
+#optimizer .forge-verdict-main.warn{border-color:rgba(255,181,74,.18);}
+#optimizer .forge-verdict-main.warn .forge-verdict-mark{color:#ffb54a;border-color:rgba(255,181,74,.35);}
+#optimizer .forge-verdict-main.strong{border-color:rgba(82,226,160,.22);}
+#optimizer .forge-verdict-main.strong .forge-verdict-mark{color:#54e2a0;border-color:rgba(82,226,160,.35);}
+@media(max-width:1100px){#optimizer .forge-reference-doctrine{align-items:flex-start;flex-direction:column;gap:3px;}}
