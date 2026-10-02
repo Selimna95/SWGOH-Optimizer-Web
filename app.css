@@ -1858,3 +1858,26 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
   #optimizer .forge-control-grid,
   #optimizer .forge-primary-grid{grid-template-columns:1fr}
 }
+
+
+/* V2.1.0 — Seigneur Sith / Forge character-by-character scope */
+#optimizer .forge-control-grid{grid-template-columns:repeat(3,minmax(220px,1fr));align-items:stretch;gap:12px;}
+#optimizer .forge-control-group{max-width:1180px;margin:0 auto 14px;}
+#optimizer .forge-scope-grid{grid-template-columns:repeat(4,minmax(160px,1fr));}
+#optimizer .scope-choice{display:flex!important;flex-direction:column;align-items:flex-start;justify-content:center;min-height:78px;padding:12px 14px!important;border:1px solid rgba(126,176,198,.25);border-radius:8px;background:rgba(7,18,27,.62);cursor:pointer;}
+#optimizer .scope-choice input{margin:0 0 8px!important;width:auto!important;}
+#optimizer .scope-choice b{font-size:.72rem;letter-spacing:.09em;}
+#optimizer .scope-choice small{margin-top:4px;opacity:.58;}
+#optimizer .scope-all{border-color:rgba(255,204,87,.3);}
+#optimizer .forge-reference-card{display:flex;flex-direction:column;justify-content:center;min-height:70px;padding:12px 14px;border:1px solid rgba(255,204,87,.24);border-radius:8px;background:rgba(19,20,25,.58);}
+#optimizer .forge-reference-card span{font-size:.62rem;letter-spacing:.14em;opacity:.55;}
+#optimizer .forge-reference-card strong{font-size:.82rem;letter-spacing:.08em;margin:4px 0;}
+#optimizer .forge-reference-card small{opacity:.62;}
+#optimizer .forge-primary-group{display:none!important;}
+/* Les valeurs cibles et contextes avancés appartiennent à SITH'ARI, pas au Seigneur Sith. */
+#optimizer .forge-control-group[data-advanced-context]{display:none;}
+/* Une carte de mod ne doit jamais se déplacer au survol. */
+#optimizer .forge-mod-card,.mod-detail-modal,.modal-content,.reallocation-table tr{transform:none!important;}
+#optimizer .forge-mod-card:hover{transform:none!important;top:auto!important;left:auto!important;}
+@media(max-width:1100px){#optimizer .forge-scope-grid{grid-template-columns:repeat(2,minmax(160px,1fr));}}
+@media(max-width:720px){#optimizer .forge-control-grid,#optimizer .forge-scope-grid{grid-template-columns:1fr;}}

@@ -690,7 +690,7 @@ function getOptimizerWorker() {
   return optimizerWorker;
 }
 
-function runOptimizationInWorker(character, profile, nBuilds, limitSlot, context) {
+function runOptimizationInWorker(character, profile, nBuilds, limitSlot, context, scopedMods) {
   const worker = getOptimizerWorker();
   const id = ++optimizerRequestId;
   return new Promise((resolve, reject) => {
@@ -710,7 +710,7 @@ function runOptimizationInWorker(character, profile, nBuilds, limitSlot, context
       }
     };
     worker.addEventListener('message', onMessage);
-    worker.postMessage({ id, mods, profile, base_stats: baseStatsForCharacter(character), n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '', character_base_id: character.baseId || character.base_id || '', context });
+    worker.postMessage({ id, mods: scopedMods, profile, base_stats: baseStatsForCharacter(character), n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '', character_base_id: character.baseId || character.base_id || '', context });
   });
 }
 
@@ -1111,7 +1111,7 @@ function renderHolocronTopChanges(){
 
 
 
-/* V2.0.2 — SITH'ARI / NEXUS. UI-only aggregation over data already loaded. */
+/* V2.1.0 — SITH'ARI / NEXUS. UI-only aggregation over data already loaded. */
 function renderSithariNexus(){
   const chars=Array.isArray(rosterCharacters)?rosterCharacters:[];
   const equipped=Array.isArray(mods)?mods:[];
@@ -1641,6 +1641,39 @@ async function boot(){
 
 $('fileInput').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{currentData=JSON.parse(await file.text());mods=extractMods(currentData);const importedUnits=extractCharacters(currentData);const split=splitRosterUnits(importedUnits);rosterCharacters=split.characters;rosterShips=split.ships;buildFactionMap();updateRosterCounts(rosterCharacters,rosterShips);fillCharacters(rosterCharacters);updateAccountSummary(file.name,'IMPORT JSON');renderV18SpeedRecap('v18DashboardSpeed');renderModsAnalysis();renderDataTable();renderHolocronVerdict(holocronTopChangeCandidates().slice(0,10));renderSithariNexus();$('dataInfo').textContent=`Fichier: ${file.name}\nMods détectés: ${mods.length}\nPersonnages détectés: ${rosterCharacters.length}\nVaisseaux détectés: ${rosterShips.length}`;$('log').textContent='';log(`Import: ${file.name}`);log(`${mods.length} mods détectés.`);log(`${rosterCharacters.length} personnages + ${rosterShips.length} vaisseaux détectés.`);document.querySelector('[data-page="data"]').click();}catch(e){log('JSON invalide: '+e.message);}});
 
+
+const KNOWN_GALACTIC_LEGEND_IDS=new Set(['GLREY','SUPREMELEADERKYLOREN','GRANDMASTERLUKE','JEDIMASTERKENOBI','LORDVADER','JABBATHEHUTT','GLLEIA','SITHPALPATINE','GLAHSOKATANO']);
+function isGalacticLegendCharacter(c){
+  const raw=c?.raw||c?.data||c||{};
+  const base=compactKey(c?.baseId||c?.base_id||c?.id||'');
+  if(KNOWN_GALACTIC_LEGEND_IDS.has(base))return true;
+  const explicit=[raw?.isGalacticLegend,raw?.is_galactic_legend,c?.isGalacticLegend,c?.is_galactic_legend];
+  if(explicit.some(v=>v===true||v===1||String(v).toLowerCase()==='true'))return true;
+  const values=[];
+  const collect=(v)=>{if(v==null)return;if(Array.isArray(v))return v.forEach(collect);if(typeof v==='object'){for(const k of ['name','displayName','nameKey','id','categoryId','category','faction','tags','categories','role'])collect(v[k]);return;}values.push(String(v));};
+  collect(raw);
+  const text=compactKey(values.join(' '));
+  return text.includes('GALACTICLEGEND');
+}
+function forgeSourceStatusAllowed(status){
+  if($('optimizerAllRoster')?.checked===true)return true;
+  if(status==='TRÈS FAIBLES')return $('optimizerVeryLow')?.checked!==false;
+  if(status==='FAIBLES')return $('optimizerLow')?.checked!==false;
+  if(status==='MOYENS')return $('optimizerMedium')?.checked===true;
+  return false;
+}
+function forgeScopedMods(){
+  const all=$('optimizerAllRoster')?.checked===true;
+  const allowed=[];
+  for(const c of rosterCharacters){
+    if(isGalacticLegendCharacter(c))continue;
+    const st=v176ModStatus(getCharacterMods(c)).status;
+    if(!forgeSourceStatusAllowed(st))continue;
+    for(const m of getCharacterMods(c)) allowed.push(m);
+  }
+  return allowed;
+}
+
 $('runOptimizer').addEventListener('click',async()=>{
   $('optimizerError').textContent='';
   $('results').innerHTML='<div class="calculating">Préparation de l’optimisation…<br><small>Le calcul va maintenant s’exécuter dans un Worker séparé pour garder l’interface réactive.</small></div>';
@@ -1653,21 +1686,19 @@ $('runOptimizer').addEventListener('click',async()=>{
 
   const nBuilds=Math.min(50,Math.max(1,Number($('buildCount').value)||10));
   const limitSlot=Math.min(150,Math.max(5,Number($('limitPerSlot').value)||80));
+  const scopedMods=forgeScopedMods();
+  if(!scopedMods.length){$('optimizerError').textContent='Aucun mod disponible dans le périmètre sélectionné. Activez une catégorie supplémentaire ou choisissez Tout le roster.';return;}
   const context={
-    mode:String($('optimizerMode')?.value||'general'),
-    objective:String($('optimizerObjective')?.value||'balanced'),
-    target_speed:String($('optimizerTargetSpeed')?.value||''),
-    opponent_speed:String($('optimizerOpponentSpeed')?.value||''),
-    target_potency:String($('optimizerTargetPotency')?.value||''),
-    target_tenacity:String($('optimizerTargetTenacity')?.value||''),
-    primary_filters:optimizerPrimaryFilters()
+    mode:'general',
+    objective:'balanced',
+    primary_filters:{}
   };
   $('runOptimizer').disabled=true;
   $('runOptimizer').textContent='CALCUL EN COURS…';
-  const baseStats=baseStatsForCharacter(character); log(`Forge V2 · ${character.name||character.baseId} · objectif ${context.objective} · mode ${context.mode} · ${nBuilds} builds · ${limitSlot} candidats/slot.`);
+  const baseStats=baseStatsForCharacter(character); log(`Forge Seigneur Sith · ${character.name||character.baseId} · référence Kyber · ${scopedMods.length} mods sources · ${nBuilds} builds · ${limitSlot} candidats/slot.`);
   const started=performance.now();
   try {
-    const data=await runOptimizationInWorker(character,profile,nBuilds,limitSlot,context);
+    const data=await runOptimizationInWorker(character,profile,nBuilds,limitSlot,context,scopedMods);
     renderResults(data);
     log(`Optimisation terminée en ${((performance.now()-started)/1000).toFixed(1)} s · ${data.length} build(s).`);
   } catch(e) {
@@ -1676,7 +1707,7 @@ $('runOptimizer').addEventListener('click',async()=>{
     log('Erreur optimisation : '+String(e?.message||e));
   } finally {
     $('runOptimizer').disabled=false;
-    $('runOptimizer').textContent='LANCER L’OPTIMISATION';
+    $('runOptimizer').textContent='LANCER LA FORGE';
   }
 });
 function optimizerStatLabel(key){
@@ -1766,6 +1797,11 @@ function renderResults(data){
     </article>`;
   }).join('');
 }
+
+['optimizerVeryLow','optimizerLow','optimizerMedium','optimizerAllRoster'].forEach(id=>$(id)?.addEventListener('change',()=>{
+  const all=$('optimizerAllRoster')?.checked===true;
+  ['optimizerVeryLow','optimizerLow','optimizerMedium'].forEach(x=>{const el=$(x);if(el)el.disabled=all;});
+}));
 
 $('reallocationSecondary')?.addEventListener('change',renderReallocationResults);
 $('reallocationVeryLow')?.addEventListener('change',renderReallocationResults);
