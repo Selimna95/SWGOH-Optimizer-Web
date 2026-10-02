@@ -325,12 +325,23 @@ function buildLocalOptimizerReference(character){
 async function ensureSelectedKyberProfile(){
   const c=selectedCharacter();if(!c)return null;
   const seq=++kyberRequestSeq;
-  $('characterInfo').innerHTML=`<span class="tag">${esc(c.baseId||c.base_id||'')}</span> <strong>${esc(c.name||c.character||c.baseId||'')}</strong> · récupération de la référence d’optimisation…`;
-  const p=await fetchKyberProfile(c);
+  $('characterInfo').innerHTML=`<span class="tag">${esc(c.baseId||c.base_id||'')}</span> <strong>${esc(c.name||c.character||c.baseId||'')}</strong> · préparation de la référence…`;
+  // The live SWGOH.GG reference is useful, but it must never block the Forge.
+  // If the relay/upstream is slow, launch with the local character profile and
+  // keep the UI responsive. The next character selection can refresh the live reference.
+  let p=null;
+  try {
+    p=await Promise.race([
+      fetchKyberProfile(c),
+      new Promise(resolve=>setTimeout(()=>resolve(null),8000))
+    ]);
+  } catch(e) {
+    log(`Référence Kyber non disponible pour ${c.name||c.baseId} : ${e?.message||e}`);
+  }
   const fallback=p||buildLocalOptimizerReference(c);
   if(seq===kyberRequestSeq)updateCharacterInfo();
   if(p) log(`Référence Kyber récupérée : ${c.name||c.baseId}.`);
-  else log(`SWGOH.GG indisponible pour ${c.name||c.baseId} : utilisation du profil Optimizer local comme référence de secours.`);
+  else log(`Référence Kyber non récupérée à temps pour ${c.name||c.baseId} : lancement avec la référence locale de secours.`);
   return fallback;
 }
 function fillCharacters(names) {
@@ -777,6 +788,20 @@ function runOptimizationInWorker(character, profile, nBuilds, limitSlot, context
   const id = ++optimizerRequestId;
   return new Promise((resolve, reject) => {
     const started = performance.now();
+    let settled = false;
+    let timer = null;
+    const cleanup = () => {
+      worker.removeEventListener('message', onMessage);
+      worker.removeEventListener('error', onError);
+      worker.removeEventListener('messageerror', onMessageError);
+      if(timer) clearTimeout(timer);
+    };
+    const fail = (message) => {
+      if(settled)return;
+      settled=true;
+      cleanup();
+      reject(new Error(message));
+    };
     const onMessage = (event) => {
       const data = event.data || {};
       if (data.id !== id) return;
@@ -784,15 +809,31 @@ function runOptimizationInWorker(character, profile, nBuilds, limitSlot, context
         $('results').innerHTML = `<div class="calculating">${esc(data.message || 'Calcul en cours…')}<br><small>Temps écoulé : ${Math.round((performance.now()-started)/1000)} s</small></div>`;
         return;
       }
-      worker.removeEventListener('message', onMessage);
+      cleanup();
       if (data.type === 'done') {
-        resolve(JSON.parse(data.result));
+        settled=true;
+        try {
+          const parsed=JSON.parse(data.result);
+          resolve(Array.isArray(parsed)?parsed:[]);
+        } catch(e) {
+          fail(`Résultat du moteur illisible : ${e?.message||e}`);
+        }
       } else {
-        reject(new Error(data.error || 'Erreur inconnue du Worker Python.'));
+        fail(data.error || 'Erreur inconnue du Worker Python.');
       }
     };
+    const onError = (event) => fail(`Worker Optimizer indisponible : ${event?.message||'erreur de chargement ou d’exécution'}`);
+    const onMessageError = () => fail('Le Worker Optimizer n’a pas pu transmettre le résultat.');
     worker.addEventListener('message', onMessage);
-    worker.postMessage({ id, mods: scopedMods, profile, base_stats: baseStatsForCharacter(character), n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '', character_base_id: character.baseId || character.base_id || '', context });
+    worker.addEventListener('error', onError);
+    worker.addEventListener('messageerror', onMessageError);
+    // Never leave the Forge frozen indefinitely if the browser cannot load Pyodide/CDN.
+    timer=setTimeout(()=>fail('Le calcul de la Forge a dépassé 120 secondes. Vérifiez le Worker Optimizer ou rechargez la page.'),120000);
+    try {
+      worker.postMessage({ id, mods: scopedMods, profile, base_stats: baseStatsForCharacter(character), n_builds: nBuilds, limit_slot: limitSlot, character_name: character.name || character.baseId || '', character_base_id: character.baseId || character.base_id || '', context });
+    } catch(e) {
+      fail(`Impossible de lancer le Worker Optimizer : ${e?.message||e}`);
+    }
   });
 }
 
@@ -1781,8 +1822,14 @@ $('runOptimizer').addEventListener('click',async()=>{
   const started=performance.now();
   try {
     const data=await runOptimizationInWorker(character,profile,nBuilds,limitSlot,context,scopedMods);
-    renderResults(data);
-    log(`Optimisation terminée en ${((performance.now()-started)/1000).toFixed(1)} s · ${data.length} build(s).`);
+    if(!Array.isArray(data)||!data.length){
+      $('optimizerError').textContent='Aucune configuration complète ne respecte exactement la référence de sets dans le périmètre actuel. La Forge va désormais proposer le meilleur compromis disponible.';
+      $('results').innerHTML='<div class="empty">Aucun build exact dans ce périmètre.</div>';
+      log(`Optimisation terminée sans build exact en ${((performance.now()-started)/1000).toFixed(1)} s.`);
+    }else{
+      renderResults(data);
+      log(`Optimisation terminée en ${((performance.now()-started)/1000).toFixed(1)} s · ${data.length} build(s).`);
+    }
   } catch(e) {
     $('optimizerError').textContent=String(e?.message||e);
     $('results').innerHTML='<div class="empty">Le calcul Python a rencontré une erreur. Consultez le journal ci-dessus.</div>';
