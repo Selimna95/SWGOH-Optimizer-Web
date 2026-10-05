@@ -2230,3 +2230,69 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 .sithari-page .sithari-result-row.active{border-color:rgba(126,169,191,.48);background:rgba(65,105,130,.07)}
 @media(max-width:1100px){.sithari-page .sithari-stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:680px){.sithari-page .sithari-stats-grid{grid-template-columns:1fr 1fr}.sithari-page .sithari-stats-head{align-items:flex-start;flex-direction:column}.sithari-page .sithari-analysis-portrait{width:52px;height:52px;flex-basis:52px}}
+
+/* SITH'ARI — lisibilité / mode d'emploi : bloc strictement local à Sith'ari */
+.sithari-page .sithari-selector-head h3{font-size:16px;letter-spacing:.03em;color:#f1eee7}
+.sithari-page .sithari-help{margin:6px 0 0;max-width:720px;color:#8e918e;font:8px/1.5 Inter,sans-serif}
+.sithari-page .sithari-team-count{display:grid;grid-template-columns:auto auto;gap:0 5px;align-items:end;text-align:right}
+.sithari-page .sithari-team-count strong{color:#f1eee7;font-size:28px}
+.sithari-page .sithari-team-count span{color:#7f8584;font-size:9px}
+.sithari-page .sithari-team-count small{grid-column:1/-1;color:#6f7675;font:700 6px var(--font-display);letter-spacing:.12em}
+.sithari-page .sithari-next-step{margin-top:10px;padding:8px 10px;border-top:1px solid rgba(255,255,255,.06);color:#9aa09e;font:8px Inter}
+.sithari-page .sithari-next-step b{color:#cbd2cf;font:800 7px var(--font-display);letter-spacing:.12em;margin-right:8px}
+.sithari-page .sithari-selected-chip{border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.025)}
+.sithari-page .sithari-selected-chip.active{border-color:rgba(116,210,160,.6);background:rgba(35,95,68,.10)}
+.sithari-page .sithari-character-card{min-height:68px;border-color:rgba(255,255,255,.10);background:rgba(10,12,14,.78)}
+.sithari-page .sithari-character-card.selected{border-color:rgba(116,210,160,.62);background:rgba(35,95,68,.11)}
+.sithari-page .sithari-character-card>i{font:900 6px var(--font-display);letter-spacing:.08em;color:#8d9793;font-style:normal}
+.sithari-page .sithari-character-card.selected>i{color:#74d2a0}
+.sithari-page .sithari-analysis-empty{min-height:220px;padding:25px}
+.sithari-page .sithari-analysis-empty strong{font-size:10px;color:#d8ddd9}
+.sithari-page .sithari-analysis-empty small{max-width:650px;font-size:8px;line-height:1.7;color:#858b89}
+.sithari-page .sithari-empty-steps{display:flex;align-items:center;gap:8px;margin-top:12px;color:#89908e;font:700 7px var(--font-display);letter-spacing:.08em}
+.sithari-page .sithari-empty-steps b{width:20px;height:20px;display:grid;place-items:center;border:1px solid rgba(116,210,160,.35);color:#74d2a0}
+.sithari-page .sithari-empty-steps i{color:#59615f;font-style:normal}
+.sithari-page .sithari-character-analysis{overflow:visible}
+.sithari-page .sithari-analysis-head{padding:13px 0 12px}
+.sithari-page .sithari-analysis-portrait{width:68px;height:68px;flex:0 0 68px;border:1px solid rgba(255,255,255,.12);background:#090b0d;overflow:hidden}
+.sithari-page .sithari-analysis-portrait img{width:100%;height:100%;object-fit:cover;display:block}
+.sithari-page .sithari-character-heading{display:flex;gap:12px;align-items:center}
+.sithari-page .sithari-character-heading h3{font-size:22px;color:#f2f0ea}
+.sithari-page .sithari-character-heading p{font-size:7px;color:#8c9390}
+.sithari-page .sithari-analysis-kpis span{border-color:rgba(255,255,255,.10);background:rgba(255,255,255,.015)}
+.sithari-page .sithari-analysis-kpis span b{color:#e8ece9}
+.sithari-page .sithari-analysis-kpis .kpi-replace{border-color:rgba(116,210,160,.55);background:rgba(35,95,68,.10)}
+.sithari-page .sithari-analysis-kpis .kpi-replace b,.sithari-page .sithari-analysis-kpis .kpi-replace em{color:#74d2a0}
+.sithari-page .sithari-analysis-kpis .kpi-search{border-color:rgba(210,113,92,.48);background:rgba(160,61,45,.07)}
+.sithari-page .sithari-stats-panel{margin:10px 0;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.018);padding:10px}
+.sithari-page .sithari-stats-head{display:flex;justify-content:space-between;align-items:end;gap:10px;margin-bottom:7px}
+.sithari-page .sithari-stats-head strong{display:block;color:#dce2df;font:800 8px var(--font-display);letter-spacing:.1em}
+.sithari-page .sithari-stats-head span{color:#6f7774;font:6px var(--font-display);letter-spacing:.08em}
+.sithari-page .sithari-stat-row{display:grid;grid-template-columns:1fr 80px 18px 80px 70px;align-items:center;gap:6px;padding:5px 0;border-top:1px solid rgba(255,255,255,.045);font:7px Inter}
+.sithari-page .sithari-stat-row>span{color:#929a97}.sithari-page .sithari-stat-row>b{color:#f0f2ef;text-align:right}.sithari-page .sithari-stat-row>strong{color:#b7c0bc;text-align:right}.sithari-page .sithari-stat-row>i{color:#65706c;text-align:center;font-style:normal}.sithari-page .sithari-stat-row>small{text-align:right;font:700 6px var(--font-display)}
+.sithari-page .sithari-stat-row .behind{color:#df8b82}.sithari-page .sithari-stat-row .ahead{color:#74d2a0}
+.sithari-page .sithari-action-summary{border-color:rgba(255,255,255,.12)!important;background:rgba(255,255,255,.025)!important}
+.sithari-page .sithari-action-summary-main strong{color:#eef1ef;font-size:10px}
+.sithari-page .sithari-action-summary-main small{color:#8e9693}
+.sithari-page .sithari-action-pills b{border-color:rgba(116,210,160,.35);color:#74d2a0;background:rgba(35,95,68,.08)}
+.sithari-page .sithari-action-pills b:last-child{border-color:rgba(210,113,92,.3);color:#df8b82;background:rgba(160,61,45,.06)}
+.sithari-page .sithari-slot-card{padding:10px;background:rgba(8,10,12,.72)}
+.sithari-page .sithari-slot-card.keep{border-left:3px solid rgba(125,140,135,.45)}
+.sithari-page .sithari-slot-card.improve{border-left:3px solid rgba(170,160,100,.55)}
+.sithari-page .sithari-slot-card.replace{border-color:rgba(116,210,160,.52);box-shadow:inset 3px 0 0 rgba(116,210,160,.85)}
+.sithari-page .sithari-slot-card.search{border-color:rgba(210,113,92,.42);box-shadow:inset 3px 0 0 rgba(210,113,92,.65)}
+.sithari-page .sithari-slot-card header em{color:#8e9793;border-color:rgba(255,255,255,.09);background:rgba(255,255,255,.018)}
+.sithari-page .sithari-slot-card.replace header em{color:#74d2a0;border-color:rgba(116,210,160,.35);background:rgba(35,95,68,.08)}
+.sithari-page .sithari-slot-card.search header em{color:#df8b82;border-color:rgba(210,113,92,.3);background:rgba(160,61,45,.05)}
+.sithari-page .sithari-current-mod{background:rgba(255,255,255,.025)}
+.sithari-page .sithari-kyber-ref{background:rgba(255,255,255,.018)}
+.sithari-page .sithari-slot-arrow{color:#77827e}
+.sithari-page .sithari-replacement{border-left-color:#74d2a0;background:rgba(35,95,68,.10)}
+.sithari-page .sithari-replacement>div>small{color:#74d2a0}
+.sithari-page .sithari-replacement>strong{color:#74d2a0;border-color:rgba(116,210,160,.45);background:rgba(35,95,68,.12)}
+.sithari-page .sithari-search-target{border-left-color:#df8b82;background:rgba(160,61,45,.06)}
+.sithari-page .sithari-search-target>small{color:#df8b82}
+.sithari-page .sithari-search-target strong{color:#e6e9e6}
+.sithari-page .sithari-team-results .sithari-panel-title em{color:#7f8784;font:6px var(--font-display);font-style:normal}
+.sithari-page .sithari-result-row{border-color:rgba(255,255,255,.07);background:rgba(255,255,255,.015)}
+.sithari-page .sithari-result-row.active{border-color:rgba(116,210,160,.45);background:rgba(35,95,68,.07)}

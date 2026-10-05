@@ -163,20 +163,21 @@
 
   <section class="sithari-selector panel">
     <div class="sithari-selector-head">
-      <div><small>SITH’ARI // CONSTITUTION DE L’ÉQUIPE</small><h3>QUI VEUX-TU AMENER AU NIVEAU KYBER ?</h3></div>
-      <div class="sithari-team-count"><strong id="sithariSelectedCount">0</strong><span>/ 5</span></div>
+      <div><small>SITH’ARI // 1 · CONSTITUER L’ÉQUIPE</small><h3>CHOISIS 1 À 5 PERSONNAGES À OPTIMISER</h3><p class="sithari-help">Filtre par faction, puis clique sur les personnages à analyser. Les personnages sélectionnés apparaissent dans l’équipe.</p></div>
+      <div class="sithari-team-count"><strong id="sithariSelectedCount">0</strong><span>/ 5</span><small>sélectionnés</small></div>
     </div>
     <div class="sithari-filters">
       <label class="sithari-faction-filter"><span>FACTION</span><select id="sithariFaction"><option value="Toutes les factions">Toutes les factions</option></select></label>
       <label class="sithari-search"><span>RECHERCHE</span><input id="sithariCharacterSearch" type="search" placeholder="Nom du personnage…"></label>
     </div>
-    <div class="sithari-selection-meta"><span id="sithariSelectionMeta">Aucun roster chargé.</span><button type="button" id="sithariClearSelection">VIDER L’ÉQUIPE</button></div>
+    <div class="sithari-selection-meta"><span id="sithariSelectionMeta">Choisis une faction puis ajoute jusqu’à 5 personnages.</span><button type="button" id="sithariClearSelection">VIDER L’ÉQUIPE</button></div>
     <div id="sithariCharacterGrid" class="sithari-character-grid"></div>
   </section>
 
   <section class="sithari-team-panel panel">
-    <div class="sithari-panel-title"><span>✧</span><div><small>SITH’ARI // ÉQUIPE</small><strong>ÉQUIPE SÉLECTIONNÉE</strong></div><em id="sithariTeamSummary">Sélectionnez 1 à 5 personnages</em></div>
+    <div class="sithari-panel-title"><span>✧</span><div><small>SITH’ARI // 2 · ÉQUIPE</small><strong>PERSONNAGES À ANALYSER</strong></div><em id="sithariTeamSummary">Ajoutez au moins 1 personnage</em></div>
     <div id="sithariSelectedTeam" class="sithari-selected-team"></div>
+    <div class="sithari-next-step"><b>ÉTAPE SUIVANTE</b><span>→ Clique sur un personnage ci-dessous pour comparer ses 6 slots au Kyber.</span></div>
   </section>
 
   <section class="sithari-workspace">
@@ -186,14 +187,15 @@
     </aside>
     <article class="sithari-character-analysis panel">
       <div id="sithariAnalysisEmpty" class="sithari-analysis-empty">
-        <span>✧</span><strong>SÉLECTIONNE AU MOINS UN PERSONNAGE</strong><small>Sith’ari analysera les 6 slots du personnage choisi et cherchera une meilleure solution dans les mods disponibles.</small>
+        <span>✧</span><strong>CHOISIS UN PERSONNAGE À ANALYSER</strong><small>Ajoute 1 à 5 personnages en haut, puis clique sur un personnage dans la liste. Sith’ari comparera ses 6 mods au Kyber et indiquera quoi réaffecter ou rechercher.</small>
+        <div class="sithari-empty-steps"><b>1</b> Choisir <i>→</i><b>2</b> Comparer <i>→</i><b>3</b> Réaffecter <i>→</i><b>4</b> Trouver</div>
       </div>
       <div id="sithariCharacterAnalysis" hidden></div>
     </article>
   </section>
 
   <section class="sithari-team-results panel">
-    <div class="sithari-panel-title"><span>⬢</span><div><small>SITH’ARI // VUE ÉQUIPE</small><strong>RÉCAPITULATIF DES BESOINS</strong></div></div>
+    <div class="sithari-panel-title"><span>⬢</span><div><small>SITH’ARI // 4 · VUE ÉQUIPE</small><strong>CE QU’IL RESTE À FAIRE</strong></div><em>Vert = réaffecter · Rouge = trouver</em></div>
     <div id="sithariTeamResults" class="sithari-team-results-grid"></div>
   </section>
 
