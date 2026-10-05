@@ -1202,44 +1202,164 @@ function renderHolocronTopChanges(){
 
 
 
-/* V2.1.0 — SITH'ARI / NEXUS. UI-only aggregation over data already loaded. */
-function renderSithariNexus(){
-  const chars=Array.isArray(rosterCharacters)?rosterCharacters:[];
-  const equipped=Array.isArray(mods)?mods:[];
-  const units=$('sithariUnits'), modsEl=$('sithariMods'), gpEl=$('sithariGp'), avgEl=$('sithariAvgSpeed');
-  if(!units)return;
-  units.textContent=num(chars.length); modsEl.textContent=num(equipped.length); gpEl.textContent=accountGalacticPower?.total?num(accountGalacticPower.total):'—';
-  const speeds=chars.map(c=>Number(c?.stats?.Speed ?? c?.speed ?? c?.current_stats?.Speed ?? 0)).filter(Number.isFinite).filter(x=>x>0);
-  const avg=speeds.length?speeds.reduce((a,b)=>a+b,0)/speeds.length:0; avgEl.textContent=avg?num(avg,1):'—';
-  const conflicts=$('sithariConflicts'), priorities=$('sithariPriorities'), actions=$('sithariActions');
-  const candidates=chars.length?holocronTopChangeCandidates():[];
-  const weak=chars.map(c=>({c,mods:getCharacterMods(c)})).map(x=>({ ...x,status:v176ModStatus(x.mods)})).filter(x=>['SANS MODS','INCOMPLETS','TRÈS FAIBLES','FAIBLES'].includes(x.status.status));
-  const recipientMap=new Map();
-  candidates.forEach(r=>{const key=r.recipient?.baseId||r.recipient?.name||'unknown';const prev=recipientMap.get(key)||{r,count:0};prev.count++;recipientMap.set(key,prev)});
-  const topRecipients=[...recipientMap.values()].sort((a,b)=>b.count-a.count).slice(0,4);
-  const donorMap=new Map(); candidates.forEach(r=>{const key=r.donor?.baseId||r.donor?.name||'unknown'; donorMap.set(key,(donorMap.get(key)||0)+1)});
-  const conflictsRows=[...donorMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3);
-  $('sithariConflictCount').textContent=String(conflictsRows.length);
-  conflicts.classList.toggle('empty',!conflictsRows.length);
-  conflicts.innerHTML=conflictsRows.length?conflictsRows.map((x,i)=>`<div class="sithari-list-row"><b>0${i+1}</b><span>${esc((chars.find(c=>(c.baseId||c.id)===x[0])?.name)||x[0])}</span><strong>${x[1]} destination${x[1]>1?'s':''}</strong></div>`).join(''):'Aucun conflit calculé.';
-  const priorityRows=topRecipients.length?topRecipients:weak.slice(0,4).map(x=>({r:{recipient:x.c},count:1}));
-  $('sithariPriorityCount').textContent=String(priorityRows.length);
-  priorities.classList.toggle('empty',!priorityRows.length);
-  priorities.innerHTML=priorityRows.length?priorityRows.map((x,i)=>`<div class="sithari-list-row"><b>0${i+1}</b><span>${esc(x.r.recipient?.name||x.r.recipient?.baseId||'—')}</span><strong>${x.count} signal${x.count>1?'s':''}</strong></div>`).join(''):'Aucune priorité détectée.';
-  const urgent=candidates.filter(r=>Number(r?.gain?.speed||0)>=10).length;
-  const verdict=$('sithariVerdict'), detail=$('sithariVerdictDetail'), tag=$('sithariVerdictTag'), state=$('sithariState');
-  if(!chars.length){tag.textContent='ATTENTE';state.textContent='EN ATTENTE DU SCAN';verdict.textContent='Le Nexus attend les données du roster.';detail.textContent='Synchronisez le profil pour faire émerger les priorités globales.';actions.innerHTML='<div class="sithari-action"><span>✧</span><div><strong>Synchroniser le roster</strong><small>Le SITH’ARI travaille uniquement sur les données déjà chargées par le moteur existant.</small></div></div>';return;}
-  tag.textContent=candidates.length?'VERDICT':'STABLE'; state.textContent=candidates.length?'NEXUS ACTIF':'NEXUS // AUCUNE ALERTE MAJEURE';
-  verdict.textContent=candidates.length?`${candidates.length} décision${candidates.length>1?'s':''} émergent du roster.`:'Le Nexus ne détecte pas de transfert prioritaire.';
-  detail.textContent=candidates.length?`${topRecipients.length} personnage${topRecipients.length>1?'s':''} concentre${topRecipients.length>1?'nt':''} les principaux signaux ; ${urgent} opportunité${urgent>1?'s':''} à forte variation de vitesse.`:'La lecture globale reste cohérente avec les données actuellement chargées.';
-  const rows=[];
-  if(topRecipients[0]) rows.push({title:`Examiner ${topRecipients[0].r.recipient?.name||topRecipients[0].r.recipient?.baseId}`,desc:`${topRecipients[0].count} signal${topRecipients[0].count>1?'s':''} de réallocation converge${topRecipients[0].count>1?'nt':''} vers cette unité.`,page:'top-changes',label:'VOIR'});
-  if(candidates[0]) rows.push({title:`Étudier le transfert ${candidates[0].donor?.name||'du donneur'}`,desc:`${candidates[0].donor?.name||'Donneur'} → ${candidates[0].recipient?.name||'Cible'} · ${num(modTotalSpeed(candidates[0].oldMod),0)} → ${num(modTotalSpeed(candidates[0].newMod),0)} Speed`,page:'mods-analysis',label:'ANALYSER'});
-  if(weak.length) rows.push({title:`Auditer ${weak.length} unité${weak.length>1?'s':''} fragilisée${weak.length>1?'s':''}`,desc:'Le Nexus repère des personnages sans mods, incomplets ou faibles.',page:'mods-analysis',label:'AUDITER'});
-  rows.push({title:'Lancer une optimisation contextualisée',desc:'Le SITH’ARI transmet le contexte à la Forge V2 pour l’analyse détaillée.',page:'optimizer',label:'OUVRIR LA FORGE'});
-  actions.innerHTML=rows.map((r,i)=>`<div class="sithari-action"><span>${String(i+1).padStart(2,'0')}</span><div><strong>${esc(r.title)}</strong><small>${esc(r.desc)}</small></div><button type="button" data-sithari-page="${esc(r.page)}">${esc(r.label)}</button></div>`).join('');
-  actions.querySelectorAll('[data-sithari-page]').forEach(btn=>btn.addEventListener('click',()=>showPage(btn.dataset.sithariPage)));
+/* SITH’ARI — équipe Kyber. Ne lit que les données déjà chargées par le moteur existant. */
+let sithariSpeedThreshold = 20;
+let sithariFaction = 'Toutes les factions';
+let sithariSearch = '';
+let sithariSelectedKeys = [];
+let sithariActiveKey = '';
+
+const SITHARI_SLOT_ORDER = ['Square','Arrow','Diamond','Triangle','Circle','Cross'];
+const SITHARI_SLOT_LABEL = {Square:'CARRÉ',Arrow:'FLÈCHE',Diamond:'LOSANGE',Triangle:'TRIANGLE',Circle:'CERCLE',Cross:'CROIX'};
+const SITHARI_FIXED_PRIMARY = {Square:'Offense',Diamond:'Defense'};
+
+function sithariProfileForCharacter(c){
+  const base=compactKey(c?.baseId||c?.base_id||'');
+  const name=slug(c?.name||c?.character||'');
+  if(profiles?.[name]) return profiles[name];
+  if(base){
+    for(const p of Object.values(profiles||{})) if(compactKey(p?.base_id||'')===base) return p;
+  }
+  const target=compactKey(c?.name||'');
+  if(target) for(const p of Object.values(profiles||{})) if(compactKey(p?.character||p?.name||'')===target) return p;
+  return null;
 }
+function sithariCharacterSpeed(c){
+  return getCharacterMods(c).reduce((m,mod)=>Math.max(m,modTotalSpeed(mod)),0);
+}
+function sithariFilteredCharacters(){
+  const search=compactKey(sithariSearch);
+  return (charactersInFaction(sithariFaction||'Toutes les factions')||[])
+    .filter(c=>rosterUnitType(c)!=='ship')
+    .filter(c=>sithariSpeedThreshold===0 || sithariCharacterSpeed(c)>=sithariSpeedThreshold)
+    .filter(c=>!search || compactKey(c?.name||c?.baseId||'').includes(search))
+    .sort((a,b)=>sithariCharacterSpeed(b)-sithariCharacterSpeed(a)||String(a?.name||'').localeCompare(String(b?.name||''),'fr'));
+}
+function sithariModSecondaryMap(m){
+  const out={};
+  for(let i=1;i<=4;i++){const stat=String(m?.[`secondary_${i}_stat`]||'').trim();if(stat)out[stat]=Number(m?.[`secondary_${i}_value`]||0)||0;}
+  return out;
+}
+function sithariTopKyberSets(p){return (Array.isArray(p?.sets)?p.sets:[]).slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0)).slice(0,3);}
+function sithariPrimaryRefs(p,slot){
+  if(SITHARI_FIXED_PRIMARY[slot]) return [{name:SITHARI_FIXED_PRIMARY[slot],weight:1}];
+  return Object.entries(p?.slots?.[slot]?.primaries||{}).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name,weight])=>({name,weight}));
+}
+function sithariSetMatch(m,p){return sithariTopKyberSets(p).some(x=>compactKey(x.name)===compactKey(m?.set_name));}
+function sithariPrimaryMatch(m,p,slot){return sithariPrimaryRefs(p,slot).some(x=>compactKey(x.name)===compactKey(m?.primary_stat));}
+function sithariSecondaryScore(m,p){
+  const focus=p?.secondary_focus||{}; const sec=sithariModSecondaryMap(m); let score=0, count=0;
+  for(const [stat,ref] of Object.entries(focus)){const v=Number(sec[stat]||0); if(v>0 && Number(ref)>0){score+=Math.min(1,v/Number(ref));count++;}}
+  const speed=modSpeedMetrics(m).secondary||0; if(Number(focus.Speed)>0 && speed>0){score+=Math.min(1,speed/Number(focus.Speed));count++;}
+  return count?score/count:0;
+}
+function sithariSlotScore(m,p,slot){
+  if(!m)return 0;
+  const set=sithariSetMatch(m,p)?1:0;
+  const primary=sithariPrimaryMatch(m,p,slot)?1:0;
+  const sec=sithariSecondaryScore(m,p);
+  const speed=Math.min(1,(modSpeedMetrics(m).secondary||0)/Math.max(1,Number(p?.secondary_focus?.Speed||20)));
+  return set*.35+primary*.3+sec*.25+speed*.1;
+}
+function sithariEquippedOwner(m){return modOwnerKey(m)||'';}
+function sithariAvailableMods(){
+  return (Array.isArray(mods)?mods:[]).map((raw,i)=>({...normalizeModForDisplay(raw),_index:i})).filter(m=>!sithariEquippedOwner(m));
+}
+function sithariAllCandidateMods(){
+  // Les mods déjà équipés restent utilisables comme sources potentielles, sauf le mod du slot analysé.
+  return (Array.isArray(mods)?mods:[]).map((raw,i)=>({...normalizeModForDisplay(raw),_index:i}));
+}
+function sithariBestReplacement(c,slot,current,p){
+  const pool=sithariAllCandidateMods().filter(m=>String(m.slot||'')===slot && m.game_id!==current?.game_id);
+  if(!pool.length)return null;
+  const ranked=pool.map(m=>({m,score:sithariSlotScore(m,p,slot)})).sort((a,b)=>b.score-a.score||modTotalSpeed(b.m)-modTotalSpeed(a.m));
+  const best=ranked[0];
+  if(!best || best.score <= sithariSlotScore(current,p,slot)+.08)return null;
+  return best;
+}
+function sithariReferenceText(p,slot){
+  const sets=sithariTopKyberSets(p).map(x=>x.name).join(' / ')||'—';
+  const prim=sithariPrimaryRefs(p,slot).map(x=>x.name).join(' / ')||'—';
+  const focus=p?.secondary_focus||{};
+  const sec=Object.entries(focus).slice(0,4).map(([k,v])=>`${k} ${num(v,1)}`).join(' · ')||'—';
+  return {sets,prim,sec};
+}
+function sithariSlotState(c,slot){
+  const p=sithariProfileForCharacter(c); const cm=getCharacterMods(c); const current=cm.find(m=>String(m.slot||'')===slot)||null;
+  if(!p)return {slot,current,status:'NOREF',profile:null,reference:{sets:'Référence Kyber indisponible',prim:'—',sec:'—'}};
+  const reference=sithariReferenceText(p,slot);
+  if(!current){return {slot,current,status:'MISSING',profile:p,reference,replacement:sithariBestReplacement(c,slot,null,p)};}
+  const replacement=sithariBestReplacement(c,slot,current,p);
+  const score=sithariSlotScore(current,p,slot);
+  let status='KEEP'; if(replacement)status='REPLACE'; else if(score<.52)status='SEARCH'; else if(score<.72)status='IMPROVE';
+  const searchProfile={set:sithariTopKyberSets(p)[0]?.name||'—',primary:sithariPrimaryRefs(p,slot)[0]?.name||'—',speed:Number(p?.secondary_focus?.Speed||0)};
+  return {slot,current,status,profile:p,reference,replacement,score,searchProfile};
+}
+function sithariPortrait(c){
+  const src=c?.portraitUrl||c?.thumbnailName||''; return src?`<img src="${esc(src)}" alt="" loading="lazy">`:`<span>${esc(String(c?.name||'?').slice(0,1))}</span>`;
+}
+function sithariRenderSelectors(){
+  const factionEl=$('sithariFaction'), grid=$('sithariCharacterGrid'), meta=$('sithariSelectionMeta'); if(!grid)return;
+  buildFactionMap();
+  const factions=['Toutes les factions',...allFactions()];
+  if(factionEl){factionEl.innerHTML=factions.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');factionEl.value=sithariFaction;}
+  const rows=sithariFilteredCharacters();
+  meta.textContent=rows.length?`${rows.length} personnage${rows.length>1?'s':''} correspondant${rows.length>1?'s':''} · ≥ ${sithariSpeedThreshold||0} Speed · ${sithariFaction}`:'Aucun personnage ne correspond à ces critères.';
+  grid.innerHTML=rows.map(c=>{
+    const key=characterKey(c), selected=sithariSelectedKeys.includes(key), speed=sithariCharacterSpeed(c), disabled=!selected&&sithariSelectedKeys.length>=5;
+    const factions=factionMap[key]||[];
+    return `<button type="button" class="sithari-character-card ${selected?'selected':''}" data-sithari-char="${esc(key)}" ${disabled?'disabled':''}><span class="sithari-character-portrait">${sithariPortrait(c)}</span><span class="sithari-character-copy"><strong>${esc(c?.name||c?.baseId||'—')}</strong><small>${factions.slice(0,2).map(esc).join(' · ')||'Faction non renseignée'}</small></span><b>${num(speed)}</b><i>${selected?'✓':'+'}</i></button>`;
+  }).join('');
+  grid.querySelectorAll('[data-sithari-char]').forEach(btn=>btn.addEventListener('click',()=>sithariToggleCharacter(btn.dataset.sithariChar)));
+}
+function sithariToggleCharacter(key){
+  if(sithariSelectedKeys.includes(key)){sithariSelectedKeys=sithariSelectedKeys.filter(x=>x!==key);if(sithariActiveKey===key)sithariActiveKey=sithariSelectedKeys[0]||'';}
+  else if(sithariSelectedKeys.length<5){sithariSelectedKeys.push(key);sithariActiveKey=key;}
+  sithariRenderAll();
+}
+function sithariCharacterByKey(key){return rosterCharacters.find(c=>characterKey(c)===key)||null;}
+function sithariRenderTeam(){
+  const team=$('sithariSelectedTeam'), tabs=$('sithariTeamTabs'), count=$('sithariSelectedCount'), summary=$('sithariTeamSummary'); if(!team)return;
+  count.textContent=String(sithariSelectedKeys.length); summary.textContent=sithariSelectedKeys.length?`${sithariSelectedKeys.length} personnage${sithariSelectedKeys.length>1?'s':''} · cliquez pour analyser`:'Sélectionnez 1 à 5 personnages';
+  team.innerHTML=sithariSelectedKeys.map(key=>{const c=sithariCharacterByKey(key);return `<button type="button" class="sithari-selected-chip ${sithariActiveKey===key?'active':''}" data-sithari-active="${esc(key)}"><span>${sithariPortrait(c||{})}</span><strong>${esc(c?.name||key)}</strong><i>×</i></button>`}).join('');
+  tabs.innerHTML=sithariSelectedKeys.map((key,i)=>{const c=sithariCharacterByKey(key);const states=c?SITHARI_SLOT_ORDER.map(s=>sithariSlotState(c,s)):[];const rep=states.filter(x=>x.status==='REPLACE').length, find=states.filter(x=>x.status==='SEARCH'||x.status==='MISSING').length;return `<button type="button" class="sithari-team-tab ${sithariActiveKey===key?'active':''}" data-sithari-active="${esc(key)}"><span>${String(i+1).padStart(2,'0')}</span><strong>${esc(c?.name||key)}</strong><small>${rep} réaffectation · ${find} à trouver</small></button>`}).join('');
+  document.querySelectorAll('[data-sithari-active]').forEach(btn=>btn.addEventListener('click',()=>{sithariActiveKey=btn.dataset.sithariActive;sithariRenderAll(false)}));
+  team.querySelectorAll('.sithari-selected-chip i').forEach((x)=>x.addEventListener('click',e=>{e.stopPropagation();sithariToggleCharacter(x.closest('[data-sithari-active]').dataset.sithariActive)}));
+}
+function sithariModMini(m){if(!m)return '<span class="sithari-no-mod">AUCUN MOD</span>';return `<span class="sithari-mod-mini"><b>${esc(String(m.set_name||'—'))}</b><small>${esc(String(m.primary_stat||'—'))} · ${num(modTotalSpeed(m))} Speed</small></span>`;}
+function sithariRenderCharacter(){
+  const box=$('sithariCharacterAnalysis'), empty=$('sithariAnalysisEmpty'); if(!box)return;
+  const c=sithariCharacterByKey(sithariActiveKey); if(!c){box.hidden=true;empty.hidden=false;return;}
+  const p=sithariProfileForCharacter(c); const states=SITHARI_SLOT_ORDER.map(s=>sithariSlotState(c,s));
+  const rep=states.filter(x=>x.status==='REPLACE').length, find=states.filter(x=>x.status==='SEARCH'||x.status==='MISSING').length;
+  box.hidden=false;empty.hidden=true;
+  box.innerHTML=`<div class="sithari-analysis-head"><div><small>SITH’ARI // ANALYSE PERSONNAGE</small><h3>${esc(c?.name||c?.baseId||'—')}</h3><p>${(factionMap[characterKey(c)]||[]).map(esc).join(' · ')||'Faction non renseignée'} · ${num(sithariCharacterSpeed(c))} Speed max mod</p></div><div class="sithari-analysis-kpis"><span><b>6</b> SLOTS</span><span><b>${rep}</b> RÉAFFECT.</span><span><b>${find}</b> À TROUVER</span></div></div>
+  ${!p?'<div class="sithari-no-reference">Référence Kyber indisponible pour ce personnage.</div>':`<div class="sithari-slots">${states.map((x,i)=>sithariSlotCard(x,i)).join('')}</div>`}`;
+}
+function sithariSlotCard(x,i){
+  const labels={KEEP:['CONFORME','keep'],REPLACE:['RÉAFFECTER','replace'],SEARCH:['À TROUVER','search'],MISSING:['À TROUVER','search'],IMPROVE:['AMÉLIORABLE','improve'],NOREF:['SANS RÉFÉRENCE','noref']};
+  const [label,cls]=labels[x.status]||labels.NOREF;
+  const replacement=x.replacement?.m;
+  const search=x.searchProfile||{};
+  return `<article class="sithari-slot-card ${cls}"><header><span>${String(i+1).padStart(2,'0')}</span><div><small>SLOT</small><strong>${SITHARI_SLOT_LABEL[x.slot]||x.slot}</strong></div><em>${label}</em></header><div class="sithari-slot-compare"><div><small>TON MOD</small>${sithariModMini(x.current)}</div><div class="sithari-slot-arrow">→</div><div><small>RÉFÉRENCE KYBER</small><p><b>SETS</b> ${esc(x.reference.sets)}</p><p><b>PRIMAIRE</b> ${esc(x.reference.prim)}</p><p><b>SECONDAIRES</b> ${esc(x.reference.sec)}</p></div></div>${replacement?`<div class="sithari-replacement"><small>MOD DISPONIBLE</small>${sithariModMini(replacement)}<strong>→ meilleure correspondance Kyber</strong></div>`:''}${(x.status==='SEARCH'||x.status==='MISSING')?`<div class="sithari-search-target"><small>MOD À TROUVER</small><strong>${esc(search.set||x.reference.sets)}</strong><span>${esc(search.primary||x.reference.prim)} · Speed secondaire ≥ ${num(search.speed||0,1)}</span></div>`:''}</article>`;
+}
+function sithariRenderTeamResults(){
+  const box=$('sithariTeamResults');if(!box)return;
+  if(!sithariSelectedKeys.length){box.innerHTML='<div class="sithari-results-empty">La vue équipe apparaîtra dès qu’un personnage sera sélectionné.</div>';return;}
+  box.innerHTML=sithariSelectedKeys.map(key=>{const c=sithariCharacterByKey(key);const states=SITHARI_SLOT_ORDER.map(s=>sithariSlotState(c,s));const rep=states.filter(x=>x.status==='REPLACE').length, find=states.filter(x=>x.status==='SEARCH'||x.status==='MISSING').length, keep=states.filter(x=>x.status==='KEEP'||x.status==='IMPROVE').length;return `<button type="button" class="sithari-result-row ${sithariActiveKey===key?'active':''}" data-sithari-active="${esc(key)}"><span>${sithariPortrait(c||{})}</span><strong>${esc(c?.name||key)}</strong><em>${keep} conformes</em><em>${rep} réaffectations</em><em>${find} à trouver</em></button>`}).join('');
+  box.querySelectorAll('[data-sithari-active]').forEach(btn=>btn.addEventListener('click',()=>{sithariActiveKey=btn.dataset.sithariActive;sithariRenderAll(false)}));
+}
+function renderSithariNexus(){
+  const state=$('sithariState'); if(!state)return;
+  buildFactionMap();
+  state.textContent=rosterCharacters.length?'SITH’ARI // PRÊT':'EN ATTENTE DU SCAN';
+  sithariRenderAll();
+}
+function sithariRenderAll(resetActive=true){
+  if(resetActive && sithariSelectedKeys.length && !sithariSelectedKeys.includes(sithariActiveKey))sithariActiveKey=sithariSelectedKeys[0];
+  sithariRenderSelectors();sithariRenderTeam();sithariRenderCharacter();sithariRenderTeamResults();
+}
+
 
 function showPage(page){
   document.body.dataset.page=page;
@@ -2356,6 +2476,10 @@ $('modDetailModal')?.addEventListener('click',e=>{if(e.target.id==='modDetailMod
 document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{showPage(btn.dataset.page);if(btn.dataset.page==='data')renderDataTable();}));
 
 document.getElementById('sithariAccess')?.addEventListener('click',()=>showPage('sithari'));
+$('sithariFaction')?.addEventListener('change',e=>{sithariFaction=e.target.value;sithariRenderAll();});
+$('sithariCharacterSearch')?.addEventListener('input',e=>{sithariSearch=e.target.value||'';sithariRenderSelectors();});
+document.querySelectorAll('[data-sithari-speed]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-sithari-speed]').forEach(x=>x.classList.toggle('active',x===btn));sithariSpeedThreshold=Number(btn.dataset.sithariSpeed||0);sithariRenderSelectors();}));
+$('sithariClearSelection')?.addEventListener('click',()=>{sithariSelectedKeys=[];sithariActiveKey='';sithariRenderAll();});
 renderGalacticPower();
 renderSithariNexus();
 boot();

@@ -155,39 +155,60 @@
   <header class="sithari-header">
     <div class="sithari-kicker">HOLOCRON // SITH’ARI</div>
     <div class="sithari-title-row">
-      <div><h2>LE NEXUS</h2><p>TRANSCENDER LES LIMITES. LIRE LE ROSTER COMME UN SEUL SYSTÈME.</p></div>
+      <div><h2>SITH’ARI</h2><p>CHOISIR UNE ÉQUIPE. COMPARER AU KYBER. RÉAFFECTER OU TROUVER.</p></div>
       <div class="sithari-state"><span class="status-dot"></span><span id="sithariState">EN ATTENTE DU SCAN</span></div>
     </div>
-    <div class="sithari-thesis"><span>ACOLYTE</span><b>VOIR</b><i>→</i><span>DISCIPLE</span><b>COMPRENDRE</b><i>→</i><span>SEIGNEUR SITH</span><b>MAÎTRISER</b><i>→</i><strong>SITH’ARI</strong><b>TRANSCENDER</b></div>
+    <div class="sithari-thesis"><strong>SÉLECTIONNER</strong><i>→</i><strong>COMPARER</strong><i>→</i><strong>RÉAFFECTER</strong><i>→</i><strong>TROUVER</strong></div>
   </header>
 
-  <section class="sithari-command-grid">
-    <article class="sithari-command-card sithari-global">
-      <div class="sithari-card-head"><span>01</span><div><small>LECTURE GLOBALE</small><h3>ÉTAT DU ROSTER</h3></div><em>NEXUS</em></div>
-      <div class="sithari-metric-grid">
-        <div><small>UNITÉS</small><strong id="sithariUnits">0</strong></div>
-        <div><small>MODS</small><strong id="sithariMods">0</strong></div>
-        <div><small>PUISSANCE</small><strong id="sithariGp">0</strong></div>
-        <div><small>VITESSE MOY.</small><strong id="sithariAvgSpeed">0</strong></div>
+  <section class="sithari-selector panel">
+    <div class="sithari-selector-head">
+      <div><small>SITH’ARI // CONSTITUTION DE L’ÉQUIPE</small><h3>QUI VEUX-TU AMENER AU NIVEAU KYBER ?</h3></div>
+      <div class="sithari-team-count"><strong id="sithariSelectedCount">0</strong><span>/ 5</span></div>
+    </div>
+    <div class="sithari-filters">
+      <div class="sithari-filter-block">
+        <span>NIVEAU DE VITESSE</span>
+        <div id="sithariSpeedFilters" class="sithari-pills">
+          <button type="button" class="active" data-sithari-speed="20">≥ 20</button>
+          <button type="button" data-sithari-speed="15">≥ 15</button>
+          <button type="button" data-sithari-speed="10">≥ 10</button>
+          <button type="button" data-sithari-speed="0">TOUS</button>
+        </div>
       </div>
-    </article>
+      <label class="sithari-faction-filter"><span>FACTION</span><select id="sithariFaction"><option value="Toutes les factions">Toutes les factions</option></select></label>
+      <label class="sithari-search"><span>RECHERCHE</span><input id="sithariCharacterSearch" type="search" placeholder="Nom du personnage…"></label>
+    </div>
+    <div class="sithari-selection-meta"><span id="sithariSelectionMeta">Aucun roster chargé.</span><button type="button" id="sithariClearSelection">VIDER L’ÉQUIPE</button></div>
+    <div id="sithariCharacterGrid" class="sithari-character-grid"></div>
+  </section>
 
-    <article class="sithari-command-card sithari-verdict-card">
-      <div class="sithari-card-head"><span>02</span><div><small>DÉCISION GLOBALE</small><h3>VERDICT DU NEXUS</h3></div><em id="sithariVerdictTag">SCAN</em></div>
-      <div class="sithari-verdict" id="sithariVerdict">Le Nexus attend les données du roster.</div>
-      <div class="sithari-verdict-detail" id="sithariVerdictDetail">Synchronisez le profil pour faire émerger les priorités globales.</div>
-    </article>
+  <section class="sithari-team-panel panel">
+    <div class="sithari-panel-title"><span>✧</span><div><small>SITH’ARI // ÉQUIPE</small><strong>ÉQUIPE SÉLECTIONNÉE</strong></div><em id="sithariTeamSummary">Sélectionnez 1 à 5 personnages</em></div>
+    <div id="sithariSelectedTeam" class="sithari-selected-team"></div>
+  </section>
 
-    <article class="sithari-command-card sithari-opportunity-card">
-      <div class="sithari-card-head"><span>03</span><div><small>COÛT D’OPPORTUNITÉ</small><h3>CONFLITS DE RESSOURCES</h3></div><em id="sithariConflictCount">0</em></div>
-      <div id="sithariConflicts" class="sithari-list empty">Aucun conflit calculé.</div>
-    </article>
-
-    <article class="sithari-command-card sithari-priority-card">
-      <div class="sithari-card-head"><span>04</span><div><small>DESTINS À MODIFIER</small><h3>PRIORITÉS SYSTÉMIQUES</h3></div><em id="sithariPriorityCount">0</em></div>
-      <div id="sithariPriorities" class="sithari-list empty">Aucune priorité détectée.</div>
+  <section class="sithari-workspace">
+    <aside class="sithari-roster-summary panel">
+      <div class="sithari-panel-title"><span>◈</span><div><small>ÉQUIPE</small><strong>PERSONNAGES</strong></div></div>
+      <div id="sithariTeamTabs" class="sithari-team-tabs"></div>
+    </aside>
+    <article class="sithari-character-analysis panel">
+      <div id="sithariAnalysisEmpty" class="sithari-analysis-empty">
+        <span>✧</span><strong>SÉLECTIONNE AU MOINS UN PERSONNAGE</strong><small>Sith’ari analysera les 6 slots du personnage choisi et cherchera une meilleure solution dans les mods disponibles.</small>
+      </div>
+      <div id="sithariCharacterAnalysis" hidden></div>
     </article>
   </section>
+
+  <section class="sithari-team-results panel">
+    <div class="sithari-panel-title"><span>⬢</span><div><small>SITH’ARI // VUE ÉQUIPE</small><strong>RÉCAPITULATIF DES BESOINS</strong></div></div>
+    <div id="sithariTeamResults" class="sithari-team-results-grid"></div>
+  </section>
+
+  <footer class="sithari-footer"><span>SITH’ARI // TRANSCENDER</span><strong>COMPARER · RÉAFFECTER · TROUVER</strong><small>Une équipe. Six slots par personnage. Une référence Kyber.</small></footer>
+</section>
+
 
   <section class="sithari-analysis-grid">
     <article class="panel sithari-decision-panel">
