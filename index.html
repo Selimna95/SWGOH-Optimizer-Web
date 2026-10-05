@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="app.css?v=2.2.4">
+  <link rel="stylesheet" href="app.css?v=2.2.5">
 
 
 
 
-<title>Selimna’s Holocron — V2.2.4</title>
+<title>Selimna’s Holocron — V2.2.5</title>
 
 
 
@@ -279,7 +279,7 @@
 <section id="mods-analysis" class="page">
       <div class="panel analysis-header">
         <div>
-          <div class="panel-title">DISCIPLE // COMMAND TACTIQUE — V176</div><div class="laser-sweep" aria-hidden="true"></div><div class="command-rune" aria-hidden="true">HYPERLANE // MODS // V176</div>
+          <div class="panel-title">DISCIPLE // COMPRENDRE — RÉAFFECTATION</div><div class="laser-sweep" aria-hidden="true"></div><div class="command-rune" aria-hidden="true">HYPERLANE // MODS // DISCIPLE</div>
           <p>Comprendre le roster, lire les personnages, maîtriser les mods et agir sur les réaffectations.</p>
         </div>
         <div class="analysis-tabs">
@@ -334,28 +334,54 @@
       </div>
 
       <div class="analysis-panel panel" data-analysis-panel="reallocation" hidden>
-        <div class="reallocation-header">
+        <div class="disciple-command-head">
           <div>
-            <div class="panel-title">RÉAFFECTATION INTELLIGENTE D’UN MOD</div>
-            <p class="reallocation-intro">Par défaut, la recherche récupère uniquement les mods équipés sur les personnages très faibles ou faibles. Les personnages moyens sont optionnels. Pour élargir la recherche, activez <strong>TOUT LE ROSTER</strong>.</p>
+            <div class="panel-title">DISCIPLE // RÉAFFECTATION MOD PAR MOD</div>
+            <p>Une seule décision à la fois : conserver <strong>le set</strong>, conserver <strong>la primaire</strong>, choisir <strong>une seule secondaire</strong>, puis classer les meilleures possibilités par vitesse.</p>
           </div>
-          <button type="button" class="detail-mods-btn" id="reallocationSelectedModBtn">AUCUN MOD SÉLECTIONNÉ</button>
+          <div class="disciple-command-badge"><span>MODE ACTIF</span><strong>COMPRENDRE</strong><small>1 MOD · 1 SECONDAIRE</small></div>
         </div>
-        <div class="reallocation-controls">
-          <label>SECONDAIRE RECHERCHÉE
-            <select id="reallocationSecondary"><option value="">Choisir une secondaire…</option></select>
-          </label>
-          <div class="reallocation-scope">
-            <span>PERSONNAGES À ANALYSER</span>
-            <label><input type="checkbox" id="reallocationVeryLow" checked> Très faibles</label>
-            <label><input type="checkbox" id="reallocationLow" checked> Faibles</label>
-            <label class="medium-option"><input type="checkbox" id="reallocationMedium"> Moyens</label>
-            <label class="roster-option"><input type="checkbox" id="reallocationAllRoster"> Tout le roster</label>
+
+        <div class="disciple-step disciple-step-mod">
+          <div class="disciple-step-title"><span>01 // MOD À REMPLACER</span><small>Le set et la primaire sont verrouillés par le mod choisi.</small></div>
+          <div class="disciple-mod-selector">
+            <label>MOD SÉLECTIONNÉ
+              <select id="reallocationModSelect"><option value="">Choisir un mod équipé…</option></select>
+            </label>
+            <div id="reallocationSelectedModVisual" class="disciple-selected-mod"><div class="empty">Aucun mod sélectionné.</div></div>
           </div>
-          <button type="button" class="primary" id="runReallocation">RECHERCHER LES MODS</button>
         </div>
-        <div id="reallocationInfo" class="table-meta">Sélectionnez un mod dans un rapport ou dans l’inventaire.</div>
-        <div id="reallocationResults" class="reallocation-results"><div class="empty">Aucun mod sélectionné.</div></div>
+
+        <div class="disciple-step">
+          <div class="disciple-step-title"><span>02 // RÈGLES CONSERVÉES</span><small>Aucune modification automatique du set ou de la primaire.</small></div>
+          <div id="reallocationLockedRules" class="disciple-locked-rules"><div class="disciple-lock-card"><span>SET</span><b>—</b><small>sera conservé</small></div><div class="disciple-lock-card"><span>PRIMAIRE</span><b>—</b><small>sera conservée</small></div><div class="disciple-lock-card"><span>SLOT</span><b>—</b><small>même emplacement</small></div></div>
+        </div>
+
+        <div class="disciple-step">
+          <div class="disciple-step-title"><span>03 // SOURCE DES MODS</span><small>Choisir où chercher les remplaçants.</small></div>
+          <div class="disciple-scope-grid">
+            <label class="disciple-scope-choice"><input type="checkbox" id="reallocationVeryLow" checked><b>TRÈS FAIBLES</b><small>source par défaut</small></label>
+            <label class="disciple-scope-choice"><input type="checkbox" id="reallocationLow" checked><b>FAIBLES</b><small>source par défaut</small></label>
+            <label class="disciple-scope-choice disciple-scope-optional"><input type="checkbox" id="reallocationMedium"><b>MOYENS</b><small>option</small></label>
+            <label class="disciple-scope-choice disciple-scope-all"><input type="checkbox" id="reallocationAllRoster"><b>TOUT LE ROSTER</b><small>option</small></label>
+          </div>
+        </div>
+
+        <div class="disciple-step disciple-search-step">
+          <div class="disciple-step-title"><span>04 // SECONDAIRE RECHERCHÉE</span><small>Une seule secondaire. La vitesse sert ensuite à classer les résultats.</small></div>
+          <div class="disciple-search-row">
+            <label>SECONDAIRE UNIQUE
+              <select id="reallocationSecondary"><option value="">Choisir une secondaire…</option></select>
+            </label>
+            <button type="button" class="primary" id="runReallocation">RECHERCHER 5 OPTIONS</button>
+          </div>
+          <div id="reallocationInfo" class="disciple-selection-info">Sélectionnez un mod équipé pour commencer.</div>
+        </div>
+
+        <div class="disciple-step disciple-results-step">
+          <div class="disciple-step-title"><span>05 // OPTIONS DE RÉAFFECTATION</span><small>Priorité : secondaire recherchée → vitesse décroissante.</small></div>
+          <div id="reallocationResults" class="reallocation-results"><div class="empty">Aucune recherche lancée.</div></div>
+        </div>
       </div>
 
       <div class="analysis-panel panel" data-analysis-panel="inventory" hidden>
@@ -449,7 +475,7 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <!-- V100: interface nouvelle / moteur technique V90 conservé intégralement. -->
 <script src="gac-usage.js?v=89"></script>
-<script src="app.js?v=2.2.4"></script>
-<script src="interface-adapter.js?v=2.2.4"></script>
+<script src="app.js?v=2.2.5"></script>
+<script src="interface-adapter.js?v=2.2.5"></script>
 </body>
 </html>

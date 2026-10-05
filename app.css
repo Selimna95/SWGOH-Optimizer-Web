@@ -2081,3 +2081,82 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 @media(max-width:1200px){#optimizer .forge-candidate{grid-template-columns:30px 60px minmax(160px,1fr) 110px 68px}}
 @media(max-width:1100px){#optimizer .forge-candidate{grid-template-columns:30px 58px 1fr 1fr}.forge-delta{grid-column:3/-1;border-left:0;border-top:1px solid rgba(126,176,198,.12);padding:7px 0 0}.forge-candidate-speed{grid-column:4}}
 @media(max-width:760px){#optimizer .forge-candidate{grid-template-columns:30px 58px 1fr}.forge-delta,.forge-candidate-speed{grid-column:3}.forge-candidate-speed{text-align:left;border-left:0;border-top:1px solid rgba(126,176,198,.12);padding:7px 0 0}}
+
+/* V2.2.5 — DISCIPLE refondu sur la base visuelle SEIGNEUR SITH : 1 mod / 1 secondaire */
+#mods-analysis .disciple-command-head{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:16px;align-items:start;padding:2px 0 16px}
+#mods-analysis .disciple-command-head p{margin:7px 0 0;color:#8eafc2;line-height:1.5;max-width:900px;font-size:11px}
+#mods-analysis .disciple-command-badge{border:1px solid rgba(76,191,232,.25);border-radius:7px;background:linear-gradient(145deg,rgba(5,24,38,.92),rgba(3,12,20,.94));padding:10px 12px;display:grid;gap:3px;text-align:right}
+#mods-analysis .disciple-command-badge span{font-size:7px;letter-spacing:.14em;color:#5edbff}
+#mods-analysis .disciple-command-badge strong{font-size:13px;color:#f0d36a;letter-spacing:.08em}
+#mods-analysis .disciple-command-badge small{font-size:7px;color:#6e8794}
+#mods-analysis .disciple-step{margin-top:12px;border:1px solid rgba(61,155,195,.18);border-radius:8px;background:linear-gradient(145deg,rgba(4,18,29,.82),rgba(3,11,19,.9));padding:13px}
+#mods-analysis .disciple-step-title{display:flex;justify-content:space-between;gap:14px;align-items:baseline;margin-bottom:11px}
+#mods-analysis .disciple-step-title span{font-size:9px;font-weight:900;letter-spacing:.12em;color:#ff465c}
+#mods-analysis .disciple-step-title small{font-size:7px;color:#5e7887}
+#mods-analysis .disciple-mod-selector{display:grid;grid-template-columns:minmax(260px,1fr) minmax(330px,1.3fr);gap:12px;align-items:stretch}
+#mods-analysis .disciple-mod-selector label,#mods-analysis .disciple-search-row label{display:flex;flex-direction:column;gap:6px;color:#79a4b9;font-size:9px;font-weight:900;letter-spacing:.06em}
+#mods-analysis .disciple-mod-selector select,#mods-analysis .disciple-search-row select{min-height:42px}
+#mods-analysis .disciple-selected-mod{min-width:0}
+#mods-analysis .disciple-selected-mod-card{height:100%;display:grid;grid-template-columns:68px minmax(0,1fr) 90px;gap:11px;align-items:center;border:1px solid rgba(67,181,225,.22);border-radius:7px;padding:9px 11px;background:rgba(4,15,24,.62)}
+#mods-analysis .disciple-selected-mod-icon{display:flex;justify-content:center;align-items:center}
+#mods-analysis .disciple-selected-mod-main{display:grid;gap:3px;min-width:0}
+#mods-analysis .disciple-selected-mod-main span{font-size:7px;color:#5edbff;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mods-analysis .disciple-selected-mod-main strong{font-size:12px;color:#e8f8ff}
+#mods-analysis .disciple-selected-mod-main small{font-size:7px;color:#7e97a4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mods-analysis .disciple-selected-mod-speed{text-align:right;border-left:1px solid rgba(126,176,198,.12);padding-left:10px}
+#mods-analysis .disciple-selected-mod-speed span,#mods-analysis .disciple-result-summary span{display:block;font-size:7px;letter-spacing:.1em;color:#718a98}
+#mods-analysis .disciple-selected-mod-speed b{font-size:20px;color:#f4d578}
+#mods-analysis .disciple-locked-rules{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#mods-analysis .disciple-lock-card{min-height:66px;padding:9px 10px;border:1px solid rgba(126,176,198,.13);border-radius:6px;background:rgba(2,11,18,.48);display:grid;align-content:center;gap:2px}
+#mods-analysis .disciple-lock-card.is-locked{border-color:rgba(240,211,106,.22);background:rgba(55,43,13,.1)}
+#mods-analysis .disciple-lock-card span{font-size:7px;color:#6d8795;letter-spacing:.1em}
+#mods-analysis .disciple-lock-card b{font-size:11px;color:#e7f6fd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#mods-analysis .disciple-lock-card small{font-size:7px;color:#6d8795}
+#mods-analysis .disciple-scope-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#mods-analysis .disciple-scope-choice{min-height:62px;padding:10px;border:1px solid rgba(61,155,195,.18);border-radius:6px;background:rgba(3,14,23,.55);display:grid;grid-template-columns:16px 1fr;grid-template-rows:auto auto;column-gap:7px;align-items:center;cursor:pointer}
+#mods-analysis .disciple-scope-choice:has(input:checked){border-color:rgba(57,220,184,.5);box-shadow:inset 0 0 18px rgba(38,184,164,.05)}
+#mods-analysis .disciple-scope-choice input{grid-row:1/3;accent-color:#32d8ff}
+#mods-analysis .disciple-scope-choice b{font-size:9px;color:#8db2c3;letter-spacing:.06em}
+#mods-analysis .disciple-scope-choice small{font-size:7px;color:#5e7887}
+#mods-analysis .disciple-scope-optional{border-color:rgba(240,211,106,.16)}
+#mods-analysis .disciple-scope-all{border-color:rgba(240,211,106,.28)}
+#mods-analysis .disciple-search-row{display:grid;grid-template-columns:minmax(260px,1fr) 230px;gap:12px;align-items:end}
+#mods-analysis .disciple-search-row .primary{min-height:42px}
+#mods-analysis .disciple-selection-info{margin-top:10px;padding:9px 11px;border:1px solid rgba(61,155,195,.12);border-radius:5px;background:rgba(2,10,17,.42);color:#7d98a7;font-size:8px}
+#mods-analysis .disciple-selection-info strong{color:#cfe9f5}
+#mods-analysis .disciple-selection-info b{color:#f0d36a}
+#mods-analysis .disciple-result-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:11px}
+#mods-analysis .disciple-result-summary>div{padding:9px 10px;border:1px solid rgba(61,155,195,.14);border-radius:6px;background:rgba(3,13,22,.48)}
+#mods-analysis .disciple-result-summary b{display:block;margin-top:3px;font-size:12px;color:#e6f7ff}
+#mods-analysis .disciple-result-summary small{font-size:7px;color:#607987}
+#mods-analysis .disciple-candidate-list{display:grid;gap:8px}
+#mods-analysis .disciple-candidate{display:grid;grid-template-columns:42px 150px minmax(210px,1fr) 78px 105px minmax(260px,1.25fr);gap:10px;align-items:center;border:1px solid rgba(61,155,195,.18);border-radius:7px;padding:9px 10px;background:linear-gradient(145deg,rgba(5,17,27,.88),rgba(2,10,17,.94));transition:.12s ease}
+#mods-analysis .disciple-candidate:hover{border-color:rgba(80,211,255,.38);background:rgba(8,25,38,.9)}
+#mods-analysis .disciple-candidate-rank{text-align:center;border-right:1px solid rgba(126,176,198,.12);padding-right:8px}
+#mods-analysis .disciple-candidate-rank span{display:block;font-size:6px;color:#637d8b;letter-spacing:.12em}
+#mods-analysis .disciple-candidate-rank b{font-size:18px;color:#f0d36a}
+#mods-analysis .disciple-candidate-owner{display:flex;align-items:center;gap:7px;min-width:0}
+#mods-analysis .disciple-candidate-owner .topchange-portrait{width:38px;height:38px;min-width:38px;border-radius:6px;border:1px solid rgba(85,220,255,.2);overflow:hidden}
+#mods-analysis .disciple-candidate-owner .topchange-portrait img{width:100%;height:100%;object-fit:cover;object-position:center top}
+#mods-analysis .disciple-candidate-owner>div{min-width:0;display:grid;gap:4px}
+#mods-analysis .disciple-candidate-owner strong{font-size:8px;color:#dceff7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mods-analysis .disciple-candidate-owner .audit-badge{font-size:6px;padding:2px 4px;width:max-content}
+#mods-analysis .disciple-candidate-mod{display:flex;align-items:center;gap:8px;min-width:0}
+#mods-analysis .disciple-candidate-icon{width:56px;min-width:56px;text-align:center}
+#mods-analysis .disciple-candidate-mod>div:last-child{display:grid;gap:3px;min-width:0}
+#mods-analysis .disciple-candidate-mod span{font-size:7px;color:#62cdef}
+#mods-analysis .disciple-candidate-mod strong{font-size:9px;color:#dceff7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mods-analysis .disciple-candidate-mod small{font-size:6px;color:#6e8794;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mods-analysis .disciple-candidate-speed{border-left:1px solid rgba(126,176,198,.12);padding-left:9px;text-align:right}
+#mods-analysis .disciple-candidate-speed span,#mods-analysis .disciple-candidate-match span{display:block;font-size:6px;color:#657f8c;letter-spacing:.08em}
+#mods-analysis .disciple-candidate-speed b{font-size:17px;color:#f0d36a}
+#mods-analysis .disciple-candidate-speed small,#mods-analysis .disciple-candidate-match small{display:block;font-size:6px;color:#5f7785}
+#mods-analysis .disciple-candidate-match{padding:6px 7px;border:1px solid rgba(83,215,255,.18);border-radius:5px;background:rgba(7,31,43,.45)}
+#mods-analysis .disciple-candidate-match b{display:block;color:#50e2ff;font-size:12px;margin-top:2px}
+#mods-analysis .disciple-candidate-delta{min-width:0}
+#mods-analysis .disciple-candidate-delta .forge-delta{padding-left:8px}
+#mods-analysis .disciple-no-result{display:grid;gap:5px;padding:20px;border:1px dashed rgba(255,83,99,.28);border-radius:7px;text-align:center;background:rgba(60,8,15,.1)}
+#mods-analysis .disciple-no-result b{font-size:10px;color:#ff707b;letter-spacing:.12em}
+#mods-analysis .disciple-no-result span{font-size:8px;color:#728b98}
+@media(max-width:1250px){#mods-analysis .disciple-candidate{grid-template-columns:38px 135px minmax(180px,1fr) 70px 95px;}.disciple-candidate-delta{grid-column:3/-1;border-top:1px solid rgba(126,176,198,.12);padding-top:8px}.disciple-candidate-delta .forge-delta{border-left:0;padding-left:0}.disciple-scope-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){#mods-analysis .disciple-command-head{grid-template-columns:1fr}.disciple-command-badge{text-align:left}.disciple-mod-selector,.disciple-search-row{grid-template-columns:1fr}.disciple-locked-rules,.disciple-result-summary{grid-template-columns:1fr}.disciple-scope-grid{grid-template-columns:1fr}.disciple-candidate{grid-template-columns:34px 1fr}.disciple-candidate-owner,.disciple-candidate-mod,.disciple-candidate-speed,.disciple-candidate-match,.disciple-candidate-delta{grid-column:2}.disciple-candidate-speed{border-left:0;border-top:1px solid rgba(126,176,198,.12);padding:7px 0 0;text-align:left}.disciple-candidate-delta{border-top:1px solid rgba(126,176,198,.12);padding-top:8px}}
