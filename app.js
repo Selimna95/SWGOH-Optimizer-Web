@@ -1208,6 +1208,8 @@ let sithariFaction = 'Toutes les factions';
 let sithariSearch = '';
 let sithariSelectedKeys = [];
 let sithariActiveKey = '';
+let sithariKyberLoading = {};
+let sithariKyberAttempted = {};
 
 const SITHARI_SLOT_ORDER = ['Square','Arrow','Diamond','Triangle','Circle','Cross'];
 const SITHARI_SLOT_LABEL = {Square:'CARRÉ',Arrow:'FLÈCHE',Diamond:'LOSANGE',Triangle:'TRIANGLE',Circle:'CERCLE',Cross:'CROIX'};
@@ -1286,7 +1288,11 @@ function sithariReferenceText(p,slot){
 }
 function sithariSlotState(c,slot){
   const p=sithariProfileForCharacter(c); const cm=getCharacterMods(c); const current=cm.find(m=>String(m.slot||'')===slot)||null;
-  if(!p)return {slot,current,status:'NOREF',profile:null,reference:{sets:'Référence Kyber indisponible',prim:'—',sec:'—'}};
+  if(!p){
+    const key=characterKey(c);
+    const loading=!!sithariKyberLoading[key];
+    return {slot,current,status:loading?'LOADING':'NOREF',profile:null,reference:{sets:loading?'Récupération de la référence Kyber…':'Référence Kyber indisponible',prim:'—',sec:'—'}};
+  }
   const reference=sithariReferenceText(p,slot);
   if(!current){return {slot,current,status:'MISSING',profile:p,reference,replacement:sithariBestReplacement(c,slot,null,p)};}
   const replacement=sithariBestReplacement(c,slot,current,p);
@@ -1332,9 +1338,27 @@ function sithariRenderCharacter(){
   const c=sithariCharacterByKey(sithariActiveKey); if(!c){box.hidden=true;empty.hidden=false;return;}
   const p=sithariProfileForCharacter(c); const states=SITHARI_SLOT_ORDER.map(s=>sithariSlotState(c,s));
   const rep=states.filter(x=>x.status==='REPLACE').length, find=states.filter(x=>x.status==='SEARCH'||x.status==='MISSING').length;
+  const loading=states.some(x=>x.status==='LOADING');
   box.hidden=false;empty.hidden=true;
   box.innerHTML=`<div class="sithari-analysis-head"><div><small>SITH’ARI // ANALYSE PERSONNAGE</small><h3>${esc(c?.name||c?.baseId||'—')}</h3><p>${(factionMap[characterKey(c)]||[]).map(esc).join(' · ')||'Faction non renseignée'} · ${num(sithariCharacterSpeed(c))} Speed max mod</p></div><div class="sithari-analysis-kpis"><span><b>6</b> SLOTS</span><span><b>${rep}</b> RÉAFFECT.</span><span><b>${find}</b> À TROUVER</span></div></div>
-  ${!p?'<div class="sithari-no-reference">Référence Kyber indisponible pour ce personnage.</div>':`<div class="sithari-slots">${states.map((x,i)=>sithariSlotCard(x,i)).join('')}</div>`}`;
+  ${loading?'<div class="sithari-no-reference">Récupération de la référence Kyber pour ce personnage…</div>':!p?'<div class="sithari-no-reference">Référence Kyber indisponible pour ce personnage.</div>':`<div class="sithari-slots">${states.map((x,i)=>sithariSlotCard(x,i)).join('')}</div>`}`;
+}
+function sithariEnsureProfilesForTeam(){
+  const targets=sithariSelectedKeys.map(sithariCharacterByKey).filter(Boolean);
+  for(const c of targets){
+    const key=characterKey(c);
+    if(sithariProfileForCharacter(c)||sithariKyberLoading[key]||sithariKyberAttempted[key])continue;
+    sithariKyberLoading[key]=true;
+    fetchKyberProfile(c).then(()=>{
+      sithariKyberAttempted[key]=true;
+      delete sithariKyberLoading[key];
+      sithariRenderAll(false);
+    }).catch(()=>{
+      sithariKyberAttempted[key]=true;
+      delete sithariKyberLoading[key];
+      sithariRenderAll(false);
+    });
+  }
 }
 function sithariSlotCard(x,i){
   const labels={KEEP:['CONFORME','keep'],REPLACE:['RÉAFFECTER','replace'],SEARCH:['À TROUVER','search'],MISSING:['À TROUVER','search'],IMPROVE:['AMÉLIORABLE','improve'],NOREF:['SANS RÉFÉRENCE','noref']};
@@ -1358,6 +1382,7 @@ function renderSithariNexus(){
 function sithariRenderAll(resetActive=true){
   if(resetActive && sithariSelectedKeys.length && !sithariSelectedKeys.includes(sithariActiveKey))sithariActiveKey=sithariSelectedKeys[0];
   sithariRenderSelectors();sithariRenderTeam();sithariRenderCharacter();sithariRenderTeamResults();
+  sithariEnsureProfilesForTeam();
 }
 
 
