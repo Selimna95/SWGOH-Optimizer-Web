@@ -239,7 +239,7 @@ function parseKyberProfileHTML(text,character,kyberSlug){
   // Primary distributions for all variable slots. Square and Diamond are fixed
   // in SWGOH and are always shown in the recommendation header.
   const sections=[['Arrow','Best Arrow Mod '],['Triangle','Best Triangle Mod '],['Circle','Best Circle Mod '],['Cross','Best Cross Mod ']];
-  for(const [slot,prefix] of sections){
+  for(const pair of sections){ const slot=pair[0], prefix=pair[1];
     const k=nextIndex(x=>x.startsWith(prefix),0); if(k<0)continue;
     const end=nextIndex(x=>x.startsWith('Best ') && !x.startsWith(prefix),k+1);
     const prim={};
@@ -297,7 +297,7 @@ async function fetchKyberProfile(character){
   for(const candidate of candidates){const parsed=await tryCandidate(candidate);if(parsed){profiles[candidate]=parsed;return parsed;}}
   try{
     const r=await fetch(`${workerUrl()}/?path=characters-index`,{headers:{'Accept':'text/html,application/xhtml+xml'}});
-    if(r.ok){const doc=parseHTML(await r.text());const wanted=normalizeKyberKey(display);for(const a of doc.querySelectorAll('a[href*="/units/"]')){const label=normalizeKyberKey(a.textContent);const href=a.getAttribute('href')||'';const m=href.match(/\/units\/([^/]+)/);if(label===wanted&&m){const candidate=m[1];const parsed=await tryCandidate(candidate);if(parsed){profiles[candidate]=parsed;return parsed;}}}}
+    if(r.ok){const doc=parseHTML(await r.text());const wanted=normalizeKyberKey(display);for(const a of Array.from(doc.querySelectorAll('a[href*="/units/"]')||[])){const label=normalizeKyberKey(a.textContent);const href=a.getAttribute('href')||'';const m=href.match(/\/units\/([^/]+)/);if(label===wanted&&m){const candidate=m[1];const parsed=await tryCandidate(candidate);if(parsed){profiles[candidate]=parsed;return parsed;}}}}
   }catch(e){log(`Index personnages Kyber indisponible : ${e?.message||e}`);}
   return null;
 }
@@ -410,7 +410,7 @@ function optimizerReferenceMarkup(profile, character){
   const source=profile?.source||'SWGOH.GG Kyber / Top 1000 GAC';
   const url=profile?.url||'';
   const sets=rec.sets.length?rec.sets.map((x,i)=>`<div class="forge-ref-row"><span>${String(i+1).padStart(2,'0')}</span><b>${esc(x.label)}</b>${x.weight!=null?`<em>${(x.weight*100).toFixed(1)} %</em>`:''}</div>`).join(''):'<div class="forge-ref-empty">Référence de sets non disponible.</div>';
-  const primaryMap=new Map(rec.primaries.map(x=>[x.slot,x]));
+  const primaryMap=new Map(Array.isArray(rec.primaries)?rec.primaries.map(x=>[x.slot,x]):[]);
   const sixSlots=[['Square','Carré'],['Arrow','Flèche'],['Diamond','Diamant'],['Triangle','Triangle'],['Circle','Cercle'],['Cross','Croix']];
   const primaries=sixSlots.map(([slot,label])=>{
     const x=primaryMap.get(slot);
@@ -1851,38 +1851,24 @@ function forgeSetCompatible(m,profile){
   return rules.some(r=>Object.keys(r.counts).some(s=>String(s).toLowerCase()===actual));
 }
 function forgePrimaryCompatible(m,profile){return forgeModPrimaryConformity(m,profile).ok===true;}
-function forgeCandidateScore(m,profile,secA,secB,normalizers={}){
+function forgeCandidateScore(m,profile,secA,secB){
   const a=forgeHasSecondary(m,secA), b=forgeHasSecondary(m,secB);
   const speed=modTotalSpeed(m);
   const set=forgeSetCompatible(m,profile), primary=forgePrimaryCompatible(m,profile);
-  const vals={};
-  for(const x of forgeSecondaryStats(m)){
-    const k=compactKey(x.stat);
-    if(k===compactKey(secA)||k===compactKey(secB)) vals[k]=Number(x.value||0);
-  }
-  const na=Math.max(Number(normalizers[compactKey(secA)]||0),1);
-  const nb=Math.max(Number(normalizers[compactKey(secB)]||0),1);
-  const contributionSum=(Number(vals[compactKey(secA)]||0)/na)+(Number(vals[compactKey(secB)]||0)/nb);
-  return {both:a&&b,one:(a||b),a,b,speed,set,primary,contributionSum,values:vals};
+  let contribution=0;
+  for(const x of forgeSecondaryStats(m)) if(compactKey(x.stat)===compactKey(secA)||compactKey(x.stat)===compactKey(secB)) contribution+=Number(x.value||0);
+  return {both:a&&b,one:(a||b),a,b,speed,set,primary,contribution};
 }
 function forgeSearchCandidates(character,profile,slot,secA,secB){
   const current=getCharacterMods(character).find(m=>forgeSlotCompatible(m,slot));
   const source=forgeAllSourceMods().filter(m=>forgeSourceAllowedForSearch(m)&&forgeSlotCompatible(m,slot));
   const candidates=source.filter(m=>String(m.game_id||m.id||'')!==String(current?.game_id||current?.id||''));
-  const normalizers={};
-  for(const stat of [secA,secB]){
-    const key=compactKey(stat);
-    normalizers[key]=Math.max(...candidates.map(m=>{
-      const x=forgeSecondaryStats(m).find(v=>compactKey(v.stat)===key);
-      return Number(x?.value||0);
-    }),1);
-  }
-  const ranked=candidates.map(m=>({...m,_rank:forgeCandidateScore(m,profile,secA,secB,normalizers)})).sort((x,y)=>{
+  const ranked=candidates.map(m=>({...m,_rank:forgeCandidateScore(m,profile,secA,secB)})).sort((x,y)=>{
     if(Number(y._rank.both)-Number(x._rank.both))return Number(y._rank.both)-Number(x._rank.both);
     if(Number(y._rank.one)-Number(x._rank.one))return Number(y._rank.one)-Number(x._rank.one);
-    if(Number(y._rank.contributionSum)-Number(x._rank.contributionSum))return Number(y._rank.contributionSum)-Number(x._rank.contributionSum);
     if(Number(y._rank.primary)-Number(x._rank.primary))return Number(y._rank.primary)-Number(x._rank.primary);
     if(Number(y._rank.set)-Number(x._rank.set))return Number(y._rank.set)-Number(x._rank.set);
+    if(Number(y._rank.contribution)-Number(x._rank.contribution))return Number(y._rank.contribution)-Number(x._rank.contribution);
     return Number(y._rank.speed)-Number(x._rank.speed);
   });
   const both=ranked.filter(x=>x._rank.both).slice(0,5);
@@ -1941,8 +1927,7 @@ function renderForgeSearchResults(character,profile){
   const result=forgeSearchCandidates(character,profile,slot,a,b);
   const rows=result.candidates;
   if(!rows.length){box.innerHTML=`<div class="forge-no-result"><b>AUCUN CANDIDAT</b><span>Aucun mod du périmètre <strong>${esc(forgeSearchSourceSummary())}</strong> ne possède les secondaires recherchées. Active MOYENS ou TOUT LE ROSTER pour élargir.</span></div>`;return;}
-  const currentLabel=result.current?`${result.current.slot||'Mod'} · ${result.current.set_name||'—'} · ${result.current.primary_stat||'—'}`:'Mod actuel';
-  box.innerHTML=`<div class="forge-search-header"><div><span>ARSENAL DISPONIBLE</span><b>${result.sourceCount} mods · ${rows.length} choix affichés</b><small>Comparaison avec : ${esc(currentLabel)}</small></div><strong>${result.usedBoth?'✓ DEUX SECONDAIRES':'→ UNE SECONDAIRE · MEILLEUR APPORT'}</strong></div><div class="forge-candidate-grid">${rows.map((m,i)=>{const r=m._rank;const secs=forgeSecondaryStats(m);const hit=secs.filter(x=>compactKey(x.stat)===compactKey(a)||compactKey(x.stat)===compactKey(b));return `<article class="forge-candidate ${r.both?'both':''}"><div class="forge-candidate-rank"><span>${String(i+1).padStart(2,'0')}</span><b>${r.both?'✓✓':'✓'}</b></div><div class="forge-candidate-icon">${modIconHtml(m,'58')}</div><div class="forge-candidate-main"><div class="forge-candidate-owner">${forgeSourcePortrait(m._sourceOwner)}<span>${esc(m._sourceOwner||'Libre')}</span></div><strong>${esc(m.slot)} · ${esc(m.set_name||'—')}</strong><small>${esc(m._sourceStatus||'—')}</small><div class="forge-candidate-primary"><span>PRIMAIRE</span><b>${esc(m.primary_stat||'—')}</b>${r.primary?'✓ KYBER':''}</div><div class="forge-candidate-seconds">${secs.map(x=>`<span class="${hit.some(h=>compactKey(h.stat)===compactKey(x.stat))?'hit':''}">${esc(x.stat)} <b>${num(x.value,1)}</b></span>`).join('')}</div></div><div class="forge-candidate-speed"><span>VITESSE</span><b>${num(modTotalSpeed(m),0)}</b><small>${r.set?'SET KYBER':'SET différent'}</small></div>${forgeModDeltaMarkup(result.current,m)}</article>`;}).join('')}</div>`;
+  box.innerHTML=`<div class="forge-search-header"><div><span>ARSENAL DISPONIBLE</span><b>${result.sourceCount} mods · ${rows.length} choix affichés</b></div><strong>${result.usedBoth?'✓ DEUX SECONDAIRES':'→ UNE SECONDAIRE · MEILLEUR APPORT'}</strong></div><div class="forge-candidate-grid">${rows.map((m,i)=>{const r=m._rank;const secs=forgeSecondaryStats(m);const hit=secs.filter(x=>compactKey(x.stat)===compactKey(a)||compactKey(x.stat)===compactKey(b));return `<article class="forge-candidate ${r.both?'both':''}"><div class="forge-candidate-rank"><span>${String(i+1).padStart(2,'0')}</span><b>${r.both?'✓✓':'✓'}</b></div><div class="forge-candidate-icon">${modIconHtml(m,'58')}</div><div class="forge-candidate-main"><div class="forge-candidate-owner">${forgeSourcePortrait(m._sourceOwner)}<span>${esc(m._sourceOwner||'Libre')}</span></div><strong>${esc(m.slot)} · ${esc(m.set_name||'—')}</strong><small>${esc(m._sourceStatus||'—')}</small><div class="forge-candidate-primary"><span>PRIMAIRE</span><b>${esc(m.primary_stat||'—')}</b>${r.primary?'✓ KYBER':''}</div><div class="forge-candidate-seconds">${secs.map(x=>`<span class="${hit.some(h=>compactKey(h.stat)===compactKey(x.stat))?'hit':''}">${esc(x.stat)} <b>${num(x.value,1)}</b></span>`).join('')}</div></div>${forgeModDeltaMarkup(result.current,m)}<div class="forge-candidate-speed"><span>VITESSE</span><b>${num(modTotalSpeed(m),0)}</b><small>${r.set?'SET KYBER':'SET différent'}</small></div></article>`;}).join('')}</div>`;
 }
 
 $('runOptimizer').addEventListener('click',async()=>{
