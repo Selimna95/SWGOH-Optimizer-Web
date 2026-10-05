@@ -1604,6 +1604,7 @@ function setReallocationMod(index){
 }
 function reallocationStatusAllowed(status){
   if($('reallocationAllRoster')?.checked===true)return true;
+  if(status==='INCOMPLETS')return $('reallocationIncomplete')?.checked!==false;
   if(status==='TRÈS FAIBLES')return $('reallocationVeryLow')?.checked!==false;
   if(status==='FAIBLES')return $('reallocationLow')?.checked!==false;
   if(status==='MOYENS')return $('reallocationMedium')?.checked===true;
@@ -1648,6 +1649,7 @@ function renderReallocationResults(){
   rows.sort((a,b)=>b.speed-a.speed||b.value-a.value||String(a.character.name||'').localeCompare(String(b.character.name||''),'fr'));
   const top=rows.slice(0,5);
   const scope=$('reallocationAllRoster')?.checked===true?'TOUT LE ROSTER':[
+    $('reallocationIncomplete')?.checked!==false?'INCOMPLETS':null,
     $('reallocationVeryLow')?.checked!==false?'TRÈS FAIBLES':null,
     $('reallocationLow')?.checked!==false?'FAIBLES':null,
     $('reallocationMedium')?.checked===true?'MOYENS':null
@@ -1688,11 +1690,11 @@ function openReallocation(index){
 }
 
 function renderModsAnalysis(){
+  // DISCIPLE is intentionally a dedicated mod-by-mod decision space.
+  // The legacy analysis panels remain in the codebase for compatibility, but
+  // this phase opens directly on the single-secondary reallocation workflow.
   buildFactionMap(); prepareV18Filters();
-  if(!analysisSelectedCharacter && rosterCharacters.length) analysisSelectedCharacter=characterKey(rosterCharacters[0]);
-  renderV18SpeedRecap();
-  const tab=document.querySelector('.analysis-tab.active')?.dataset.analysisTab||'recap';
-  setAnalysisTab(tab);
+  setAnalysisTab('reallocation');
 }
 
 async function loadOptimizerReferenceData(){
@@ -2160,12 +2162,13 @@ $('reallocationModSelect')?.addEventListener('change',()=>{
   else { reallocationSelectedModIndex=null; renderReallocationSelectionVisual(null); renderReallocationSecondaryOptions(''); renderReallocationResults(); }
 });
 $('reallocationSecondary')?.addEventListener('change',renderReallocationResults);
+$('reallocationIncomplete')?.addEventListener('change',renderReallocationResults);
 $('reallocationVeryLow')?.addEventListener('change',renderReallocationResults);
 $('reallocationLow')?.addEventListener('change',renderReallocationResults);
 $('reallocationMedium')?.addEventListener('change',renderReallocationResults);
 $('reallocationAllRoster')?.addEventListener('change',()=>{
   const all=$('reallocationAllRoster')?.checked===true;
-  ['reallocationVeryLow','reallocationLow','reallocationMedium'].forEach(id=>{const el=$(id);if(el)el.disabled=all;});
+  ['reallocationIncomplete','reallocationVeryLow','reallocationLow','reallocationMedium'].forEach(id=>{const el=$(id);if(el)el.disabled=all;});
   renderReallocationResults();
 });
 $('runReallocation')?.addEventListener('click',renderReallocationResults);

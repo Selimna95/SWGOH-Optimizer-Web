@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="app.css?v=2.2.5">
+  <link rel="stylesheet" href="app.css?v=2.2.6">
 
 
 
 
-<title>Selimna’s Holocron — V2.2.5</title>
+<title>Selimna’s Holocron — V2.2.6</title>
 
 
 
@@ -60,7 +60,7 @@
 
 <div id="appShell" class="app-shell" hidden>
 <header class="topbar">
-  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V2.1.1</span></div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V2.2.6</span></div>
   <div class="top-status-group">
     <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
     <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
@@ -75,7 +75,7 @@
     <button class="nav" data-page="top-changes"><span class="nav-icon">⇄</span><span>PRIORITÉS</span></button>
 
     <div class="phase-nav-label disciple"><span>Ⅱ</span> DISCIPLE <small>COMPRENDRE</small></div>
-    <button class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>COMMAND TACTIQUE</span></button>
+    <button class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>DISCIPLE // RÉAFFECTATION</span></button>
 
     <div class="phase-nav-label lord"><span>Ⅲ</span> SEIGNEUR SITH <small>MAÎTRISER</small></div>
     <button class="nav nav-phase-entry nav-lord" data-page="optimizer"><span class="nav-icon">✦</span><span>SEIGNEUR SITH</span><small>MAÎTRISER</small></button>
@@ -277,18 +277,16 @@
 </section>
 
 <section id="mods-analysis" class="page">
-      <div class="panel analysis-header">
+      <div class="panel analysis-header disciple-analysis-header">
         <div>
-          <div class="panel-title">DISCIPLE // COMPRENDRE — RÉAFFECTATION</div><div class="laser-sweep" aria-hidden="true"></div><div class="command-rune" aria-hidden="true">HYPERLANE // MODS // DISCIPLE</div>
-          <p>Comprendre le roster, lire les personnages, maîtriser les mods et agir sur les réaffectations.</p>
+          <div class="panel-title">DISCIPLE // COMPRENDRE — RÉAFFECTATION MOD PAR MOD</div><div class="laser-sweep" aria-hidden="true"></div><div class="command-rune" aria-hidden="true">DISCIPLE // 1 MOD · 1 SECONDAIRE</div>
+          <p>Une décision locale, précise et manuelle : tu choisis <strong>un mod</strong>, tu conserves <strong>son set et sa primaire</strong>, puis tu recherches <strong>une seule secondaire</strong>.</p>
         </div>
-        <div class="analysis-tabs">
-          <button class="analysis-tab active" data-analysis-tab="recap">SITUATION</button>
-          <button class="analysis-tab" data-analysis-tab="selection">PERSONNAGES</button>
-          <button class="analysis-tab" data-analysis-tab="report">DOSSIER PERSONNAGE</button>
-          <button class="analysis-tab" data-analysis-tab="inventory">MODS</button>
-          <button class="analysis-tab" data-analysis-tab="reallocation">RÉAFFECTATION</button>
-        </div>
+        <div class="disciple-analysis-badge"><span>DOCTRINE ACTIVE</span><strong>1 MOD · 1 SECONDAIRE</strong><small>SET + PRIMAIRE + SLOT CONSERVÉS</small></div>
+      </div>
+
+      <div class="disciple-logic-strip">
+        <span>MOD À REMPLACER</span><i>→</i><span>SET CONSERVÉ</span><i>→</i><span>PRIMAIRE CONSERVÉE</span><i>→</i><strong>1 SECONDAIRE</strong><i>→</i><span>5 OPTIONS MAX</span>
       </div>
 
       <div class="analysis-panel panel" data-analysis-panel="recap" id="analysisRecap"></div>
@@ -360,6 +358,7 @@
         <div class="disciple-step">
           <div class="disciple-step-title"><span>03 // SOURCE DES MODS</span><small>Choisir où chercher les remplaçants.</small></div>
           <div class="disciple-scope-grid">
+            <label class="disciple-scope-choice"><input type="checkbox" id="reallocationIncomplete" checked><b>INCOMPLETS</b><small>source par défaut</small></label>
             <label class="disciple-scope-choice"><input type="checkbox" id="reallocationVeryLow" checked><b>TRÈS FAIBLES</b><small>source par défaut</small></label>
             <label class="disciple-scope-choice"><input type="checkbox" id="reallocationLow" checked><b>FAIBLES</b><small>source par défaut</small></label>
             <label class="disciple-scope-choice disciple-scope-optional"><input type="checkbox" id="reallocationMedium"><b>MOYENS</b><small>option</small></label>
@@ -368,7 +367,7 @@
         </div>
 
         <div class="disciple-step disciple-search-step">
-          <div class="disciple-step-title"><span>04 // SECONDAIRE RECHERCHÉE</span><small>Une seule secondaire. La vitesse sert ensuite à classer les résultats.</small></div>
+          <div class="disciple-step-title"><span>04 // UNE SEULE SECONDAIRE</span><small>Une seule cible. Aucun second critère n'est demandé.</small></div>
           <div class="disciple-search-row">
             <label>SECONDAIRE UNIQUE
               <select id="reallocationSecondary"><option value="">Choisir une secondaire…</option></select>
@@ -475,7 +474,7 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <!-- V100: interface nouvelle / moteur technique V90 conservé intégralement. -->
 <script src="gac-usage.js?v=89"></script>
-<script src="app.js?v=2.2.5"></script>
-<script src="interface-adapter.js?v=2.2.5"></script>
+<script src="app.js?v=2.2.6"></script>
+<script src="interface-adapter.js?v=2.2.6"></script>
 </body>
 </html>

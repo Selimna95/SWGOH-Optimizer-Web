@@ -2160,3 +2160,23 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 #mods-analysis .disciple-no-result span{font-size:8px;color:#728b98}
 @media(max-width:1250px){#mods-analysis .disciple-candidate{grid-template-columns:38px 135px minmax(180px,1fr) 70px 95px;}.disciple-candidate-delta{grid-column:3/-1;border-top:1px solid rgba(126,176,198,.12);padding-top:8px}.disciple-candidate-delta .forge-delta{border-left:0;padding-left:0}.disciple-scope-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:800px){#mods-analysis .disciple-command-head{grid-template-columns:1fr}.disciple-command-badge{text-align:left}.disciple-mod-selector,.disciple-search-row{grid-template-columns:1fr}.disciple-locked-rules,.disciple-result-summary{grid-template-columns:1fr}.disciple-scope-grid{grid-template-columns:1fr}.disciple-candidate{grid-template-columns:34px 1fr}.disciple-candidate-owner,.disciple-candidate-mod,.disciple-candidate-speed,.disciple-candidate-match,.disciple-candidate-delta{grid-column:2}.disciple-candidate-speed{border-left:0;border-top:1px solid rgba(126,176,198,.12);padding:7px 0 0;text-align:left}.disciple-candidate-delta{border-top:1px solid rgba(126,176,198,.12);padding-top:8px}}
+
+/* V2.2.6 — DISCIPLE is a dedicated, simpler decision space than SEIGNEUR SITH. */
+#mods-analysis .analysis-tabs{display:none!important}
+#mods-analysis .analysis-panel[data-analysis-panel]:not([data-analysis-panel="reallocation"]){display:none!important}
+#mods-analysis .disciple-analysis-header{border-color:rgba(83,191,226,.34);background:linear-gradient(110deg,rgba(6,22,34,.98),rgba(3,12,20,.96))}
+#mods-analysis .disciple-analysis-header .panel-title{color:#6edfff}
+.disciple-analysis-badge{min-width:245px;padding:12px 14px;border:1px solid rgba(64,211,238,.28);border-radius:7px;background:rgba(3,19,29,.72);text-align:right}
+.disciple-analysis-badge span{display:block;font-size:7px;letter-spacing:.18em;color:#5d8192;font-weight:900}
+.disciple-analysis-badge strong{display:block;margin-top:5px;color:#f5d36a;font:900 14px var(--font-display);letter-spacing:.08em}
+.disciple-analysis-badge small{display:block;margin-top:4px;color:#7091a0;font-size:7px;letter-spacing:.08em}
+.disciple-logic-strip{display:flex;align-items:center;justify-content:center;gap:12px;margin:12px 0;padding:11px 14px;border:1px solid rgba(62,168,211,.18);border-radius:7px;background:linear-gradient(90deg,rgba(4,17,28,.9),rgba(7,27,40,.76),rgba(4,17,28,.9));color:#7ea1b0;font-size:8px;font-weight:900;letter-spacing:.1em}
+.disciple-logic-strip i{color:#f0c957;font-style:normal;font-size:12px}
+.disciple-logic-strip strong{color:#f4d56d}
+#mods-analysis .disciple-step{border-color:rgba(61,155,195,.22);background:linear-gradient(145deg,rgba(5,20,31,.9),rgba(3,11,19,.94))}
+#mods-analysis .disciple-step-title span{color:#ff5265}
+#mods-analysis .disciple-step-title small{color:#7594a3}
+#mods-analysis .disciple-scope-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+#mods-analysis .disciple-scope-choice{min-height:68px}
+@media(max-width:900px){.disciple-analysis-badge{min-width:0;text-align:left}.disciple-logic-strip{justify-content:flex-start;overflow-x:auto;white-space:nowrap}.disciple-logic-strip span,.disciple-logic-strip strong{flex:0 0 auto}#mods-analysis .disciple-scope-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){#mods-analysis .disciple-scope-grid{grid-template-columns:1fr}}
