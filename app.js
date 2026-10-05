@@ -419,7 +419,7 @@ function optimizerReferenceMarkup(profile, character){
       const fixed=entries[0]?.name||(slot==='Square'?'Offense':'Defense');
       return `<div class="forge-primary-slot ${entries.length?'is-live':'is-fixed-fallback'}"><span>${label}</span><b>${esc(fixed)}</b><em>${entries.length?'FIXE':'FIXE · JEU'}</em></div>`;
     }
-    const top=entries.slice(0,4).map(([name,weight])=>`<span class="forge-primary-option"><b>${esc(name)}</b><em>${(Number(weight||0)*100).toFixed(1)} %</em></span>`).join('');
+    const top=entries.slice(0,4).map(entry=>`<span class="forge-primary-option"><b>${esc(entry?.name||'—')}</b><em>${(Number(entry?.weight||0)*100).toFixed(1)} %</em></span>`).join('');
     return `<div class="forge-primary-slot ${entries.length?'is-live':'is-missing'}"><span>${label}</span><div class="forge-primary-options">${top||'<span class="forge-primary-option"><b>Référence indisponible</b></span>'}</div></div>`;
   }).join('');
   const secondaries=rec.secondaries.length?rec.secondaries.map((x,i)=>`<div class="forge-ref-row"><span>${String(i+1).padStart(2,'0')}</span><b>${esc(x.name)}</b>${Number.isFinite(x.avg)&&x.avg>0?`<em>moy. ${num(x.avg,1)}</em>`:''}</div>`).join(''):'<div class="forge-ref-empty">Référence des secondaires non disponible.</div>';
