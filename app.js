@@ -537,7 +537,7 @@ function extractApiMods(json){
   const seen=new Set();
   return out.filter(m=>m&&!seen.has(m.game_id)&&seen.add(m.game_id));
 }
-function unitToCharacter(u,index=0){const o=u?.data&&typeof u.data==='object'?u.data:u;if(!o||typeof o!=='object')return null;const baseId=o.base_id??o.baseId??o.definitionId;const name=o.name??o.character??o.characterName??o.unitName;const hasRosterFields=baseId&&Number.isFinite(Number(o.level))&&Number.isFinite(Number(o.rarity))&&(Object.prototype.hasOwnProperty.call(o,'gear_level')||Object.prototype.hasOwnProperty.call(o,'gearLevel')||Object.prototype.hasOwnProperty.call(o,'gear')||Object.prototype.hasOwnProperty.call(o,'power')||Object.prototype.hasOwnProperty.call(o,'combat_type'));if(!hasRosterFields)return null;const relicTierRaw=o.relic_tier??o.relicTier??o.relic_level??o.relicLevel??o.relic?.tier??o.relic?.relicTier??0;return{name:name||baseId,baseId,level:Number(o.level||0),gear:Number(o.gear_level??o.gearLevel??o.gear??0),stars:Number(o.rarity??o.starLevel??o.stars??0),power:Number(o.power||0),combatType:Number(o.combat_type??o.combatType??1),relic_tier:Number(relicTierRaw)||0,raw:u};}
+function unitToCharacter(u,index=0){const o=u?.data&&typeof u.data==='object'?u.data:u;if(!o||typeof o!=='object')return null;const baseId=o.base_id??o.baseId??o.definitionId;const name=o.name??o.character??o.characterName??o.unitName;const hasRosterFields=baseId&&Number.isFinite(Number(o.level))&&Number.isFinite(Number(o.rarity))&&(Object.prototype.hasOwnProperty.call(o,'gear_level')||Object.prototype.hasOwnProperty.call(o,'gearLevel')||Object.prototype.hasOwnProperty.call(o,'gear')||Object.prototype.hasOwnProperty.call(o,'power')||Object.prototype.hasOwnProperty.call(o,'combat_type'));if(!hasRosterFields)return null;const relicTierRaw=o.relic_tier??o.relicTier??o.relic_level??o.relicLevel??o.relic?.tier??o.relic?.relicTier??0;const thumbnailName=o.thumbnail_name??o.thumbnailName??o.thumbnail??o.icon??o.image??'';const portraitUrl=o.portrait_url??o.portraitUrl??o.image_url??o.imageUrl??'';return{name:name||baseId,baseId,level:Number(o.level||0),gear:Number(o.gear_level??o.gearLevel??o.gear??0),stars:Number(o.rarity??o.starLevel??o.stars??0),power:Number(o.power||0),combatType:Number(o.combat_type??o.combatType??1),relic_tier:Number(relicTierRaw)||0,thumbnailName,portraitUrl,raw:u};}
 function extractApiCharacters(json){const direct=Array.isArray(json?.units)?json.units:[];let out=direct.map(unitToCharacter).filter(Boolean);if(!out.length){const candidates=[];walkObjects(json,o=>{const unit=unitToCharacter(o);if(unit)candidates.push(unit);});out=candidates;}const seen=new Set();return out.filter(x=>{const key=`${x.baseId||''}|${x.name||''}`;if(seen.has(key))return false;seen.add(key);return true;});}
 async function fetchJSON(url){const r=await fetch(url,{headers:{'Accept':'application/json,text/plain,*/*'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);return JSON.parse(await r.text());}
 
@@ -1099,7 +1099,12 @@ function essentialPortraitCandidates(character){
  add(base);
  add(slug);
 
- return candidates.map(id=>`https://game-assets.swgoh.gg/textures/tex.charui_${id}.png`);
+ const gameUrls=candidates.map(id=>`https://game-assets.swgoh.gg/textures/tex.charui_${id}.png`);
+ const mirrorName=String(character?.name||character?.baseId||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,'_');
+ const mirror=mirrorName?`https://raw.githubusercontent.com/tools4swgoh/swgoh-icons/main/65px-Unit-Character-${encodeURIComponent(mirrorName)}-portrait.png`:'';
+ const legacyName=mirrorName.replace(/[^A-Za-z0-9_-]/g,c=>`%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0')}`);
+ const legacyMirror=mirrorName?`https://raw.githubusercontent.com/tools4swgoh/swgoh-icons/main/65px-Unit-Character-${encodeURIComponent(legacyName)}-portrait.png`:'';
+ return [...gameUrls,...(mirror?[mirror]:[]),...(legacyMirror?[legacyMirror]:[])];
 }
 
 function essentialPortraitHtml(character){
@@ -1543,7 +1548,8 @@ function reallocationSpeedTierMatch(mod,tier){
 // (e.g. Luminara -> luminara, Ackbar -> ackbaradmiral, Fives -> trooperclone fives).
 // Keep this isolated to DISCIPLE so ACOLYTE and SEIGNEUR SITH remain untouched.
 function disciplePortraitCandidates(character){
- const name=String(character?.name||'').trim().toLowerCase();
+ const rawName=String(character?.name||character?.character||'').trim();
+ const name=rawName.toLowerCase();
  const base=String(character?.baseId||character?.base_id||'').trim().toLowerCase();
  const thumb=String(character?.thumbnailName||character?.thumbnail_name||'').trim().toLowerCase();
  const candidates=[];
@@ -1551,6 +1557,10 @@ function disciplePortraitCandidates(character){
    const clean=String(id||'').trim().toLowerCase().replace(/^tex\.charui[_\.]/,'').replace(/\.png$/,'');
    if(clean&&!candidates.includes(clean))candidates.push(clean);
  };
+ // If the API already supplied the real portrait/thumbnail, keep it first.
+ const direct=String(character?.portraitUrl||character?.portrait_url||character?.image||character?.imageUrl||'').trim();
+ const urls=[];
+ if(/^https?:\/\//i.test(direct))urls.push(direct);
  if(thumb)add(thumb);
  const exact={
    'luminara unduli':['luminara'],
@@ -1558,8 +1568,9 @@ function disciplePortraitCandidates(character){
    'boba fett, scion of jango':['bobafettold'],
    'crosshair (scarred)':['crosshair','crosshair_scarred','crosshairscarred'],
    'ct-5555 "fives"':['trooperclone fives'],
-   'death trooper':['trooperdeath'],
-   'enfys nest':['enfys'],
+   'death trooper':['trooperdeath','deathtrooper'],
+   'death trooper (peridea)':['troopedeathperidea','death_trooper_peridea','deathtrooperperidea'],
+   'colonel ward':['bishop','colonelward','ward'],
    'ewok elder':['ewok chief'],
    'ezra bridger':['ezra s3'],
    'gar saxon':['garsaxon','gar_saxon'],
@@ -1567,8 +1578,7 @@ function disciplePortraitCandidates(character){
    'jawa scavenger':['jawa scavenger'],
    'l3-37':['l337'],
    'range trooper':['trooperranger'],
-   'scarif rebel pathfinder':['rebel scarif'],
-   'scarif rebel pathfinder':['rebel_scarif']
+   'scarif rebel pathfinder':['rebel_scarif','rebel scarif']
  };
  for(const [label,ids] of Object.entries(exact)){
    if(name===label || name.includes(label))ids.forEach(add);
@@ -1577,7 +1587,15 @@ function disciplePortraitCandidates(character){
  add(base);
  const slug=name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');
  add(slug);
- return candidates.map(id=>`https://game-assets.swgoh.gg/textures/tex.charui_${id.replace(/ /g,'_')}.png`);
+ const gameUrls=candidates.map(id=>`https://game-assets.swgoh.gg/textures/tex.charui_${id.replace(/ /g,'_')}.png`);
+ // Stable community mirror. Its filenames follow the displayed character name,
+ // which covers many cases where SWGOH baseId != texture key.
+ const mirrorName=rawName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'_');
+ const mirror=`https://raw.githubusercontent.com/tools4swgoh/swgoh-icons/main/65px-Unit-Character-${encodeURIComponent(mirrorName)}-portrait.png`;
+ // Older files in the mirror keep punctuation already percent-encoded in the filename.
+ const legacyName=mirrorName.replace(/[^A-Za-z0-9_-]/g,c=>`%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0')}`);
+ const legacyMirror=`https://raw.githubusercontent.com/tools4swgoh/swgoh-icons/main/65px-Unit-Character-${encodeURIComponent(legacyName)}-portrait.png`;
+ return [...urls,...gameUrls,mirror,legacyMirror];
 }
 function disciplePortraitHtml(character){
  const urls=disciplePortraitCandidates(character);
@@ -1632,6 +1650,7 @@ function renderReallocationCharacterChoices(){
     const c=r.character; const key=characterKey(c); const active=key===reallocationCharacterKey;
     return `<button type="button" class="disciple-character-choice ${active?'is-active':''}" data-character-key="${esc(key)}"><div class="disciple-character-choice-portrait">${disciplePortraitHtml(c)}</div><div><strong>${esc(c.name||c.baseId||'Personnage')}</strong><span>${r.count} mod${r.count>1?'s':''} dans la tranche</span></div></button>`;
   }).join('');
+  bindEssentialPortraits();
 }
 function setReallocationSpeedTier(tier){
   if(!['no_speed','speed_1_5','speed_6_9'].includes(tier))return;
