@@ -1543,12 +1543,24 @@ function reallocationSpeedTierLabel(tier){
 }
 function reallocationCharacterOptions(){
   if(!reallocationSpeedTier)return [];
-  const rows=[];
-  for(const c of rosterCharacters){
-    const owned=mods.map((raw,index)=>({m:normalizeModForDisplay(raw),index})).filter(x=>reallocationSpeedTierMatch(x.m,reallocationSpeedTier)&&reallocationModOwnerKey(x.m)===characterKey(c));
-    if(owned.length)rows.push({character:c,count:owned.length});
+  // Disciple must remain instantaneous even on a large roster. The previous
+  // implementation scanned/normalized the entire mod list once per character,
+  // turning a 2k-mod / 400-character roster into hundreds of thousands of
+  // repeated operations. Build the owner index in a single pass instead.
+  const owners=new Map();
+  const charactersByKey=new Map(rosterCharacters.map(c=>[characterKey(c),c]));
+  for(const raw of mods){
+    const m=normalizeModForDisplay(raw);
+    if(!reallocationSpeedTierMatch(m,reallocationSpeedTier))continue;
+    const ownerKey=reallocationModOwnerKey(m);
+    if(!ownerKey)continue;
+    const entry=owners.get(ownerKey)||{character:charactersByKey.get(ownerKey)||null,count:0};
+    entry.count++;
+    owners.set(ownerKey,entry);
   }
-  return rows.sort((a,b)=>b.count-a.count||String(a.character?.name||'').localeCompare(String(b.character?.name||''),'fr'));
+  return [...owners.values()]
+    .filter(x=>x.character&&x.count>0)
+    .sort((a,b)=>b.count-a.count||String(a.character?.name||'').localeCompare(String(b.character?.name||''),'fr'));
 }
 function renderReallocationSpeedTierChoices(){
   const box=$('reallocationSpeedTierChoices');
