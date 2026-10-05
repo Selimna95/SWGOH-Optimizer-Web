@@ -2180,18 +2180,3 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 #mods-analysis .disciple-scope-choice{min-height:68px}
 @media(max-width:900px){.disciple-analysis-badge{min-width:0;text-align:left}.disciple-logic-strip{justify-content:flex-start;overflow-x:auto;white-space:nowrap}.disciple-logic-strip span,.disciple-logic-strip strong{flex:0 0 auto}#mods-analysis .disciple-scope-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){#mods-analysis .disciple-scope-grid{grid-template-columns:1fr}}
-
-/* DISCIPLE V2.2.7 — speed-tier workflow only */
-#mods-analysis .disciple-speed-tier-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
-#mods-analysis .disciple-speed-tier{appearance:none;border:1px solid rgba(83,191,226,.2);border-radius:7px;background:linear-gradient(145deg,rgba(5,20,31,.94),rgba(3,11,19,.96));padding:13px 12px;text-align:left;cursor:pointer;color:#cfe5ed;display:grid;gap:4px;transition:border-color .16s,background .16s,transform .16s,box-shadow .16s}
-#mods-analysis .disciple-speed-tier:hover{border-color:rgba(83,191,226,.5);transform:translateY(-1px)}
-#mods-analysis .disciple-speed-tier.active{border-color:rgba(240,201,87,.72);background:linear-gradient(145deg,rgba(43,31,9,.9),rgba(9,17,23,.96));box-shadow:0 0 0 1px rgba(240,201,87,.14),0 0 18px rgba(240,201,87,.08)}
-#mods-analysis .disciple-speed-tier strong{font:900 11px var(--font-display);letter-spacing:.1em;color:#f2d46b}
-#mods-analysis .disciple-speed-tier span{font:800 15px var(--font-display);color:#e5f4f8}
-#mods-analysis .disciple-speed-tier small{font-size:7px;color:#6f8997;letter-spacing:.08em}
-#mods-analysis .disciple-tier-summary{margin-top:9px;padding:9px 11px;border-left:2px solid rgba(240,201,87,.55);background:rgba(4,16,25,.58);color:#7893a0;font-size:8px;letter-spacing:.06em}
-#mods-analysis .disciple-tier-summary strong{color:#f0d36a;font-size:11px}
-#mods-analysis .disciple-character-select{display:grid;gap:6px;max-width:620px;color:#658391;font-size:7px;letter-spacing:.12em;font-weight:900}
-#mods-analysis .disciple-character-select select{width:100%;padding:11px 12px;border:1px solid rgba(83,191,226,.22);border-radius:6px;background:rgba(3,13,21,.92);color:#d9edf3;font:800 10px var(--font-display);outline:none}
-#mods-analysis .disciple-character-select select:focus{border-color:rgba(83,191,226,.55);box-shadow:0 0 0 2px rgba(83,191,226,.07)}
-@media(max-width:760px){#mods-analysis .disciple-speed-tier-grid{grid-template-columns:1fr}}
