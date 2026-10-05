@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="app.css?v=2.1.2">
+  <link rel="stylesheet" href="app.css?v=2.2.0">
 
 
 
 
-<title>Selimna’s Holocron — V2.1.2</title>
+<title>Selimna’s Holocron — V2.2.0</title>
 
 
 
@@ -242,39 +242,41 @@
 </section>
 
 <section id="optimizer" class="page">
-      <div class="panel controls">
-        <div class="panel-title">SEIGNEUR SITH // FORGE D’OPTIMISATION</div>
-        <div class="forge-control-group forge-character-group">
-          <div class="forge-control-title"><span>01 // PERSONNAGE</span><small>Le Seigneur Sith travaille personnage par personnage. La doctrine de recherche est dictée par la référence Kyber.</small></div>
-          <div class="forge-character-select-row">
-            <label>Personnage<select id="character"></select></label>
-            <div class="forge-reference-stamp"><span>RÉFÉRENCE ACTIVE</span><strong>KYBER // SWGOH.GG</strong><small>Top 1000 GAC · sets · primaires · secondaires</small></div>
-          </div>
-        </div>
-        <div class="forge-control-group forge-scope-group">
-          <div class="forge-control-title"><span>02 // PERSONNAGES À ANALYSER</span><small>Le périmètre des mods sources reste volontairement séparé de la référence du personnage.</small></div>
-          <div class="forge-control-grid forge-scope-grid">
-            <label class="scope-choice"><input type="checkbox" id="optimizerVeryLow" checked><b>TRÈS FAIBLES</b><small>source prioritaire</small></label>
-            <label class="scope-choice"><input type="checkbox" id="optimizerLow" checked><b>FAIBLES</b><small>source prioritaire</small></label>
-            <label class="scope-choice"><input type="checkbox" id="optimizerMedium"><b>MOYENS</b><small>extension volontaire</small></label>
-            <label class="scope-choice scope-all"><input type="checkbox" id="optimizerAllRoster"><b>TOUT LE ROSTER</b><small>sans GL à ce niveau</small></label>
-          </div>
-        </div>
-        <div class="forge-control-group forge-run-group">
-          <div class="forge-control-title"><span>03 // PROFONDEUR DE RECHERCHE</span><small>La Forge ne remplace pas la référence : elle cherche dans ton arsenal ce qui s'en approche le mieux.</small></div>
-          <div class="forge-control-grid">
-            <label>Nombre de builds<input id="buildCount" type="number" min="1" max="50" value="5"></label>
-            <label>Limite / slot<input id="limitPerSlot" type="number" min="5" max="150" value="80"></label>
-            <button id="runOptimizer" class="primary">LANCER LA FORGE</button>
-          </div>
-        </div>
-        <div id="characterInfo" class="character-info">Aucun personnage sélectionné.</div>
-        <div id="optimizerError" class="error"></div>
+  <div class="panel controls">
+    <div class="panel-title">SEIGNEUR SITH // FORGE PERSONNAGE</div>
+    <div class="forge-control-group forge-character-group">
+      <div class="forge-control-title"><span>01 // PERSONNAGE</span><small>Choisir un personnage. La référence Kyber est construite avant toute recherche.</small></div>
+      <div class="forge-character-select-row">
+        <label>Personnage<select id="character"></select></label>
+        <div class="forge-reference-stamp"><span>RÉFÉRENCE ACTIVE</span><strong>KYBER // SWGOH.GG</strong><small>Sets + primaires par slot</small></div>
+        <button id="runOptimizer" class="primary" type="button">ANALYSER LE PERSONNAGE</button>
       </div>
-      <div class="panel"><div class="panel-title">RÉSULTATS</div><div id="results" class="results empty">Chargez d'abord vos données.</div></div>
-    </section>
+    </div>
+    <div id="characterInfo" class="character-info">Aucun personnage sélectionné.</div>
+    <div id="optimizerError" class="error"></div>
+  </div>
 
-    <section id="mods-analysis" class="page">
+  <div class="panel forge-character-panel">
+    <div class="panel-title">02 // DIAGNOSTIC DU PERSONNAGE</div>
+    <div id="forgeCharacterAudit" class="forge-character-audit"><div class="forge-audit-empty">Sélectionnez un personnage puis lancez l'analyse.</div></div>
+  </div>
+
+  <div class="panel forge-search-panel-wrap">
+    <div class="panel-title">03 // RECHERCHE CIBLÉE</div>
+    <div class="forge-scope-grid forge-scope-grid-main">
+      <label class="scope-choice"><input type="checkbox" id="optimizerIncomplete" checked><b>INCOMPLETS</b><small>source par défaut</small></label>
+      <label class="scope-choice"><input type="checkbox" id="optimizerVeryLow" checked><b>TRÈS FAIBLES</b><small>source par défaut</small></label>
+      <label class="scope-choice"><input type="checkbox" id="optimizerLow" checked><b>FAIBLES</b><small>source par défaut</small></label>
+      <label class="scope-choice"><input type="checkbox" id="optimizerMedium"><b>MOYENS</b><small>option</small></label>
+      <label class="scope-choice scope-all"><input type="checkbox" id="optimizerAllRoster"><b>TOUT LE ROSTER</b><small>option · GL exclues</small></label>
+    </div>
+    <div id="forgeSearchPanel" class="forge-search-panel"><div class="forge-audit-empty">Le diagnostic du personnage ouvrira ici la recherche de deux secondaires.</div></div>
+  </div>
+
+  <div class="panel"><div class="panel-title">04 // VERDICT HOLOCRON</div><div id="results" class="results empty">Aucune recherche lancée.</div></div>
+</section>
+
+<section id="mods-analysis" class="page">
       <div class="panel analysis-header">
         <div>
           <div class="panel-title">DISCIPLE // COMMAND TACTIQUE — V176</div><div class="laser-sweep" aria-hidden="true"></div><div class="command-rune" aria-hidden="true">HYPERLANE // MODS // V176</div>
@@ -447,7 +449,7 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <!-- V100: interface nouvelle / moteur technique V90 conservé intégralement. -->
 <script src="gac-usage.js?v=89"></script>
-<script src="app.js?v=2.1.2"></script>
-<script src="interface-adapter.js?v=2.1.2"></script>
+<script src="app.js?v=2.2.0"></script>
+<script src="interface-adapter.js?v=2.2.0"></script>
 </body>
 </html>
