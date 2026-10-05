@@ -2180,3 +2180,23 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 #mods-analysis .disciple-scope-choice{min-height:68px}
 @media(max-width:900px){.disciple-analysis-badge{min-width:0;text-align:left}.disciple-logic-strip{justify-content:flex-start;overflow-x:auto;white-space:nowrap}.disciple-logic-strip span,.disciple-logic-strip strong{flex:0 0 auto}#mods-analysis .disciple-scope-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){#mods-analysis .disciple-scope-grid{grid-template-columns:1fr}}
+
+/* DISCIPLE V2.2.9 — speed tier is the entry point.  Scoped to Disciple only. */
+#mods-analysis .disciple-speed-tier-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#mods-analysis .disciple-speed-tier{appearance:none;border:1px solid rgba(77,172,211,.24);border-radius:8px;background:linear-gradient(145deg,rgba(7,29,44,.92),rgba(3,13,21,.96));padding:12px 14px;text-align:left;cursor:pointer;color:#9bb9c8;display:grid;gap:3px;transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+#mods-analysis .disciple-speed-tier:hover{border-color:rgba(86,210,247,.52);transform:translateY(-1px)}
+#mods-analysis .disciple-speed-tier.is-active{border-color:rgba(255,211,90,.72);box-shadow:0 0 0 1px rgba(255,211,90,.18),inset 0 0 20px rgba(255,211,90,.05)}
+#mods-analysis .disciple-speed-tier span{font-size:9px;font-weight:900;letter-spacing:.1em;color:#68d8ff}
+#mods-analysis .disciple-speed-tier b{font-size:18px;color:#f2d66a;letter-spacing:.04em}
+#mods-analysis .disciple-speed-tier small{font-size:7px;color:#627f8e}
+#mods-analysis .disciple-character-choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+#mods-analysis .disciple-character-choice{appearance:none;border:1px solid rgba(71,156,193,.2);border-radius:8px;background:linear-gradient(145deg,rgba(6,23,35,.88),rgba(3,12,20,.94));padding:8px;display:flex;align-items:center;gap:9px;text-align:left;color:#a8c1ce;cursor:pointer;min-width:0}
+#mods-analysis .disciple-character-choice:hover{border-color:rgba(88,211,247,.52)}
+#mods-analysis .disciple-character-choice.is-active{border-color:rgba(255,211,90,.72);box-shadow:0 0 0 1px rgba(255,211,90,.14)}
+#mods-analysis .disciple-character-choice-portrait{width:38px;height:38px;flex:0 0 38px;overflow:hidden;border-radius:5px;border:1px solid rgba(113,190,219,.25);background:#07131d}
+#mods-analysis .disciple-character-choice-portrait .essential-portrait{width:100%;height:100%;margin:0}
+#mods-analysis .disciple-character-choice-portrait img{width:100%;height:100%;object-fit:cover;display:block}
+#mods-analysis .disciple-character-choice strong{display:block;font-size:9px;color:#e6f0f4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mods-analysis .disciple-character-choice span{display:block;margin-top:3px;font-size:7px;color:#6f93a4}
+@media(max-width:1000px){#mods-analysis .disciple-character-choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){#mods-analysis .disciple-speed-tier-grid,#mods-analysis .disciple-character-choices{grid-template-columns:1fr}}

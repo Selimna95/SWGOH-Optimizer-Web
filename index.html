@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="app.css?v=2.2.8">
+  <link rel="stylesheet" href="app.css?v=2.2.9">
 
 
 
 
-<title>Selimna’s Holocron — V2.2.8</title>
+<title>Selimna’s Holocron — V2.2.9</title>
 
 
 
@@ -60,7 +60,7 @@
 
 <div id="appShell" class="app-shell" hidden>
 <header class="topbar">
-  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V2.2.8</span></div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V2.2.9</span></div>
   <div class="top-status-group">
     <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
     <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
@@ -340,23 +340,38 @@
           <div class="disciple-command-badge"><span>MODE ACTIF</span><strong>COMPRENDRE</strong><small>1 MOD · 1 SECONDAIRE</small></div>
         </div>
 
+        <div class="disciple-step disciple-step-speed">
+          <div class="disciple-step-title"><span>01 // NIVEAU DE VITESSE DU MOD</span><small>Choisis d’abord la tranche de vitesse à traiter.</small></div>
+          <div id="reallocationSpeedTierChoices" class="disciple-speed-tier-grid">
+            <button type="button" class="disciple-speed-tier" data-speed-tier="no_speed"><span>SANS VITESSE</span><b>0</b><small>aucune secondaire Speed</small></button>
+            <button type="button" class="disciple-speed-tier" data-speed-tier="speed_1_5"><span>1 À 5 VITESSE</span><b>1–5</b><small>Speed secondaire</small></button>
+            <button type="button" class="disciple-speed-tier" data-speed-tier="speed_6_9"><span>6 À 9 VITESSE</span><b>6–9</b><small>Speed secondaire</small></button>
+          </div>
+          <div id="reallocationSpeedTierInfo" class="disciple-selection-info">Choisis une tranche pour afficher les personnages concernés.</div>
+        </div>
+
+        <div class="disciple-step disciple-step-character">
+          <div class="disciple-step-title"><span>02 // PERSONNAGE CONCERNÉ</span><small>Seuls les personnages possédant des mods dans la tranche choisie sont proposés.</small></div>
+          <div id="reallocationCharacterChoices" class="disciple-character-choices"><div class="empty">Choisis d’abord un niveau de vitesse.</div></div>
+        </div>
+
         <div class="disciple-step disciple-step-mod">
-          <div class="disciple-step-title"><span>01 // MOD À REMPLACER</span><small>Le set et la primaire sont verrouillés par le mod choisi.</small></div>
+          <div class="disciple-step-title"><span>03 // MOD À REMPLACER</span><small>Après le personnage, seuls ses mods de la tranche choisie sont sélectionnables.</small></div>
           <div class="disciple-mod-selector">
             <label>MOD SÉLECTIONNÉ
-              <select id="reallocationModSelect"><option value="">Choisir un mod équipé…</option></select>
+              <select id="reallocationModSelect"><option value="">Choisir un mod de la tranche…</option></select>
             </label>
             <div id="reallocationSelectedModVisual" class="disciple-selected-mod"><div class="empty">Aucun mod sélectionné.</div></div>
           </div>
         </div>
 
         <div class="disciple-step">
-          <div class="disciple-step-title"><span>02 // RÈGLES CONSERVÉES</span><small>Aucune modification automatique du set ou de la primaire.</small></div>
+          <div class="disciple-step-title"><span>04 // RÈGLES CONSERVÉES</span><small>Aucune modification automatique du set ou de la primaire.</small></div>
           <div id="reallocationLockedRules" class="disciple-locked-rules"><div class="disciple-lock-card"><span>SET</span><b>—</b><small>sera conservé</small></div><div class="disciple-lock-card"><span>PRIMAIRE</span><b>—</b><small>sera conservée</small></div><div class="disciple-lock-card"><span>SLOT</span><b>—</b><small>même emplacement</small></div></div>
         </div>
 
         <div class="disciple-step">
-          <div class="disciple-step-title"><span>03 // SOURCE DES MODS</span><small>Choisir où chercher les remplaçants.</small></div>
+          <div class="disciple-step-title"><span>05 // SOURCE DES MODS</span><small>Choisir où chercher les remplaçants.</small></div>
           <div class="disciple-scope-grid">
             <label class="disciple-scope-choice"><input type="checkbox" id="reallocationIncomplete" checked><b>INCOMPLETS</b><small>source par défaut</small></label>
             <label class="disciple-scope-choice"><input type="checkbox" id="reallocationVeryLow" checked><b>TRÈS FAIBLES</b><small>source par défaut</small></label>
@@ -367,7 +382,7 @@
         </div>
 
         <div class="disciple-step disciple-search-step">
-          <div class="disciple-step-title"><span>04 // UNE SEULE SECONDAIRE</span><small>Une seule cible. Aucun second critère n'est demandé.</small></div>
+          <div class="disciple-step-title"><span>06 // UNE SEULE SECONDAIRE</span><small>Une seule cible. Aucun second critère n'est demandé.</small></div>
           <div class="disciple-search-row">
             <label>SECONDAIRE UNIQUE
               <select id="reallocationSecondary"><option value="">Choisir une secondaire…</option></select>
@@ -378,7 +393,7 @@
         </div>
 
         <div class="disciple-step disciple-results-step">
-          <div class="disciple-step-title"><span>05 // OPTIONS DE RÉAFFECTATION</span><small>Priorité : secondaire recherchée → vitesse décroissante.</small></div>
+          <div class="disciple-step-title"><span>07 // OPTIONS DE RÉAFFECTATION</span><small>Priorité : secondaire recherchée → vitesse décroissante.</small></div>
           <div id="reallocationResults" class="reallocation-results"><div class="empty">Aucune recherche lancée.</div></div>
         </div>
       </div>
@@ -474,7 +489,7 @@
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <!-- V100: interface nouvelle / moteur technique V90 conservé intégralement. -->
 <script src="gac-usage.js?v=89"></script>
-<script src="app.js?v=2.2.8"></script>
-<script src="interface-adapter.js?v=2.2.8"></script>
+<script src="app.js?v=2.2.9"></script>
+<script src="interface-adapter.js?v=2.2.9"></script>
 </body>
 </html>

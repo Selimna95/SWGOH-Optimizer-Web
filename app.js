@@ -6,6 +6,8 @@ let optimizerWorker = null;
 let optimizerRequestId = 0;
 let optimizerTimer = null;
 let reallocationSelectedModIndex = null;
+let reallocationSpeedTier = null;
+let reallocationCharacterKey = '';
 let reallocationMediumUnlocked = false;
 let currentData = null;
 let mods = [];
@@ -1527,6 +1529,71 @@ function secondaryDisplayName(name){
   };
   return map[key]||raw;
 }
+function reallocationSpeedTierMatch(mod,tier){
+  const x=modSpeedMetrics(mod);
+  const speed=Number(x?.secondary);
+  const hasSecondary=Number.isFinite(speed) && speed>0;
+  if(tier==='no_speed')return !hasSecondary;
+  if(tier==='speed_1_5')return hasSecondary && speed>=1 && speed<=5;
+  if(tier==='speed_6_9')return hasSecondary && speed>=6 && speed<=9;
+  return false;
+}
+function reallocationSpeedTierLabel(tier){
+  return tier==='no_speed'?'SANS VITESSE':tier==='speed_1_5'?'1 À 5 VITESSE':tier==='speed_6_9'?'6 À 9 VITESSE':'—';
+}
+function reallocationCharacterOptions(){
+  if(!reallocationSpeedTier)return [];
+  const rows=[];
+  for(const c of rosterCharacters){
+    const owned=mods.map((raw,index)=>({m:normalizeModForDisplay(raw),index})).filter(x=>reallocationSpeedTierMatch(x.m,reallocationSpeedTier)&&reallocationModOwnerKey(x.m)===characterKey(c));
+    if(owned.length)rows.push({character:c,count:owned.length});
+  }
+  return rows.sort((a,b)=>b.count-a.count||String(a.character?.name||'').localeCompare(String(b.character?.name||''),'fr'));
+}
+function renderReallocationSpeedTierChoices(){
+  const box=$('reallocationSpeedTierChoices');
+  if(box)box.querySelectorAll('[data-speed-tier]').forEach(btn=>btn.classList.toggle('is-active',btn.dataset.speedTier===reallocationSpeedTier));
+  const info=$('reallocationSpeedTierInfo');
+  if(!info)return;
+  if(!reallocationSpeedTier){info.textContent='Choisis une tranche pour afficher les personnages concernés.';return;}
+  const rows=reallocationCharacterOptions();
+  const modsCount=rows.reduce((sum,r)=>sum+r.count,0);
+  info.innerHTML=`<strong>${esc(reallocationSpeedTierLabel(reallocationSpeedTier))}</strong> · <b>${modsCount}</b> mod(s) · <b>${rows.length}</b> personnage(s) concerné(s)`;
+}
+function renderReallocationCharacterChoices(){
+  const box=$('reallocationCharacterChoices'); if(!box)return;
+  if(!reallocationSpeedTier){box.innerHTML='<div class="empty">Choisis d’abord un niveau de vitesse.</div>';return;}
+  const rows=reallocationCharacterOptions();
+  if(!rows.length){box.innerHTML=`<div class="disciple-no-result"><b>AUCUN PERSONNAGE</b><span>Aucun personnage ne possède actuellement de mod dans <strong>${esc(reallocationSpeedTierLabel(reallocationSpeedTier))}</strong>.</span></div>`;return;}
+  box.innerHTML=rows.map(r=>{
+    const c=r.character; const key=characterKey(c); const active=key===reallocationCharacterKey;
+    return `<button type="button" class="disciple-character-choice ${active?'is-active':''}" data-character-key="${esc(key)}"><div class="disciple-character-choice-portrait">${essentialPortraitHtml(c)}</div><div><strong>${esc(c.name||c.baseId||'Personnage')}</strong><span>${r.count} mod${r.count>1?'s':''} dans la tranche</span></div></button>`;
+  }).join('');
+}
+function setReallocationSpeedTier(tier){
+  if(!['no_speed','speed_1_5','speed_6_9'].includes(tier))return;
+  reallocationSpeedTier=tier;
+  reallocationCharacterKey='';
+  reallocationSelectedModIndex=null;
+  renderReallocationSpeedTierChoices();
+  renderReallocationCharacterChoices();
+  renderReallocationModSelector();
+  renderReallocationSelectionVisual(null);
+  renderReallocationSecondaryOptions('');
+  renderReallocationResults();
+}
+function setReallocationCharacter(key){
+  const match=reallocationCharacterOptions().find(x=>characterKey(x.character)===compactKey(key));
+  if(!match)return;
+  reallocationCharacterKey=characterKey(match.character);
+  reallocationSelectedModIndex=null;
+  renderReallocationCharacterChoices();
+  renderReallocationModSelector();
+  renderReallocationSelectionVisual(null);
+  renderReallocationSecondaryOptions('');
+  renderReallocationResults();
+}
+
 function reallocationSecondaryOptions(){
   const names=new Map();
   for(const raw of mods){
@@ -1681,6 +1748,8 @@ function renderReallocationResults(){
   }).join('')}</div>`;
 }
 function renderReallocationPanel(){
+  renderReallocationSpeedTierChoices();
+  renderReallocationCharacterChoices();
   renderReallocationModSelector();
   const selected=selectedReallocationMod();
   renderReallocationSelectionVisual(selected);
@@ -2165,6 +2234,12 @@ function renderResults(data){
   ['optimizerIncomplete','optimizerVeryLow','optimizerLow','optimizerMedium'].forEach(x=>{const el=$(x);if(el)el.disabled=all;});
   updateCharacterInfo();
 }));
+
+document.querySelectorAll('[data-speed-tier]').forEach(btn=>btn.addEventListener('click',()=>setReallocationSpeedTier(btn.dataset.speedTier)));
+$('reallocationCharacterChoices')?.addEventListener('click',event=>{
+  const btn=event.target.closest('[data-character-key]');
+  if(btn)setReallocationCharacter(btn.dataset.characterKey);
+});
 
 $('reallocationModSelect')?.addEventListener('change',()=>{
   const n=Number($('reallocationModSelect')?.value);
