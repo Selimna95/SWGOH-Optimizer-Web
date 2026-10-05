@@ -1538,6 +1538,57 @@ function reallocationSpeedTierMatch(mod,tier){
   if(tier==='speed_6_9')return hasSecondary && speed>=6 && speed<=9;
   return false;
 }
+// DISCIPLE ONLY — portrait resolver.
+// The game texture key is not always the same as the roster baseId
+// (e.g. Luminara -> luminara, Ackbar -> ackbaradmiral, Fives -> trooperclone fives).
+// Keep this isolated to DISCIPLE so ACOLYTE and SEIGNEUR SITH remain untouched.
+function disciplePortraitCandidates(character){
+ const name=String(character?.name||'').trim().toLowerCase();
+ const base=String(character?.baseId||character?.base_id||'').trim().toLowerCase();
+ const thumb=String(character?.thumbnailName||character?.thumbnail_name||'').trim().toLowerCase();
+ const candidates=[];
+ const add=id=>{
+   const clean=String(id||'').trim().toLowerCase().replace(/^tex\.charui[_\.]/,'').replace(/\.png$/,'');
+   if(clean&&!candidates.includes(clean))candidates.push(clean);
+ };
+ if(thumb)add(thumb);
+ const exact={
+   'luminara unduli':['luminara'],
+   'admiral ackbar':['ackbaradmiral'],
+   'boba fett, scion of jango':['bobafettold'],
+   'crosshair (scarred)':['crosshair','crosshair_scarred','crosshairscarred'],
+   'ct-5555 "fives"':['trooperclone fives'],
+   'death trooper':['trooperdeath'],
+   'enfys nest':['enfys'],
+   'ewok elder':['ewok chief'],
+   'ezra bridger':['ezra s3'],
+   'gar saxon':['garsaxon','gar_saxon'],
+   'hondo ohnaka':['hondoonaka','hondo'],
+   'jawa scavenger':['jawa scavenger'],
+   'l3-37':['l337'],
+   'range trooper':['trooperranger'],
+   'scarif rebel pathfinder':['rebel scarif'],
+   'scarif rebel pathfinder':['rebel_scarif']
+ };
+ for(const [label,ids] of Object.entries(exact)){
+   if(name===label || name.includes(label))ids.forEach(add);
+ }
+ // Generic baseId/name remain useful for units whose texture key matches directly.
+ add(base);
+ const slug=name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');
+ add(slug);
+ return candidates.map(id=>`https://game-assets.swgoh.gg/textures/tex.charui_${id.replace(/ /g,'_')}.png`);
+}
+function disciplePortraitHtml(character){
+ const urls=disciplePortraitCandidates(character);
+ const label=String(character?.name||character?.baseId||'?');
+ if(!urls.length)return `<div class="topchange-portrait topchange-portrait-fallback"><span>${esc(label.slice(0,1))}</span></div>`;
+ const encoded=urls.map(u=>u.replace(/'/g,"\\'"));
+ const first=encoded[0];
+ const rest=JSON.stringify(encoded.slice(1)).replace(/"/g,'&quot;');
+ return `<div class="topchange-portrait" data-essential-portrait-list="${rest}"><img src="${first}" alt="${esc(label)}" loading="lazy" data-essential-portrait-index="0"></div>`;
+}
+
 function reallocationSpeedTierLabel(tier){
   return tier==='no_speed'?'SANS VITESSE':tier==='speed_1_5'?'1 À 5 VITESSE':tier==='speed_6_9'?'6 À 9 VITESSE':'—';
 }
@@ -1579,7 +1630,7 @@ function renderReallocationCharacterChoices(){
   if(!rows.length){box.innerHTML=`<div class="disciple-no-result"><b>AUCUN PERSONNAGE</b><span>Aucun personnage ne possède actuellement de mod dans <strong>${esc(reallocationSpeedTierLabel(reallocationSpeedTier))}</strong>.</span></div>`;return;}
   box.innerHTML=rows.map(r=>{
     const c=r.character; const key=characterKey(c); const active=key===reallocationCharacterKey;
-    return `<button type="button" class="disciple-character-choice ${active?'is-active':''}" data-character-key="${esc(key)}"><div class="disciple-character-choice-portrait">${essentialPortraitHtml(c)}</div><div><strong>${esc(c.name||c.baseId||'Personnage')}</strong><span>${r.count} mod${r.count>1?'s':''} dans la tranche</span></div></button>`;
+    return `<button type="button" class="disciple-character-choice ${active?'is-active':''}" data-character-key="${esc(key)}"><div class="disciple-character-choice-portrait">${disciplePortraitHtml(c)}</div><div><strong>${esc(c.name||c.baseId||'Personnage')}</strong><span>${r.count} mod${r.count>1?'s':''} dans la tranche</span></div></button>`;
   }).join('');
 }
 function setReallocationSpeedTier(tier){
@@ -1750,7 +1801,7 @@ function renderReallocationResults(){
   box.innerHTML=`<div class="disciple-result-summary"><div><span>ARSENAL</span><b>${rows.length}</b><small>mod(s) compatibles</small></div><div><span>OPTIONS AFFICHÉES</span><b>${top.length}</b><small>maximum 5</small></div><div><span>TRI</span><b>VITESSE ↓</b><small>puis apport de la secondaire</small></div><div><span>RÈGLES</span><b>SET + PRIMAIRE</b><small>conservés</small></div></div><div class="disciple-candidate-list">${top.map((r,i)=>{
     const m=r.mod;
     const ownerName=String(r.character?.name||r.character?.baseId||m.character||'Libre');
-    const ownerPortrait=essentialPortraitHtml(r.character||{name:ownerName});
+    const ownerPortrait=disciplePortraitHtml(r.character||{name:ownerName});
     const other=[];
     for(let j=1;j<=4;j++){
       const stat=m[`secondary_${j}_stat`];
