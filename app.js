@@ -1203,7 +1203,6 @@ function renderHolocronTopChanges(){
 
 
 /* SITH’ARI — équipe Kyber. Ne lit que les données déjà chargées par le moteur existant. */
-let sithariSpeedThreshold = 20;
 let sithariFaction = 'Toutes les factions';
 let sithariSearch = '';
 let sithariSelectedKeys = [];
@@ -1233,9 +1232,8 @@ function sithariFilteredCharacters(){
   const search=compactKey(sithariSearch);
   return (charactersInFaction(sithariFaction||'Toutes les factions')||[])
     .filter(c=>rosterUnitType(c)!=='ship')
-    .filter(c=>sithariSpeedThreshold===0 || sithariCharacterSpeed(c)>=sithariSpeedThreshold)
     .filter(c=>!search || compactKey(c?.name||c?.baseId||'').includes(search))
-    .sort((a,b)=>sithariCharacterSpeed(b)-sithariCharacterSpeed(a)||String(a?.name||'').localeCompare(String(b?.name||''),'fr'));
+    .sort((a,b)=>String(a?.name||'').localeCompare(String(b?.name||''),'fr'));
 }
 function sithariModSecondaryMap(m){
   const out={};
@@ -1310,11 +1308,11 @@ function sithariRenderSelectors(){
   const factions=['Toutes les factions',...allFactions()];
   if(factionEl){factionEl.innerHTML=factions.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');factionEl.value=sithariFaction;}
   const rows=sithariFilteredCharacters();
-  meta.textContent=rows.length?`${rows.length} personnage${rows.length>1?'s':''} correspondant${rows.length>1?'s':''} · ≥ ${sithariSpeedThreshold||0} Speed · ${sithariFaction}`:'Aucun personnage ne correspond à ces critères.';
+  meta.textContent=rows.length?`${rows.length} personnage${rows.length>1?'s':''} · ${sithariFaction||'Toutes les factions'} · sélection 1 à 5`:'Aucun personnage ne correspond à cette faction/recherche.';
   grid.innerHTML=rows.map(c=>{
-    const key=characterKey(c), selected=sithariSelectedKeys.includes(key), speed=sithariCharacterSpeed(c), disabled=!selected&&sithariSelectedKeys.length>=5;
+    const key=characterKey(c), selected=sithariSelectedKeys.includes(key), disabled=!selected&&sithariSelectedKeys.length>=5;
     const factions=factionMap[key]||[];
-    return `<button type="button" class="sithari-character-card ${selected?'selected':''}" data-sithari-char="${esc(key)}" ${disabled?'disabled':''}><span class="sithari-character-portrait">${sithariPortrait(c)}</span><span class="sithari-character-copy"><strong>${esc(c?.name||c?.baseId||'—')}</strong><small>${factions.slice(0,2).map(esc).join(' · ')||'Faction non renseignée'}</small></span><b>${num(speed)}</b><i>${selected?'✓':'+'}</i></button>`;
+    return `<button type="button" class="sithari-character-card ${selected?'selected':''}" data-sithari-char="${esc(key)}" ${disabled?'disabled':''}><span class="sithari-character-portrait">${sithariPortrait(c)}</span><span class="sithari-character-copy"><strong>${esc(c?.name||c?.baseId||'—')}</strong><small>${factions.slice(0,2).map(esc).join(' · ')||'Faction non renseignée'}</small></span><i>${selected?'✓':'+'}</i></button>`;
   }).join('');
   grid.querySelectorAll('[data-sithari-char]').forEach(btn=>btn.addEventListener('click',()=>sithariToggleCharacter(btn.dataset.sithariChar)));
 }
@@ -1332,7 +1330,20 @@ function sithariRenderTeam(){
   document.querySelectorAll('[data-sithari-active]').forEach(btn=>btn.addEventListener('click',()=>{sithariActiveKey=btn.dataset.sithariActive;sithariRenderAll(false)}));
   team.querySelectorAll('.sithari-selected-chip i').forEach((x)=>x.addEventListener('click',e=>{e.stopPropagation();sithariToggleCharacter(x.closest('[data-sithari-active]').dataset.sithariActive)}));
 }
-function sithariModMini(m){if(!m)return '<span class="sithari-no-mod">AUCUN MOD</span>';return `<span class="sithari-mod-mini"><b>${esc(String(m.set_name||'—'))}</b><small>${esc(String(m.primary_stat||'—'))} · ${num(modTotalSpeed(m))} Speed</small></span>`;}
+function sithariModMini(m){if(!m)return '<span class="sithari-no-mod">AUCUN MOD</span>';const x=modSpeedMetrics(m), sec=modSecondaries(m)||'—';return `<span class="sithari-mod-mini">${modIconHtml(m,'44')}<span class="sithari-mod-copy"><b>${esc(String(m.primary_stat||'—'))} ${num(m.primary_value,1)}</b><strong>${x.primary?'★ Primaire Speed':(x.secondary?`+${num(x.secondary)} Speed`:'Sans Speed')}</strong><small>${esc(sec)}</small></span></span>`;}
+function sithariStatsReference(c,p){
+  const op=optimizerProfileForCharacter(c)||{};
+  const cur=op.current_stats||{};
+  const avg=p?.averages||{};
+  const defs=[['Speed','Speed'],['Health','Health'],['Protection','Protection'],['Physical Damage','Physical Damage'],['Special Damage','Special Damage']];
+  return defs.filter(([k])=>Number(avg[k]||0)>0 || Number(cur[k]||0)>0).map(([k,label])=>({key:k,label,current:Number(cur[k]||0),kyber:Number(avg[k]||0)}));
+}
+function sithariStatValue(v,key){ if(key==='Potency'||key==='Tenacity') return `${(Number(v||0)*100).toFixed(1)}%`; return Math.round(Number(v||0)).toLocaleString('fr-FR'); }
+function sithariStatsPanel(c,p){
+  const rows=sithariStatsReference(c,p);
+  if(!rows.length)return '';
+  return `<section class="sithari-stats-panel"><div class="sithari-stats-head"><div><small>COMPARAISON</small><strong>TES STATS VS RÉFÉRENCE KYBER</strong></div><span>VALEUR ACTUELLE → CIBLE KYBER</span></div><div class="sithari-stats-grid">${rows.map(r=>{const delta=r.current-r.kyber;const cls=delta>=0?'ahead':'behind';return `<div class="sithari-stat-row"><span>${esc(r.label)}</span><b class="${cls}">${sithariStatValue(r.current,r.key)}</b><i>→</i><strong>${sithariStatValue(r.kyber,r.key)}</strong><small class="${cls}">${delta>=0?'▲':'▼'} ${Math.abs(delta).toLocaleString('fr-FR')}</small></div>`}).join('')}</div></section>`;
+}
 function sithariRenderCharacter(){
   const box=$('sithariCharacterAnalysis'), empty=$('sithariAnalysisEmpty'); if(!box)return;
   const c=sithariCharacterByKey(sithariActiveKey); if(!c){box.hidden=true;empty.hidden=false;return;}
@@ -1340,7 +1351,8 @@ function sithariRenderCharacter(){
   const rep=states.filter(x=>x.status==='REPLACE').length, find=states.filter(x=>x.status==='SEARCH'||x.status==='MISSING').length;
   const loading=states.some(x=>x.status==='LOADING');
   box.hidden=false;empty.hidden=true;
-  box.innerHTML=`<div class="sithari-analysis-head"><div><small>SITH’ARI // ANALYSE PERSONNAGE</small><h3>${esc(c?.name||c?.baseId||'—')}</h3><p>${(factionMap[characterKey(c)]||[]).map(esc).join(' · ')||'Faction non renseignée'} · ${num(sithariCharacterSpeed(c))} Speed max mod</p></div><div class="sithari-analysis-kpis"><span class="kpi-slots"><b>6</b><em>SLOTS</em></span><span class="kpi-replace"><b>${rep}</b><em>RÉAFFECTATIONS</em></span><span class="kpi-search"><b>${find}</b><em>MODS À TROUVER</em></span></div></div>
+  box.innerHTML=`<div class="sithari-analysis-head"><div class="sithari-character-heading"><div class="sithari-analysis-portrait">${sithariPortrait(c)}</div><div><small>SITH’ARI // ANALYSE PERSONNAGE</small><h3>${esc(c?.name||c?.baseId||'—')}</h3><p>${(factionMap[characterKey(c)]||[]).map(esc).join(' · ')||'Faction non renseignée'} · ${num(sithariCharacterSpeed(c))} Speed max mod</p></div></div><div class="sithari-analysis-kpis"><span class="kpi-slots"><b>6</b><em>SLOTS</em></span><span class="kpi-replace"><b>${rep}</b><em>RÉAFFECTATIONS</em></span><span class="kpi-search"><b>${find}</b><em>MODS À TROUVER</em></span></div></div>
+  ${loading?'':sithariStatsPanel(c,p)}
   ${loading?'<div class="sithari-no-reference">Récupération de la référence Kyber pour ce personnage…</div>':!p?'<div class="sithari-no-reference">Référence Kyber indisponible pour ce personnage.</div>':`<div class="sithari-action-summary"><div class="sithari-action-summary-main"><span class="sithari-action-icon">↻</span><div><strong>${rep ? `${rep} réaffectation${rep>1?'s':''} possible${rep>1?'s':''} dans ton inventaire` : 'Aucune réaffectation disponible dans ton inventaire'}</strong><small>${rep ? 'Sith’ari a trouvé un meilleur mod disponible pour ce personnage.' : 'Les slots signalés « À trouver » nécessitent un nouveau mod.'}</small></div></div><div class="sithari-action-pills"><b>${rep} À RÉAFFECTER</b><b>${find} À TROUVER</b></div></div><div class="sithari-slots">${states.map((x,i)=>sithariSlotCard(x,i)).join('')}</div>`}`;
 }
 function sithariEnsureProfilesForTeam(){
@@ -2503,7 +2515,6 @@ document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>
 document.getElementById('sithariAccess')?.addEventListener('click',()=>showPage('sithari'));
 $('sithariFaction')?.addEventListener('change',e=>{sithariFaction=e.target.value;sithariRenderAll();});
 $('sithariCharacterSearch')?.addEventListener('input',e=>{sithariSearch=e.target.value||'';sithariRenderSelectors();});
-document.querySelectorAll('[data-sithari-speed]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-sithari-speed]').forEach(x=>x.classList.toggle('active',x===btn));sithariSpeedThreshold=Number(btn.dataset.sithariSpeed||0);sithariRenderSelectors();}));
 $('sithariClearSelection')?.addEventListener('click',()=>{sithariSelectedKeys=[];sithariActiveKey='';sithariRenderAll();});
 renderGalacticPower();
 renderSithariNexus();

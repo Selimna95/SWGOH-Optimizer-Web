@@ -2181,3 +2181,52 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 #mods-analysis .disciple-character-choice span{display:block;margin-top:3px;font-size:7px;color:#6f93a4}
 @media(max-width:1000px){#mods-analysis .disciple-character-choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){#mods-analysis .disciple-speed-tier-grid,#mods-analysis .disciple-character-choices{grid-template-columns:1fr}}
+
+/* SITH'ARI — lisibilité v2 : faction only, contraste neutre, comparaison stats */
+.sithari-page .sithari-kicker,.sithari-page .sithari-panel-title small{color:#8d99a6}
+.sithari-page .sithari-thesis{color:#b9c2cc}.sithari-page .sithari-thesis i{color:#4c5965}
+.sithari-page .sithari-selector,.sithari-page .sithari-team-panel,.sithari-page .sithari-roster-summary,.sithari-page .sithari-character-analysis,.sithari-page .sithari-team-results{border-color:rgba(143,169,187,.20);box-shadow:inset 0 0 30px rgba(80,110,130,.025),0 14px 35px rgba(0,0,0,.18)}
+.sithari-page .sithari-pills button,.sithari-page .sithari-selection-meta button{border-color:rgba(150,170,188,.22);color:#aeb7c0}
+.sithari-page .sithari-faction-filter select,.sithari-page .sithari-search input{border-color:rgba(120,155,180,.28);background:#08131d;color:#e2e7eb}
+.sithari-page .sithari-filters{grid-template-columns:minmax(220px,.8fr) minmax(260px,1fr);max-width:760px}
+.sithari-page .sithari-character-grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));max-height:280px}
+.sithari-page .sithari-character-card:hover,.sithari-page .sithari-character-card.selected{border-color:rgba(125,170,196,.55);background:rgba(65,105,130,.10)}
+.sithari-page .sithari-character-card>i{color:#8fa8b8}.sithari-page .sithari-character-card.selected>i{color:#dce7ef}
+.sithari-page .sithari-character-card>b{display:none}
+.sithari-page .sithari-selected-chip.active{border-color:rgba(126,169,191,.55);background:rgba(65,105,130,.10)}
+.sithari-page .sithari-team-tab.active{border-color:rgba(126,169,191,.50);background:rgba(65,105,130,.08)}
+.sithari-page .sithari-analysis-head{align-items:center}
+.sithari-page .sithari-character-heading{display:flex;align-items:center;gap:12px;min-width:0}
+.sithari-page .sithari-analysis-portrait{width:64px;height:64px;flex:0 0 64px;border-radius:10px;overflow:hidden;border:1px solid rgba(160,180,195,.35);background:#10161b;box-shadow:0 0 18px rgba(40,90,120,.14)}
+.sithari-page .sithari-analysis-portrait img{width:100%;height:100%;object-fit:cover}
+.sithari-page .sithari-analysis-portrait>span{display:grid;place-items:center;width:100%;height:100%;color:#dce5eb;font:800 22px Inter}
+.sithari-page .sithari-analysis-kpis span{border-color:rgba(140,160,176,.18);background:rgba(255,255,255,.018)}
+.sithari-page .sithari-analysis-kpis span b{color:#e8edf1}
+.sithari-page .sithari-analysis-kpis .kpi-replace b{color:#74d2a0}
+.sithari-page .sithari-analysis-kpis .kpi-search b{color:#df8b82}
+.sithari-page .sithari-action-summary{border-color:rgba(116,210,160,.32)!important;background:rgba(35,95,68,.08)!important}
+.sithari-page .sithari-action-icon{border-color:rgba(116,210,160,.45)!important;color:#74d2a0!important}
+.sithari-page .sithari-action-summary-main strong{color:#dcefe4}
+.sithari-page .sithari-action-pills b:first-child{color:#74d2a0;border-color:rgba(116,210,160,.35);background:rgba(35,95,68,.10)}
+.sithari-page .sithari-action-pills b:last-child{color:#df8b82;border-color:rgba(210,113,92,.28);background:rgba(160,61,45,.05)}
+.sithari-page .sithari-stats-panel{margin:12px 0 10px;padding:12px 14px;border:1px solid rgba(126,169,191,.24);background:linear-gradient(145deg,rgba(10,20,27,.82),rgba(8,10,12,.92))}
+.sithari-page .sithari-stats-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:9px}
+.sithari-page .sithari-stats-head div{display:flex;flex-direction:column;gap:4px}.sithari-page .sithari-stats-head small{color:#778894;font:800 6px var(--font-display);letter-spacing:.18em}.sithari-page .sithari-stats-head strong{color:#dfe7ec;font:800 9px Inter}.sithari-page .sithari-stats-head>span{color:#71808b;font:700 6px var(--font-display);letter-spacing:.08em}
+.sithari-page .sithari-stats-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.sithari-page .sithari-stat-row{display:grid;grid-template-columns:1fr auto auto auto;grid-template-rows:auto auto;gap:4px 6px;padding:8px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.018)}
+.sithari-page .sithari-stat-row>span{grid-column:1/-1;color:#7d8992;font:800 6px var(--font-display);letter-spacing:.10em}.sithari-page .sithari-stat-row>b{color:#f2f4f5;font:800 12px Inter}.sithari-page .sithari-stat-row>i{color:#66737d;font-style:normal;font:800 10px Inter}.sithari-page .sithari-stat-row>strong{color:#c7d7e2;font:800 11px Inter}.sithari-page .sithari-stat-row>small{grid-column:1/-1;font:700 6px var(--font-display);letter-spacing:.05em}.sithari-page .sithari-stat-row small.ahead{color:#74d2a0}.sithari-page .sithari-stat-row small.behind{color:#df8b82}
+.sithari-page .sithari-slot-card{border-color:rgba(255,255,255,.10);background:rgba(9,11,13,.78)}
+.sithari-page .sithari-slot-card.replace{border-color:rgba(116,210,160,.50);box-shadow:inset 3px 0 0 rgba(116,210,160,.85)}
+.sithari-page .sithari-slot-card.search{border-color:rgba(210,113,92,.42);box-shadow:inset 3px 0 0 rgba(210,113,92,.60)}
+.sithari-page .sithari-slot-card.replace header em{color:#74d2a0;border-color:rgba(116,210,160,.35);background:rgba(35,95,68,.08)}
+.sithari-page .sithari-slot-card.search header em{color:#df8b82}
+.sithari-page .sithari-slot-compare{grid-template-columns:minmax(0,1fr) 18px minmax(0,1.15fr)}
+.sithari-page .sithari-current-mod,.sithari-page .sithari-kyber-ref{background:rgba(255,255,255,.022);border-color:rgba(255,255,255,.07)}
+.sithari-page .sithari-kyber-ref{background:rgba(65,105,130,.035)}
+.sithari-page .sithari-slot-arrow{color:#8396a4}
+.sithari-page .sithari-mod-mini{display:flex;flex-direction:row;align-items:center;gap:8px;margin-top:6px}.sithari-page .sithari-mod-mini>img,.sithari-page .sithari-mod-mini>.mod-icon{width:44px;height:44px;flex:0 0 44px}.sithari-page .sithari-mod-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.sithari-page .sithari-mod-copy b{color:#f0f2f4;font:800 9px Inter}.sithari-page .sithari-mod-copy strong{color:#d9e0e5;font:800 7px Inter}.sithari-page .sithari-mod-copy small{color:#8e9aa3;font:6px/1.35 Inter;letter-spacing:0}
+.sithari-page .sithari-replacement{border-left-color:rgba(116,210,160,.7);background:rgba(35,95,68,.08)}.sithari-page .sithari-replacement>div>small{color:#74d2a0}.sithari-page .sithari-replacement>strong{color:#74d2a0;border-color:rgba(116,210,160,.4);background:rgba(35,95,68,.12)}
+.sithari-page .sithari-search-target{border-left-color:rgba(210,113,92,.7);background:rgba(160,61,45,.055)}
+.sithari-page .sithari-result-row.active{border-color:rgba(126,169,191,.48);background:rgba(65,105,130,.07)}
+@media(max-width:1100px){.sithari-page .sithari-stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:680px){.sithari-page .sithari-stats-grid{grid-template-columns:1fr 1fr}.sithari-page .sithari-stats-head{align-items:flex-start;flex-direction:column}.sithari-page .sithari-analysis-portrait{width:52px;height:52px;flex-basis:52px}}
