@@ -1542,16 +1542,61 @@ function selectedReallocationMod(){
   if(reallocationSelectedModIndex==null)return null;
   return mods[reallocationSelectedModIndex] ? normalizeModForDisplay(mods[reallocationSelectedModIndex]) : null;
 }
-function reallocationEquippedModOptions(){
+let reallocationSpeedTier=null;
+let reallocationCharacterKey='';
+function reallocationSpeedTierMatch(m,tier=reallocationSpeedTier){
+  if(tier===null || tier===undefined)return false;
+  const speed=Number(modTotalSpeed(m)||0);
+  if(tier===0)return speed===0;
+  if(tier===1)return speed>=1&&speed<=5;
+  if(tier===2)return speed>=6&&speed<=9;
+  return false;
+}
+function reallocationTierLabel(tier=reallocationSpeedTier){
+  return tier===0?'SANS VITESSE':tier===1?'1 À 5 VITESSE':tier===2?'6 À 9 VITESSE':'—';
+}
+function reallocationTierMods(){
+  if(reallocationSpeedTier===null)return [];
   return mods.map((raw,index)=>({m:normalizeModForDisplay(raw),index}))
-    .filter(x=>String(x.m?.character||'').trim())
-    .sort((a,b)=>{
-      const ca=String(a.m.character||'').localeCompare(String(b.m.character||''),'fr');
-      if(ca)return ca;
-      const sa=String(a.m.slot||'').localeCompare(String(b.m.slot||''),'fr');
-      if(sa)return sa;
-      return Number(b.m.level||0)-Number(a.m.level||0);
-    });
+    .filter(x=>String(x.m?.character||'').trim() && reallocationSpeedTierMatch(x.m))
+    .sort((a,b)=>String(a.m.character||'').localeCompare(String(b.m.character||''),'fr')||String(a.m.slot||'').localeCompare(String(b.m.slot||''),'fr')||Number(b.m.level||0)-Number(a.m.level||0));
+}
+function renderReallocationSpeedTiers(){
+  document.querySelectorAll('[data-speed-tier]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.speedTier)===reallocationSpeedTier));
+  const summary=$('reallocationTierSummary');
+  if(!summary)return;
+  if(reallocationSpeedTier===null){summary.textContent='Choisissez un niveau de vitesse pour afficher les personnages concernés.';return;}
+  const rows=reallocationTierMods();
+  const people=new Map();
+  rows.forEach(x=>{const key=characterKey(rosterCharacters.find(c=>compactKey(c?.name||c?.baseId||'')===compactKey(x.m.character||''))||{name:x.m.character}); people.set(key,(people.get(key)||0)+1);});
+  summary.innerHTML=`<strong>${rows.length}</strong> mod${rows.length>1?'s':''} correspondant${rows.length>1?'s':''} · <strong>${people.size}</strong> personnage${people.size>1?'s':''} concerné${people.size>1?'s':''} · ${esc(reallocationTierLabel())}`;
+}
+function reallocationCharactersForTier(){
+  const map=new Map();
+  for(const x of reallocationTierMods()){
+    const owner=rosterCharacters.find(c=>compactKey(c?.name||c?.character||c?.baseId||'')===compactKey(x.m.character||''));
+    const key=owner?characterKey(owner):compactKey(x.m.character||'');
+    if(!map.has(key))map.set(key,{key,name:owner?.name||x.m.character||'?',character:owner,count:0});
+    map.get(key).count++;
+  }
+  return [...map.values()].sort((a,b)=>String(a.name).localeCompare(String(b.name),'fr'));
+}
+function renderReallocationCharacterSelector(){
+  const select=$('reallocationCharacterSelect'); if(!select)return;
+  const current=reallocationCharacterKey;
+  if(reallocationSpeedTier===null){select.innerHTML='<option value="">Choisir d’abord un niveau de vitesse…</option>';select.disabled=true;return;}
+  const people=reallocationCharactersForTier();
+  select.disabled=!people.length;
+  select.innerHTML='<option value="">Choisir un personnage…</option>'+people.map(x=>`<option value="${esc(x.key)}">${esc(x.name)} · ${x.count} mod${x.count>1?'s':''}</option>`).join('');
+  if(current&&people.some(x=>x.key===current))select.value=current; else {reallocationCharacterKey='';select.value='';}
+}
+function reallocationEquippedModOptions(){
+  return reallocationTierMods().filter(x=>{
+    if(!reallocationCharacterKey)return false;
+    const owner=rosterCharacters.find(c=>characterKey(c)===reallocationCharacterKey);
+    const ownerKey=owner?characterKey(owner):compactKey(x.m.character||'');
+    return ownerKey===reallocationCharacterKey;
+  });
 }
 function renderReallocationModSelector(){
   const select=$('reallocationModSelect'); if(!select)return;
@@ -1560,13 +1605,11 @@ function renderReallocationModSelector(){
   const opts=reallocationEquippedModOptions();
   select.innerHTML='<option value="">Choisir un mod équipé…</option>'+opts.map(x=>{
     const m=x.m;
-    const label=`${m.character||'Personnage'} · ${m.slot||'Mod'} · ${m.set_name||'—'} · ${m.primary_stat||'—'} · ${modSecondaries(m)||'sans secondaire'}`;
+    const label=`${m.slot||'Mod'} · ${m.set_name||'—'} · ${m.primary_stat||'—'} · ${modSecondaries(m)||'sans secondaire'} · ${num(modTotalSpeed(m))} Speed`;
     return `<option value="${x.index}" ${currentId && String(m.game_id||m.id||'')===currentId?'selected':''}>${esc(label)}</option>`;
   }).join('');
-  if(currentId){
-    const found=opts.find(x=>String(x.m.game_id||x.m.id||'')===currentId);
-    if(found)select.value=String(found.index);
-  }
+  if(currentId){const found=opts.find(x=>String(x.m.game_id||x.m.id||'')===currentId);if(found)select.value=String(found.index);}
+  select.disabled=!reallocationCharacterKey || !opts.length;
 }
 function renderReallocationSecondaryOptions(selectedValue=''){
   const select=$('reallocationSecondary'); if(!select)return;
@@ -1594,11 +1637,15 @@ function renderReallocationSelectionVisual(selected){
 function setReallocationMod(index){
   const n=Number(index);
   if(!Number.isFinite(n)||!mods[n])return;
-  reallocationSelectedModIndex=n;
   const selected=normalizeModForDisplay(mods[n]);
+  reallocationSpeedTier = modTotalSpeed(selected)===0 ? 0 : modTotalSpeed(selected)<=5 ? 1 : modTotalSpeed(selected)<=9 ? 2 : null;
+  const owner=rosterCharacters.find(c=>compactKey(c?.name||c?.character||c?.baseId||'')===compactKey(selected.character||''));
+  reallocationCharacterKey=owner?characterKey(owner):compactKey(selected.character||'');
+  reallocationSelectedModIndex=n;
+  renderReallocationSpeedTiers();
+  renderReallocationCharacterSelector();
   renderReallocationModSelector();
   renderReallocationSelectionVisual(selected);
-  // Disciple = one secondary only. Never auto-select a secondary from the current mod.
   renderReallocationSecondaryOptions('');
   renderReallocationResults();
 }
@@ -1671,6 +1718,8 @@ function renderReallocationResults(){
   }).join('')}</div>`;
 }
 function renderReallocationPanel(){
+  renderReallocationSpeedTiers();
+  renderReallocationCharacterSelector();
   renderReallocationModSelector();
   const selected=selectedReallocationMod();
   renderReallocationSelectionVisual(selected);
@@ -2156,6 +2205,23 @@ function renderResults(data){
   updateCharacterInfo();
 }));
 
+document.querySelectorAll('[data-speed-tier]').forEach(btn=>btn.addEventListener('click',()=>{
+  reallocationSpeedTier=Number(btn.dataset.speedTier);
+  reallocationCharacterKey='';
+  reallocationSelectedModIndex=null;
+  renderReallocationSpeedTiers();
+  renderReallocationCharacterSelector();
+  renderReallocationModSelector();
+  renderReallocationSelectionVisual(null);
+  renderReallocationResults();
+}));
+$('reallocationCharacterSelect')?.addEventListener('change',()=>{
+  reallocationCharacterKey=String($('reallocationCharacterSelect')?.value||'');
+  reallocationSelectedModIndex=null;
+  renderReallocationModSelector();
+  renderReallocationSelectionVisual(null);
+  renderReallocationResults();
+});
 $('reallocationModSelect')?.addEventListener('change',()=>{
   const n=Number($('reallocationModSelect')?.value);
   if(Number.isFinite(n) && mods[n]) setReallocationMod(n);
