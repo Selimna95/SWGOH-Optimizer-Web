@@ -2209,19 +2209,26 @@ function reallocationStatusAllowed(status){
   return false;
 }
 function discipleCanonicalSlot(value){
-  const k=compactKey(value);
-  return ({SQUARE:'Square',TRANSMITTER:'Square',ARROW:'Arrow',DIAMOND:'Diamond',PROCESSOR:'Diamond',TRIANGLE:'Triangle',CIRCLE:'Circle',CROSS:'Cross'})[k]||String(value||'').trim();
+  const k=compactKey(value).replace(/MODS?$/,'');
+  return ({SQUARE:'SQUARE',TRANSMITTER:'SQUARE',ARROW:'ARROW',RECEIVER:'ARROW',DIAMOND:'DIAMOND',PROCESSOR:'DIAMOND',TRIANGLE:'TRIANGLE','HOLOARRAY':'TRIANGLE',CIRCLE:'CIRCLE','DATABUS':'CIRCLE',CROSS:'CROSS',MULTIPLEXER:'CROSS',
+    '1':'SQUARE','2':'SQUARE','3':'ARROW','4':'DIAMOND','5':'TRIANGLE','6':'CIRCLE','7':'CROSS'})[k]||k;
 }
 function discipleCanonicalStat(value){
-  const k=compactKey(value);
-  return ({SPEED:'SPEED',OFFENSE:'OFFENSE',DEFENSE:'DEFENSE',HEALTH:'HEALTH',PROTECTION:'PROTECTION',POTENCY:'POTENCY',TENACITY:'TENACITY',CRITICALCHANCE:'CRITICALCHANCE',CRITICALDAMAGE:'CRITICALDAMAGE',CRITICALAVOIDANCE:'CRITICALAVOIDANCE'})[k]||k;
+  let k=compactKey(value);
+  k=k.replace(/PERCENT|PCT|PERCENTAGE/g,'');
+  return ({SPEED:'SPEED',OFFENSE:'OFFENSE',OFFENSEPERCENT:'OFFENSE',DEFENSE:'DEFENSE',DEFENSEPERCENT:'DEFENSE',HEALTH:'HEALTH',HEALTHPERCENT:'HEALTH',PROTECTION:'PROTECTION',PROTECTIONPERCENT:'PROTECTION',POTENCY:'POTENCY',TENACITY:'TENACITY',CRITICALCHANCE:'CRITICALCHANCE',CRITICCHANCE:'CRITICALCHANCE',CRITCHANCE:'CRITICALCHANCE',CRITICALDAMAGE:'CRITICALDAMAGE',CRITDAMAGE:'CRITICALDAMAGE',CRITICALAVOIDANCE:'CRITICALAVOIDANCE'})[k]||k;
 }
 function discipleCanonicalSet(value){
-  const k=compactKey(value);
-  return ({CRITDAMAGE:'CRITICALDAMAGE',CRITICALDAMAGE:'CRITICALDAMAGE',CRITCHANCE:'CRITICALCHANCE',CRITICALCHANCE:'CRITICALCHANCE'})[k]||k;
+  let k=compactKey(value);
+  k=k.replace(/MODSET$/,'').replace(/SET$/,'');
+  return ({'1':'HEALTH','2':'OFFENSE','3':'DEFENSE','4':'SPEED','5':'CRITICALCHANCE','6':'CRITICALDAMAGE','7':'POTENCY','8':'TENACITY',
+    HEALTH:'HEALTH',OFFENSE:'OFFENSE',DEFENSE:'DEFENSE',SPEED:'SPEED',CRITCHANCE:'CRITICALCHANCE',CRITICALCHANCE:'CRITICALCHANCE',CRITDAMAGE:'CRITICALDAMAGE',CRITICALDAMAGE:'CRITICALDAMAGE',POTENCY:'POTENCY',TENACITY:'TENACITY'})[k]||k;
+}
+function discipleModKeys(m){
+  return {slot:discipleCanonicalSlot(m?.slot),set:discipleCanonicalSet(m?.set_name),primary:discipleCanonicalStat(m?.primary_stat)};
 }
 function reallocationPrimaryMatches(selected,candidate){
-  const a=discipleCanonicalStat(selected?.primary_stat), b=discipleCanonicalStat(candidate?.primary_stat);
+  const a=discipleModKeys(selected).primary, b=discipleModKeys(candidate).primary;
   return !!a&&!!b&&a===b;
 }
 function reallocationCandidateSecondary(candidate,secondaryKey){
@@ -2236,19 +2243,24 @@ function reallocationSourceRows(selected){
   const rows=[];
   const selectedId=String(selected?.game_id||selected?.id||'');
   const selectedOwner=compactKey(selected?.character||'');
-  const slot=discipleCanonicalSlot(selected?.slot), set=discipleCanonicalSet(selected?.set_name);
+  const selectedKeys=discipleModKeys(selected);
+  const sourceCharacters=[];
   for(const c of rosterCharacters){
     const ck=characterKey(c), nk=compactKey(c?.name);
     if(selectedOwner&&(selectedOwner===ck||selectedOwner===nk))continue;
     const cm=getCharacterMods(c), st=v176ModStatus(cm);
     if(!reallocationStatusAllowed(st.status))continue;
-    for(const raw of cm){
+    sourceCharacters.push({character:c,mods:cm,status:st});
+  }
+  for(const group of sourceCharacters){
+    for(const raw of group.mods){
       const m=normalizeModForDisplay(raw), id=String(m.game_id||m.id||'');
       if(selectedId&&id===selectedId)continue;
-      if(discipleCanonicalSlot(m.slot)!==slot)continue;
-      if(discipleCanonicalSet(m.set_name)!==set)continue;
-      if(!reallocationPrimaryMatches(selected,m))continue;
-      rows.push({character:c,mod:m,status:st.status,class:st.class,speed:modTotalSpeed(m)});
+      const keys=discipleModKeys(m);
+      if(keys.slot!==selectedKeys.slot)continue;
+      if(keys.set!==selectedKeys.set)continue;
+      if(keys.primary!==selectedKeys.primary)continue;
+      rows.push({character:group.character,mod:m,status:group.status.status,class:group.status.class,speed:modTotalSpeed(m)});
     }
   }
   return rows;
@@ -2260,15 +2272,17 @@ function renderReallocationResults(){
   const secondaryValue=$('reallocationSecondary')?.value||'';
   const secondaryKey=discipleCanonicalStat(secondaryValue);
   if(!secondaryKey){box.innerHTML='<div class="empty">Choisissez une seule secondaire recherchée.</div>';return;}
+  const selectedKeys=discipleModKeys(selected);
   const sourceRows=reallocationSourceRows(selected), rows=[];
   for(const r of sourceRows){const match=reallocationCandidateSecondary(r.mod,secondaryKey);if(match)rows.push({...r,value:match.value});}
   rows.sort((a,b)=>b.speed-a.speed||b.value-a.value||String(a.character?.name||'').localeCompare(String(b.character?.name||''),'fr'));
-  const top=rows.slice(0,5);
   const scope=['INCOMPLETS','TRÈS FAIBLES','FAIBLES'].filter(x=>x==='INCOMPLETS'?$('reallocationIncomplete')?.checked!==false:x==='TRÈS FAIBLES'?$('reallocationVeryLow')?.checked!==false:$('reallocationLow')?.checked!==false).join(' + ')||'AUCUNE SOURCE';
-  if(!top.length){
-    box.innerHTML=`<div class="disciple-result-summary"><div><span>PÉRIMÈTRE</span><b>${esc(scope)}</b><small>mods des personnages ciblés</small></div><div><span>SET + PRIMAIRE + SLOT</span><b>${sourceRows.length}</b><small>candidat(s)</small></div><div><span>SECONDAIRE</span><b>0</b><small>candidat(s) avec ${esc(secondaryDisplayName(secondaryValue))}</small></div></div><div class="disciple-no-result disciple-quest-result"><b>LANCEZ-VOUS DANS LA QUÊTE DE CE MOD</b><span>Aucun mod du roster ne respecte simultanément le slot, le set, la primaire et la secondaire <strong>${esc(secondaryDisplayName(secondaryValue))}</strong>.</span><small>Le périmètre de recherche est limité aux mods incomplets, très faibles et faibles.</small></div>`;return;
+  const reference=`${selectedKeys.slot} · ${selectedKeys.set} · ${selectedKeys.primary}`;
+  const topRows=rows.slice(0,5);
+  if(!topRows.length){
+    box.innerHTML=`<div class="disciple-result-summary"><div><span>PÉRIMÈTRE</span><b>${esc(scope)}</b><small>mods des personnages ciblés</small></div><div><span>RÉFÉRENCE CONSERVÉE</span><b>${esc(reference)}</b><small>slot · set · primaire</small></div><div><span>COMPATIBLES</span><b>0</b><small>aucune secondaire ${esc(secondaryDisplayName(secondaryValue))}</small></div></div><div class="disciple-no-result disciple-quest-result"><b>LANCEZ-VOUS DANS LA QUÊTE DE CE MOD</b><span>Aucun mod du roster ne correspond à <strong>${esc(selectedKeys.slot)}</strong> + <strong>${esc(selectedKeys.set)}</strong> + <strong>${esc(selectedKeys.primary)}</strong> avec la secondaire <strong>${esc(secondaryDisplayName(secondaryValue))}</strong>.</span><small>Recherche limitée aux mods incomplets, très faibles et faibles des autres personnages.</small></div>`;return;
   }
-  box.innerHTML=`<div class="disciple-result-summary"><div><span>ARSENAL</span><b>${sourceRows.length}</b><small>mods compatibles slot/set/primaire</small></div><div><span>OPTIONS AFFICHÉES</span><b>${top.length}</b><small>maximum 5</small></div><div><span>SECONDAIRE</span><b>${rows.length}</b><small>candidat(s) avec ${esc(secondaryDisplayName(secondaryValue))}</small></div><div><span>TRI</span><b>VITESSE ↓</b><small>puis valeur recherchée</small></div></div><div class="disciple-candidate-list">${top.map((r,i)=>{const m=r.mod,ownerName=String(r.character?.name||r.character?.baseId||m.character||'Libre'),ownerPortrait=disciplePortraitHtml(r.character||{name:ownerName}),other=[];for(let j=1;j<=4;j++){const stat=m[`secondary_${j}_stat`];if(stat&&discipleCanonicalStat(secondaryDisplayName(stat))!==secondaryKey)other.push(`${secondaryDisplayName(stat)} ${num(m[`secondary_${j}_value`],1)}`);}return `<article class="disciple-candidate"><div class="disciple-candidate-rank"><span>OPTION</span><b>${String(i+1).padStart(2,'0')}</b></div><div class="disciple-candidate-owner">${ownerPortrait}<div><strong>${esc(ownerName)}</strong><span class="audit-badge ${r.class}">${esc(r.status)}</span></div></div><div class="disciple-candidate-mod"><div class="disciple-candidate-icon">${modIconHtml(m,'54')}</div><div><span>${esc(m.slot||'Mod')} · ${esc(m.set_name||'—')}</span><strong>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</strong><small>${esc(other.join(' · ')||'Aucune autre secondaire')}</small></div></div><div class="disciple-candidate-speed"><span>VITESSE</span><b>${num(r.speed)}</b><small>secondaire totale</small></div><div class="disciple-candidate-match"><span>${esc(secondaryDisplayName(secondaryValue))}</span><b>+${num(r.value,1)}</b><small>secondaire recherchée</small></div></article>`;}).join('')}</div>`;
+  box.innerHTML=`<div class="disciple-result-summary"><div><span>RÉFÉRENCE CONSERVÉE</span><b>${esc(reference)}</b><small>slot · set · primaire</small></div><div><span>ARSENAL COMPATIBLE</span><b>${sourceRows.length}</b><small>mod(s)</small></div><div><span>OPTIONS</span><b>${topRows.length}</b><small>maximum 5</small></div><div><span>SECONDAIRE</span><b>${rows.length}</b><small>candidat(s)</small></div></div><div class="disciple-candidate-list">${topRows.map((r,i)=>{const m=r.mod,ownerName=String(r.character?.name||r.character?.baseId||m.character||'Libre'),ownerPortrait=disciplePortraitHtml(r.character||{name:ownerName}),other=[];for(let j=1;j<=4;j++){const stat=m[`secondary_${j}_stat`];if(stat&&discipleCanonicalStat(secondaryDisplayName(stat))!==secondaryKey)other.push(`${secondaryDisplayName(stat)} ${num(m[`secondary_${j}_value`],1)}`);}return `<article class="disciple-candidate"><div class="disciple-candidate-rank"><span>OPTION</span><b>${String(i+1).padStart(2,'0')}</b></div><div class="disciple-candidate-owner">${ownerPortrait}<div><strong>${esc(ownerName)}</strong><span class="audit-badge ${r.class}">${esc(r.status)}</span></div></div><div class="disciple-candidate-mod"><div class="disciple-candidate-icon">${modIconHtml(m,'54')}</div><div><span>${esc(m.slot||'Mod')} · ${esc(m.set_name||'—')}</span><strong>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</strong><small>${esc(other.join(' · ')||'Aucune autre secondaire')}</small></div></div><div class="disciple-candidate-speed"><span>VITESSE</span><b>${num(r.speed)}</b><small>secondaire totale</small></div><div class="disciple-candidate-match"><span>${esc(secondaryDisplayName(secondaryValue))}</span><b>+${num(r.value,1)}</b><small>secondaire recherchée</small></div></article>`;}).join('')}</div>`;
 }
 
 function renderReallocationPanel(){
