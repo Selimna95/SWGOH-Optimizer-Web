@@ -1,0 +1,7 @@
+V183 - DISCIPLE SEARCH FIX
+- Comparaisons canonisées slot / set / primaire.
+- Recherche secondaire canonisée.
+- Diagnostic visible du périmètre et du nombre de candidats.
+- Message QUÊTE garanti si aucun candidat.
+- Sources : Incomplets + Très faibles + Faibles.
+- Sith'Ari et navigation inchangés.
