@@ -1226,7 +1226,7 @@ function sithariProfileForCharacter(c){
   return null;
 }
 function sithariCharacterSpeed(c){
-  return getCharacterMods(c).reduce((m,mod)=>Math.max(m,modTotalSpeed(mod)),0);
+  return sithariCharacterMods(c).reduce((m,mod)=>Math.max(m,modTotalSpeed(mod)),0);
 }
 function sithariFilteredCharacters(){
   const search=compactKey(sithariSearch);
@@ -1240,13 +1240,61 @@ function sithariModSecondaryMap(m){
   for(let i=1;i<=4;i++){const stat=String(m?.[`secondary_${i}_stat`]||'').trim();if(stat)out[stat]=Number(m?.[`secondary_${i}_value`]||0)||0;}
   return out;
 }
-function sithariTopKyberSets(p){return (Array.isArray(p?.sets)?p.sets:[]).slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0)).slice(0,3);}
+function sithariKyberSetRules(p){
+  const specific=Array.isArray(p?.specific_sets)?p.specific_sets:[];
+  if(specific.length){
+    return specific.map(x=>({name:String(x.name||''),counts:x.counts||{},weight:Number(x.weight||0)}))
+      .filter(x=>Object.keys(x.counts).length)
+      .sort((a,b)=>b.weight-a.weight);
+  }
+  const generic=(Array.isArray(p?.sets)?p.sets:[]).slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0));
+  const rules=[];
+  for(const x of generic){
+    const raw=String(x.name||'').trim();
+    const base=raw.replace(/^Triple\s+/i,'').replace(/^Double\s+/i,'').trim();
+    const n=Number(x.count||0);
+    if(!base||!n)continue;
+    if(n===6) rules.push({name:`${base} ×6`,counts:{[base]:6},weight:Number(x.weight||0)});
+  }
+  const fours=generic.filter(x=>Number(x.count||0)===4).map(x=>({name:String(x.name||'').replace(/^Double\s+/i,'').trim(),weight:Number(x.weight||0)}));
+  const twos=generic.filter(x=>Number(x.count||0)===2).map(x=>({name:String(x.name||'').trim(),weight:Number(x.weight||0)}));
+  for(const a of fours){
+    for(const b of twos){
+      if(!a.name||!b.name||compactKey(a.name)===compactKey(b.name))continue;
+      rules.push({name:`${a.name} + ${b.name}`,counts:{[a.name]:4,[b.name]:2},weight:a.weight*b.weight});
+    }
+  }
+  return rules.sort((a,b)=>b.weight-a.weight);
+}
+function sithariTopKyberSets(p){
+  const rules=sithariKyberSetRules(p);
+  const names=[]; const seen=new Set();
+  for(const r of rules){for(const name of Object.keys(r.counts||{})){const k=compactKey(name);if(!seen.has(k)){seen.add(k);names.push({name,weight:Number(r.weight||0)});}}}
+  return names.slice(0,6);
+}
 function sithariPrimaryRefs(p,slot){
   if(SITHARI_FIXED_PRIMARY[slot]) return [{name:SITHARI_FIXED_PRIMARY[slot],weight:1}];
   return Object.entries(p?.slots?.[slot]?.primaries||{}).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name,weight])=>({name,weight}));
 }
-function sithariSetMatch(m,p){
-  return sithariTopKyberSets(p).some(x=>compactKey(x.name)===compactKey(m?.set_name));
+function sithariEquippedSetCounts(c){
+  const counts={};
+  for(const m of sithariCharacterMods(c)){const set=String(m?.set_name||'').trim();if(set)counts[set]=(counts[set]||0)+1;}
+  return counts;
+}
+function sithariSetCompositionMatch(c,p){
+  const rules=sithariKyberSetRules(p); const actual=sithariEquippedSetCounts(c);
+  const total=Object.values(actual).reduce((a,b)=>a+b,0);
+  if(total!==6 || !rules.length)return false;
+  return rules.some(rule=>{
+    const expected={}; for(const [name,n] of Object.entries(rule.counts||{}))expected[compactKey(name)]=Number(n||0);
+    const actualKeys=Object.keys(actual).map(k=>compactKey(k));
+    if(actualKeys.length!==Object.keys(expected).length)return false;
+    return Object.entries(expected).every(([k,n])=>{const found=Object.entries(actual).find(([name])=>compactKey(name)===k);return found&&Number(found[1])===n;});
+  });
+}
+function sithariSetMatch(m,p,c){
+  if(c)return sithariSetCompositionMatch(c,p);
+  const set=compactKey(m?.set_name); return sithariKyberSetRules(p).some(r=>Object.keys(r.counts||{}).some(name=>compactKey(name)===set));
 }
 function sithariPrimaryMatch(m,p,slot){
   return sithariPrimaryRefs(p,slot).some(x=>compactKey(x.name)===compactKey(m?.primary_stat));
@@ -1255,13 +1303,44 @@ function sithariPrimaryReference(p,slot){
   return sithariPrimaryRefs(p,slot)[0]?.name||'';
 }
 function sithariSetReference(p){
+  const rule=sithariKyberSetRules(p)[0];
+  if(rule?.counts)return Object.entries(rule.counts).map(([name,n])=>`${name} ×${n}`).join(' + ');
   return sithariTopKyberSets(p)[0]?.name||'';
 }
+function sithariCalibrationSetChoices(p){
+  const rule=sithariKyberSetRules(p)[0];
+  if(rule?.counts)return Object.keys(rule.counts);
+  return sithariTopKyberSets(p).map(x=>x.name);
+}
+function sithariOwnerRaw(value){
+  if(value==null)return '';
+  if(typeof value==='string'||typeof value==='number')return String(value).trim();
+  if(typeof value==='object'){
+    return String(value.base_id??value.baseId??value.characterId??value.character_id??value.unitId??value.unit_id??value.name??value.displayName??value.id??'').trim();
+  }
+  return '';
+}
 function sithariEquippedOwner(m){
-  const raw=String(m?.character??m?.baseId??m?.base_id??m?.characterId??m?.character_id??'').trim();
+  const raw=sithariOwnerRaw(m?.character) || sithariOwnerRaw(m?.characterName) || sithariOwnerRaw(m?.equippedTo) || sithariOwnerRaw(m?.equipped_to) || sithariOwnerRaw(m?.unit_equiped) || sithariOwnerRaw(m?.unitEquiped) || sithariOwnerRaw(m?.location) || sithariOwnerRaw(m?.usingIn) || sithariOwnerRaw(m?.baseId) || sithariOwnerRaw(m?.base_id) || sithariOwnerRaw(m?.characterId) || sithariOwnerRaw(m?.character_id);
   if(!raw)return '';
-  const hit=rosterCharacters.find(c=>compactKey(c?.name||c?.character||c?.baseId||c?.base_id||'')===compactKey(raw));
-  return hit?characterKey(hit):compactKey(raw);
+  const key=compactKey(raw);
+  const hit=rosterCharacters.find(c=>[c?.name,c?.character,c?.baseId,c?.base_id,c?.unitId,c?.unit_id].some(v=>compactKey(v)===key));
+  return hit?characterKey(hit):key;
+}
+function sithariCharacterMods(c){
+  if(!c)return [];
+  const targetKey=characterKey(c);
+  const targetNames=new Set([targetKey,compactKey(c?.name),compactKey(c?.baseId),compactKey(c?.base_id)].filter(Boolean));
+  const bySlot=new Map();
+  mods.map((raw,i)=>({...normalizeModForDisplay(raw),_index:i})).forEach(m=>{
+    const owner=sithariEquippedOwner(m);
+    if(!owner || !targetNames.has(owner))return;
+    const slot=modSlotLabel(m?.slot); if(!SITHARI_SLOT_ORDER.includes(slot))return;
+    const prev=bySlot.get(slot);
+    const score=x=>Number(Boolean(x?.primary_stat))*4+Number(Boolean(x?.secondary_1_stat))*2+Number(x?.level||0)/100+Number(x?.game_id&&!String(x.game_id).startsWith('gg-'));
+    if(!prev || score(m)>score(prev))bySlot.set(slot,m);
+  });
+  return [...bySlot.values()].sort((a,b)=>SITHARI_SLOT_ORDER.indexOf(a.slot)-SITHARI_SLOT_ORDER.indexOf(b.slot));
 }
 function sithariSecondaryScore(m,p){
   const focus=p?.secondary_focus||{}; const sec=sithariModSecondaryMap(m); let score=0,count=0;
@@ -1271,8 +1350,12 @@ function sithariSecondaryScore(m,p){
   return count?score/count:0;
 }
 function sithariReferenceText(p,slot){
-  const sets=sithariTopKyberSets(p).map(x=>x.name).join(' / ')||'—';
-  const prim=sithariPrimaryRefs(p,slot).map(x=>x.name).join(' / ')||'—';
+  const rules=sithariKyberSetRules(p);
+  const sets=rules.slice(0,5).map(r=>{
+    const parts=Object.entries(r.counts||{}).map(([name,n])=>`${name} ×${n}`);
+    return parts.join(' + ');
+  }).join('  /  ')||sithariTopKyberSets(p).map(x=>x.name).join(' / ')||'—';
+  const prim=sithariPrimaryRefs(p,slot).map(x=>`${x.name} ${Math.round(Number(x.weight||0)*100)}%`).join(' / ')||'—';
   const focus=p?.secondary_focus||{};
   const sec=Object.entries(focus).slice(0,4).map(([k,v])=>`${k} ${num(v,1)}`).join(' · ')||'—';
   return {sets,prim,sec};
@@ -1296,7 +1379,7 @@ function sithariSourceStatus(mod){
   const ownerKey=sithariEquippedOwner(mod);
   if(!ownerKey)return 'LIBRE';
   const owner=rosterCharacters.find(c=>characterKey(c)===ownerKey);
-  return owner?v176ModStatus(getCharacterMods(owner)).status:'LIBRE';
+  return owner?v176ModStatus(sithariCharacterMods(owner)).status:'LIBRE';
 }
 function sithariSourceAllowed(status,scope){
   if(scope==='ALL')return true;
@@ -1358,9 +1441,16 @@ function sithariReinforcementResults(x){
     .slice(0,8);
 }
 function sithariCalibrationResults(x){
-  const setName=sithariSetReference(x.profile);
-  const primaryName=sithariPrimaryReference(x.profile,x.slot);
-  const pool=sithariCandidatePool(x.slot,setName,primaryName,x.current,characterKey(x.character));
+  const setChoices=sithariCalibrationSetChoices(x.profile);
+  const primaryChoices=sithariPrimaryRefs(x.profile,x.slot).map(v=>v.name);
+  const pool=[];
+  for(const setName of setChoices){
+    for(const primaryName of primaryChoices){
+      for(const m of sithariCandidatePool(x.slot,setName,primaryName,x.current,characterKey(x.character))){
+        if(!pool.some(existing=>String(existing.game_id||existing.id||'')===String(m.game_id||m.id||'')))pool.push(m);
+      }
+    }
+  }
   return pool.map(m=>({m,status:sithariSourceStatus(m),score:sithariSecondaryScore(m,x.profile),speed:modTotalSpeed(m)}))
     .sort((a,b)=>b.score-a.score||b.speed-a.speed)
     .slice(0,8);
@@ -1385,7 +1475,7 @@ function sithariRenderActionPanel(x){
   const results=active.mode==='REINFORCEMENT'
     ? `<div class="sithari-action-secondary"><label><span>SECONDAIRE 01</span><select data-sithari-secondary="A"><option value="">Choisir…</option>${names.map(n=>`<option value="${esc(n)}" ${compactKey(n)===compactKey(first)?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label><span>SECONDAIRE 02</span><select data-sithari-secondary="B"><option value="">Choisir…</option>${names.map(n=>`<option value="${esc(n)}" ${compactKey(n)===compactKey(second)?'selected':''}>${esc(n)}</option>`).join('')}</select></label></div>
        <button type="button" class="sithari-run-action" data-sithari-run ${(!first||!second||compactKey(first)===compactKey(second))?'disabled':''}>LANCER LE RENFORCEMENT</button>`
-    : `<div class="sithari-calibration-target"><span>SET KYBER</span><b>${esc(refSet||'—')}</b><span>PRIMAIRE KYBER</span><b>${esc(refPrimary||'—')}</b></div>
+    : `<div class="sithari-calibration-target"><span>CONFIGURATION SET KYBER</span><b>${esc(refSet||'—')}</b><span>PRIMAIRE(S) KYBER</span><b>${esc(sithariPrimaryRefs(x.profile,x.slot).map(v=>v.name).join(' / ')||refPrimary||'—')}</b></div>
        <button type="button" class="sithari-run-action calibration" data-sithari-run>LANCER LE CALIBRAGE</button>`;
   const resultHtml=active.ran?`<div class="sithari-action-results">${rows.length?rows.map((r,i)=>{
     const m=r.m, owner=rosterCharacters.find(c=>characterKey(c)===sithariEquippedOwner(m));
@@ -1409,13 +1499,13 @@ function sithariRenderActionPanel(x){
   </section>`;
 }
 function sithariSlotState(c,slot){
-  const p=sithariProfileForCharacter(c); const cm=getCharacterMods(c); const current=cm.find(m=>String(m.slot||'')===slot)||null;
+  const p=sithariProfileForCharacter(c); const cm=sithariCharacterMods(c); const current=cm.find(m=>String(m.slot||'')===slot)||null;
   if(!p){
     const key=characterKey(c),loading=!!sithariKyberLoading[key];
     return {character:c,slot,current,status:loading?'LOADING':'NOREF',profile:null,reference:{sets:loading?'Récupération de la référence Kyber…':'Référence Kyber indisponible',prim:'—',sec:'—'}};
   }
   const reference=sithariReferenceText(p,slot);
-  const setOk=!!current&&sithariSetMatch(current,p);
+  const setOk=!!current&&sithariSetMatch(current,p,c);
   const primaryOk=!!current&&sithariPrimaryMatch(current,p,slot);
   const mode=(setOk&&primaryOk)?'REINFORCEMENT':'CALIBRATION';
   const status=!current?'CALIBRATION':(setOk&&primaryOk?'REINFORCE':'CALIBRATE');
@@ -1537,7 +1627,7 @@ function sithariSlotCard(x,i){
   const actionBtn=action?`<button type="button" class="sithari-slot-action ${action==='REINFORCEMENT'?'reinforcement':'calibration'}" data-sithari-action="${action}" data-sithari-slot="${x.slot}">${action==='REINFORCEMENT'?'↗ RENFORCEMENT':'⌁ CALIBRAGE'}</button>`:'';
   return `<article class="sithari-slot-card ${cls}"><header><span>${String(i+1).padStart(2,'0')}</span><div><small>SLOT</small><strong>${SITHARI_SLOT_LABEL[x.slot]||x.slot}</strong></div><em>${label}</em></header>
     <div class="sithari-slot-compare"><div class="sithari-current-mod"><small>TON MOD</small>${sithariModMini(x.current)}</div><div class="sithari-slot-arrow">→</div><div class="sithari-kyber-ref"><small>RÉFÉRENCE KYBER</small><p><b>SETS</b> ${esc(x.reference.sets)}</p><p><b>PRIMAIRE</b> ${esc(x.reference.prim)}</p><p><b>SECONDAIRES</b> ${esc(x.reference.sec)}</p></div></div>
-    <div class="sithari-rule-check"><span class="${x.setOk?'ok':'bad'}">SET ${x.setOk?'✓':'×'}</span><span class="${x.primaryOk?'ok':'bad'}">PRIMAIRE ${x.primaryOk?'✓':'×'}</span></div>
+    <div class="sithari-rule-check"><span class="${x.setOk?'ok':'bad'}"><b>${x.setOk?'✓':'×'}</b> SET <em>${x.setOk?'CONFORME':'À CALIBRER'}</em></span><span class="${x.primaryOk?'ok':'bad'}"><b>${x.primaryOk?'✓':'×'}</b> PRIMAIRE <em>${x.primaryOk?'CONFORME':'À CALIBRER'}</em></span></div>
     ${actionBtn}
     ${sithariRenderActionPanel(x)}
   </article>`;

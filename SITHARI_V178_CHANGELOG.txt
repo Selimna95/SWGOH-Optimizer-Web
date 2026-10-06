@@ -1,0 +1,16 @@
+SWGOH OPTIMIZER — SITH'ARI V178 FIX
+
+Corrections:
+1. Kyber sets are evaluated from the complete recommended set configurations, not from the three most frequent individual sets.
+2. If the character's six equipped mods match ANY Kyber recommended configuration, the set is considered CONFORME.
+3. Kyber primary references accept the listed primary choices for the slot.
+4. Calibration searches the slot against the sets belonging to the top Kyber configuration and the listed Kyber primaries, while preserving the source filters.
+5. Equipped-mod resolution in SITH'ARI now handles character names, base IDs and object-shaped ownership fields, and deduplicates HTML/API copies by slot.
+6. Default sources remain: INCOMPLETS + TRÈS FAIBLES + FAIBLES. Optional: MOYENS / TOUT LE ROSTER.
+7. Reinforcement keeps exact current slot + set + primary and requires two selected secondary stats.
+8. SITH'ARI visual hierarchy was rebuilt for readability using the Seigneur Sith visual language: explicit status badges, clearer action buttons, larger reference text and cleaner result cards.
+9. Changes are scoped to SITH'ARI for the character-mod resolver; the global Seigneur Sith / Disciple behaviour is not intentionally changed.
+
+Validation:
+- app.js: node --check OK
+- Set tests: 4 Offense + 2 Health accepted; Triple Health accepted; wrong 4+2 rejected.
