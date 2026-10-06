@@ -397,3 +397,5 @@ body[data-page="sithari"] .nav-sithari.active:before{background:var(--sa-red)!im
 .sithari-page .sithari-action-result>span{color:#bdbdb7;font:8px/1.45 var(--font-ui)}.sithari-page .sithari-action-result>span em{display:block;margin-top:3px;color:#79dfa5;font:900 7px var(--font-display);font-style:normal}
 .sithari-page .sithari-action-empty{padding:14px;text-align:center;color:#8a8a84;border:1px dashed rgba(255,255,255,.1);font:8px var(--font-ui)}
 @media(max-width:900px){.sithari-page .sithari-slots{grid-template-columns:1fr!important}.sithari-page .sithari-action-secondary{grid-template-columns:1fr}.sithari-page .sithari-rule-check{grid-template-columns:1fr}.sithari-page .sithari-action-result{grid-template-columns:24px 1fr}.sithari-page .sithari-action-result>span{grid-column:2}}
+
+.disciple-quest-result{display:flex;flex-direction:column;gap:8px;text-align:center;padding:28px 22px}.disciple-quest-result>b{font-size:1.05rem;letter-spacing:.04em}.disciple-quest-result span{line-height:1.5}.disciple-quest-result small{opacity:.7}

@@ -668,7 +668,21 @@ function normalizeModForDisplay(m){
   const out={...m};
   out.set_name=modSetLabel(out.set_name??out.set??out.setId??out.set_id);
   out.slot=modSlotLabel(out.slot??out.slot_id??out.slotId??out.modSlot);
-  out.character=out.character??out.characterName??out.equippedTo??out.equipped_to??'';
+  // Normalize the equipped owner once. Comlink/export variants can expose
+  // the owner as a name, baseId, characterId, equippedTo, or an object.
+  const ownerCandidates=[out.characterName,out.equippedTo,out.equipped_to,out.character,
+    out.characterId,out.character_id,out.equippedToId,out.equipped_to_id,out.ownerId,out.owner_id];
+  let owner='';
+  for(const value of ownerCandidates){
+    if(value==null)continue;
+    if(typeof value==='object'){
+      owner=String(value.baseId??value.base_id??value.characterId??value.character_id??value.name??value.id??'').trim();
+    }else owner=String(value).trim();
+    if(owner && owner!=='[object Object]')break;
+  }
+  out.character=owner;
+  out.ownerKey=compactKey(owner);
+  out.ownerBaseId=compactKey(out.characterId??out.character_id??'');
   out.level=Number(out.level??0);
   out.rarity=Number(out.rarity??out.pips??0);
   out.dots=Number(out.dots??out.dotCount??out.pips??out.rarity??0);
@@ -835,14 +849,28 @@ const V176_FACTION_RULES = {
 
 function compactKey(v){ return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
 function characterKey(c){ return compactKey(c?.baseId??c?.base_id??c?.name??c?.character??''); }
-function modOwnerKey(m){ return compactKey(m?.character??m?.baseId??m?.base_id??m?.characterId??m?.character_id??''); }
+function modOwnerKey(m){
+  if(!m)return '';
+  const candidates=[m.ownerKey,m.character,m.characterName,m.equippedTo,m.equipped_to,m.baseId,m.base_id,m.characterId,m.character_id];
+  for(const value of candidates){
+    if(value==null)continue;
+    if(typeof value==='object'){
+      const k=compactKey(value.baseId??value.base_id??value.characterId??value.character_id??value.name??value.id??'');
+      if(k)return k;
+    }else{
+      const k=compactKey(value);
+      if(k && k!=='OBJECTOBJECT')return k;
+    }
+  }
+  return '';
+}
 function getCharacterMods(c){
   if(!c) return [];
-  const targets=new Set([characterKey(c),compactKey(c.name),compactKey(c.baseId),compactKey(c.base_id)].filter(Boolean));
+  const targets=new Set([characterKey(c),compactKey(c.name),compactKey(c.baseId),compactKey(c.base_id),compactKey(c.characterId),compactKey(c.character_id)].filter(Boolean));
   return mods.map((raw,i)=>({...normalizeModForDisplay(raw),_index:i})).filter(m=>{
     const owner=modOwnerKey(m);
-    return owner && [...targets].some(t=>owner===t);
-  }).slice(0,6).sort((a,b)=>({Square:0,Arrow:1,Diamond:2,Triangle:3,Circle:4,Cross:5}[a.slot]??99)-({Square:0,Arrow:1,Diamond:2,Triangle:3,Circle:4,Cross:5}[b.slot]??99));
+    return owner && [...targets].some(t=>owner===t || owner.includes(t) || t.includes(owner));
+  }).sort((a,b)=>({Square:0,Arrow:1,Diamond:2,Triangle:3,Circle:4,Cross:5}[a.slot]??99)-({Square:0,Arrow:1,Diamond:2,Triangle:3,Circle:4,Cross:5}[b.slot]??99));
 }
 function modSpeedMetrics(m){
   const primary=compactKey(m.primary_stat)==='SPEED';
@@ -2100,9 +2128,10 @@ function reallocationSecondaryOptions(){
   return [...names.values()].sort((a,b)=>a.localeCompare(b,'fr'));
 }
 function reallocationModOwnerKey(mod){
-  const rawName=String(mod?.character||'').trim();
-  const owner=rosterCharacters.find(c=>compactKey(c?.name||c?.character||c?.baseId||'')===compactKey(rawName));
-  return owner?characterKey(owner):compactKey(rawName);
+  const ownerKey=modOwnerKey(mod);
+  if(!ownerKey)return '';
+  const owner=rosterCharacters.find(c=>[characterKey(c),compactKey(c?.name),compactKey(c?.baseId),compactKey(c?.base_id),compactKey(c?.characterId),compactKey(c?.character_id)].filter(Boolean).some(k=>k===ownerKey||k.includes(ownerKey)||ownerKey.includes(k)));
+  return owner?characterKey(owner):ownerKey;
 }
 function reallocationModBelongsToSelection(mod){
   if(reallocationSpeedTier===null || !reallocationCharacterKey || !mod)return false;
@@ -2174,11 +2203,9 @@ function setReallocationMod(index){
   renderReallocationResults();
 }
 function reallocationStatusAllowed(status){
-  if($('reallocationAllRoster')?.checked===true)return true;
   if(status==='INCOMPLETS')return $('reallocationIncomplete')?.checked!==false;
   if(status==='TRÈS FAIBLES')return $('reallocationVeryLow')?.checked!==false;
   if(status==='FAIBLES')return $('reallocationLow')?.checked!==false;
-  if(status==='MOYENS')return $('reallocationMedium')?.checked===true;
   return false;
 }
 function reallocationPrimaryMatches(selected,candidate){
@@ -2219,14 +2246,9 @@ function renderReallocationResults(){
   }
   rows.sort((a,b)=>b.speed-a.speed||b.value-a.value||String(a.character.name||'').localeCompare(String(b.character.name||''),'fr'));
   const top=rows.slice(0,5);
-  const scope=$('reallocationAllRoster')?.checked===true?'TOUT LE ROSTER':[
-    $('reallocationIncomplete')?.checked!==false?'INCOMPLETS':null,
-    $('reallocationVeryLow')?.checked!==false?'TRÈS FAIBLES':null,
-    $('reallocationLow')?.checked!==false?'FAIBLES':null,
-    $('reallocationMedium')?.checked===true?'MOYENS':null
-  ].filter(Boolean).join(' + ')||'AUCUNE SOURCE';
+  const scope=['INCOMPLETS','TRÈS FAIBLES','FAIBLES'].join(' + ');
   if(!top.length){
-    box.innerHTML=`<div class="disciple-no-result"><b>AUCUNE OPTION</b><span>Aucun mod ne respecte simultanément le slot, le set, la primaire et la secondaire <strong>${esc(secondaryDisplayName($('reallocationSecondary')?.value))}</strong> dans <strong>${esc(scope)}</strong>.</span></div>`;
+    box.innerHTML=`<div class="disciple-no-result disciple-quest-result"><b>LANCEZ-VOUS DANS LA QUÊTE DE CE MOD</b><span>Aucun mod du roster ne respecte simultanément le slot, le set, la primaire et la secondaire <strong>${esc(secondaryDisplayName($('reallocationSecondary')?.value))}</strong>.</span><small>Le périmètre de recherche est limité aux mods incomplets, très faibles et faibles.</small></div>`;
     return;
   }
   box.innerHTML=`<div class="disciple-result-summary"><div><span>ARSENAL</span><b>${rows.length}</b><small>mod(s) compatibles</small></div><div><span>OPTIONS AFFICHÉES</span><b>${top.length}</b><small>maximum 5</small></div><div><span>TRI</span><b>VITESSE ↓</b><small>puis apport de la secondaire</small></div><div><span>RÈGLES</span><b>SET + PRIMAIRE</b><small>conservés</small></div></div><div class="disciple-candidate-list">${top.map((r,i)=>{
@@ -2745,12 +2767,6 @@ $('reallocationSecondary')?.addEventListener('change',renderReallocationResults)
 $('reallocationIncomplete')?.addEventListener('change',renderReallocationResults);
 $('reallocationVeryLow')?.addEventListener('change',renderReallocationResults);
 $('reallocationLow')?.addEventListener('change',renderReallocationResults);
-$('reallocationMedium')?.addEventListener('change',renderReallocationResults);
-$('reallocationAllRoster')?.addEventListener('change',()=>{
-  const all=$('reallocationAllRoster')?.checked===true;
-  ['reallocationIncomplete','reallocationVeryLow','reallocationLow','reallocationMedium'].forEach(id=>{const el=$(id);if(el)el.disabled=all;});
-  renderReallocationResults();
-});
 $('runReallocation')?.addEventListener('click',renderReallocationResults);
 $('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';analysisSide='ALL';analysisStatus='TOUS';analysisAuditSpeed='TOUS';analysisAuditSort='priority';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';if($('playerName'))$('playerName').textContent='Profil non chargé';if($('playerAlly'))$('playerAlly').textContent='—';if($('heroPlayerName'))$('heroPlayerName').textContent='Profil non chargé';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent='—';if($('heroProfileState'))$('heroProfileState').textContent='EN ATTENTE';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';renderSithariNexus();});
 
