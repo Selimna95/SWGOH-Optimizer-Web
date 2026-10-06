@@ -1,0 +1,298 @@
+/* =========================================================================
+   SELIMNA'S HOLOCRON — SITH'ARI // VISUAL SYSTEM
+   Couche visuelle dédiée : aucune logique de calcul.
+   À charger après app.css.
+   ========================================================================= */
+
+.sithari-page{
+  --sa-bg:#050505;
+  --sa-panel:#0d0d0d;
+  --sa-line:rgba(255,255,255,.09);
+  --sa-text:#efefec;
+  --sa-muted:#777773;
+  --sa-dim:#555550;
+  --sa-red:#ff3048;
+  --sa-green:#68e0a3;
+  --sa-gold:#d9b96a;
+  position:relative; min-height:calc(100vh - 76px); padding:26px 30px 70px;
+  overflow:hidden; color:var(--sa-text);
+  background:
+    radial-gradient(circle at 50% -8%,rgba(255,48,72,.075),transparent 34%),
+    radial-gradient(circle at 82% 48%,rgba(255,48,72,.035),transparent 30%),
+    linear-gradient(145deg,#030303,#080808 52%,#030303);
+}
+.sithari-page:before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.32;
+  background:linear-gradient(90deg,transparent 9%,rgba(255,255,255,.025) 9.05%,transparent 9.1% 90.9%,rgba(255,255,255,.025) 90.95%,transparent 91%);
+}
+.sithari-page:after{
+  content:"SITH’ARI";position:absolute;right:-70px;top:130px;
+  font:900 120px/1 var(--font-display);letter-spacing:.08em;color:transparent;
+  -webkit-text-stroke:1px rgba(255,255,255,.025);transform:rotate(90deg);pointer-events:none;
+}
+
+/* Navigation */
+body[data-page="sithari"] .topbar{border-bottom-color:rgba(255,48,72,.28)}
+body[data-page="sithari"] .topbar:after{
+  background:linear-gradient(90deg,transparent,rgba(255,48,72,.75),transparent);
+  box-shadow:0 0 14px rgba(255,48,72,.35);
+}
+body[data-page="sithari"] .sidebar{border-right-color:rgba(255,48,72,.22)}
+body[data-page="sithari"] .nav-sithari{
+  color:#fff!important;border-color:rgba(255,48,72,.32)!important;
+  background:rgba(255,48,72,.045)!important;
+}
+body[data-page="sithari"] .nav-sithari .nav-icon{
+  color:var(--sa-red)!important;text-shadow:0 0 14px rgba(255,48,72,.55);
+}
+body[data-page="sithari"] .nav-sithari.active{
+  background:linear-gradient(90deg,rgba(255,48,72,.17),rgba(255,48,72,.035))!important;
+  border-color:rgba(255,48,72,.55)!important;
+  box-shadow:inset 3px 0 0 var(--sa-red),0 0 24px rgba(255,48,72,.08)!important;
+}
+body[data-page="sithari"] .nav-sithari.active:before{background:var(--sa-red)!important;box-shadow:0 0 14px var(--sa-red)!important}
+
+/* Base panels */
+.sithari-page .panel{
+  background:linear-gradient(145deg,rgba(13,13,13,.96),rgba(7,7,7,.98));
+  border:1px solid var(--sa-line);border-radius:4px;
+  box-shadow:0 20px 60px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.018);
+}
+.sithari-page .panel:before{
+  background:linear-gradient(90deg,var(--sa-red),transparent);
+  box-shadow:0 0 12px rgba(255,48,72,.45);opacity:.65;
+}
+.sithari-page select,.sithari-page input{
+  border-color:rgba(255,255,255,.10)!important;background:#090909!important;
+  color:#ededeb!important;border-radius:3px!important;
+}
+.sithari-page select:focus,.sithari-page input:focus{
+  border-color:rgba(255,48,72,.55)!important;
+  box-shadow:0 0 0 2px rgba(255,48,72,.08)!important;
+}
+
+/* Header */
+.sithari-header{position:relative;z-index:2;padding:8px 0 22px}
+.sithari-kicker{
+  display:flex;align-items:center;gap:12px;color:var(--sa-red);
+  font:900 8px/1 var(--font-display);letter-spacing:.34em;
+}
+.sithari-kicker:after{
+  content:"";width:120px;height:1px;background:linear-gradient(90deg,var(--sa-red),transparent);
+}
+.sithari-title-row{margin-top:14px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sithari-title-row h2{
+  margin:0;color:#f7f7f5;font:900 clamp(34px,5vw,64px)/.88 var(--font-display);
+  letter-spacing:.09em;
+}
+.sithari-title-row p{
+  margin:13px 0 0;max-width:760px;color:#777773;
+  font:800 8px/1.6 var(--font-display);letter-spacing:.18em;
+}
+.sithari-state{color:#7c7c78;font:800 8px var(--font-display);letter-spacing:.15em}
+.sithari-state .status-dot{background:var(--sa-red);box-shadow:0 0 12px rgba(255,48,72,.7)}
+.sithari-thesis{justify-content:flex-start;margin:16px 0 0;gap:8px;color:#a6a6a1;font:900 7px var(--font-display);letter-spacing:.16em}
+.sithari-thesis strong{color:#d7d7d2}
+.sithari-thesis strong:nth-of-type(3),.sithari-thesis strong:nth-of-type(4){color:var(--sa-red)}
+.sithari-thesis i{color:#4d4d49}
+
+/* Character selection */
+.sithari-selector{position:relative;z-index:2;padding:18px}
+.sithari-selector-head{align-items:flex-end}
+.sithari-selector-head small,.sithari-panel-title small{color:#676763;font:900 7px var(--font-display);letter-spacing:.19em}
+.sithari-selector-head h3{margin:6px 0 0;color:#ecece9;font:800 15px var(--font-display)}
+.sithari-help{margin:7px 0 0!important;color:#686864!important;font:500 10px/1.5 var(--font-ui)!important;letter-spacing:0!important}
+.sithari-team-count{min-width:88px;justify-content:flex-end;padding-left:20px;border-left:1px solid rgba(255,255,255,.08)}
+.sithari-team-count strong{color:#f0f0ec!important;font:800 32px var(--font-display)!important}
+.sithari-team-count span,.sithari-team-count small{color:#666!important}
+.sithari-filters{grid-template-columns:260px minmax(220px,1fr);gap:8px;margin-top:16px}
+.sithari-faction-filter>span,.sithari-search>span{color:#666662;font:900 7px var(--font-display);letter-spacing:.16em}
+.sithari-faction-filter select,.sithari-search input{height:38px}
+.sithari-selection-meta{margin-top:10px;color:#62625e}
+.sithari-selection-meta button{border-color:rgba(255,48,72,.25);background:rgba(255,48,72,.035);color:#aaa8a3}
+.sithari-character-grid{grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:6px;max-height:245px;margin-top:9px}
+.sithari-character-card{
+  min-height:62px;grid-template-columns:48px minmax(0,1fr) auto;
+  border:1px solid rgba(255,255,255,.055);border-radius:2px;
+  background:rgba(255,255,255,.012);padding:6px;transition:.18s ease;
+}
+.sithari-character-card:hover{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.035);transform:translateY(-1px)}
+.sithari-character-card.selected{
+  border-color:rgba(255,48,72,.5);background:linear-gradient(90deg,rgba(255,48,72,.10),rgba(255,48,72,.025));
+  box-shadow:inset 3px 0 0 var(--sa-red);
+}
+.sithari-character-portrait{width:48px!important;height:48px!important}
+.sithari-character-copy strong{color:#e8e8e4;font:800 10px var(--font-display)}
+.sithari-character-copy small{color:#656561;font-size:8px}
+.sithari-character-card i{color:#696965;font:900 6px var(--font-display);font-style:normal}
+.sithari-character-card.selected i{color:var(--sa-red)}
+
+/* Team */
+.sithari-team-panel{margin-top:10px;padding:14px 18px}
+.sithari-panel-title>span{color:var(--sa-red);text-shadow:0 0 12px rgba(255,48,72,.45)}
+.sithari-panel-title strong{display:block;margin-top:4px;color:#e6e6e2;font:900 10px var(--font-display);letter-spacing:.12em}
+.sithari-panel-title em{margin-left:auto;color:#62625e;font:700 7px var(--font-display);font-style:normal}
+.sithari-selected-team{display:flex;gap:7px;margin-top:11px;overflow:auto}
+.sithari-team-tab{min-width:175px;border-color:rgba(255,255,255,.07)!important;background:rgba(255,255,255,.015)!important;border-radius:2px!important}
+.sithari-team-tab.active{border-color:rgba(255,48,72,.48)!important;background:rgba(255,48,72,.075)!important;box-shadow:inset 0 -2px 0 var(--sa-red)}
+.sithari-next-step{margin-top:9px;padding:8px 10px;border-top:1px solid rgba(255,255,255,.045);color:#62625e;font:700 7px var(--font-display)}
+.sithari-next-step b{color:var(--sa-red);margin-right:8px}
+
+/* Analysis workspace */
+.sithari-workspace{position:relative;z-index:2;display:grid;grid-template-columns:190px minmax(0,1fr);gap:10px;margin-top:10px;align-items:start}
+.sithari-roster-summary{position:sticky;top:92px;padding:13px}
+.sithari-team-tabs{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+.sithari-team-tabs .sithari-team-tab{width:100%;min-width:0}
+.sithari-character-analysis{min-width:0;padding:17px}
+.sithari-analysis-empty{
+  min-height:480px;border:1px dashed rgba(255,255,255,.09);
+  background:radial-gradient(circle at 50% 42%,rgba(255,48,72,.045),transparent 25%),rgba(255,255,255,.008);
+  position:relative;
+}
+.sithari-analysis-empty:before,.sithari-analysis-empty:after{
+  content:"";position:absolute;width:100px;height:100px;left:calc(50% - 50px);top:calc(50% - 50px);
+  border:1px solid rgba(255,48,72,.12);transform:rotate(45deg);
+}
+.sithari-analysis-empty:after{width:72px;height:72px;left:calc(50% - 36px);top:calc(50% - 36px);border-color:rgba(255,255,255,.07)}
+.sithari-analysis-empty span{position:relative;z-index:2;color:var(--sa-red);font-size:28px;text-shadow:0 0 18px rgba(255,48,72,.45)}
+.sithari-analysis-empty strong{position:relative;z-index:2;color:#cfcfcb;font:900 9px var(--font-display);letter-spacing:.17em}
+.sithari-analysis-empty small{position:relative;z-index:2;max-width:570px;color:#676763;font:500 9px/1.7 var(--font-ui)}
+.sithari-empty-steps{position:relative;z-index:2;color:#555550!important}
+
+/* Character header */
+.sithari-analysis-head{align-items:center!important;padding-bottom:15px!important;border-bottom-color:rgba(255,255,255,.075)!important}
+.sithari-character-heading{display:flex;align-items:center;gap:14px;min-width:0}
+.sithari-analysis-portrait{width:76px!important;height:76px!important;flex:0 0 76px;border:1px solid rgba(255,255,255,.16)!important;box-shadow:0 0 0 4px rgba(255,255,255,.018),0 15px 35px rgba(0,0,0,.4)!important}
+.sithari-character-heading h3{margin:5px 0 4px!important;color:#fafaf7!important;font:900 clamp(20px,2.4vw,31px) var(--font-display)!important}
+.sithari-character-heading small{color:var(--sa-red)!important}
+.sithari-character-heading p{color:#696965!important;font-size:8px!important}
+.sithari-analysis-kpis{gap:5px!important}
+.sithari-analysis-kpis span{min-width:96px!important;min-height:67px;justify-content:center;padding:9px 10px!important;border-radius:2px;border-color:rgba(255,255,255,.09)!important;background:#0b0b0b!important}
+.sithari-analysis-kpis span b{color:#ededeb!important;font:900 24px var(--font-display)!important}
+.sithari-analysis-kpis span em{color:#656560!important}
+.sithari-analysis-kpis .kpi-replace{border-color:rgba(104,224,163,.35)!important;background:rgba(104,224,163,.035)!important}
+.sithari-analysis-kpis .kpi-replace b,.sithari-analysis-kpis .kpi-replace em{color:var(--sa-green)!important}
+.sithari-analysis-kpis .kpi-search{border-color:rgba(255,48,72,.38)!important;background:rgba(255,48,72,.035)!important}
+.sithari-analysis-kpis .kpi-search b,.sithari-analysis-kpis .kpi-search em{color:var(--sa-red)!important}
+
+/* Stats: current -> Kyber */
+.sithari-stats-panel{margin-top:10px;border-color:rgba(255,255,255,.075)!important;background:#090909!important}
+.sithari-stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important;margin-top:7px}
+.sithari-stat-row{
+  min-height:82px;display:grid!important;grid-template-columns:1fr auto auto!important;grid-template-rows:auto auto auto!important;
+  gap:4px 7px!important;padding:10px!important;border:1px solid rgba(255,255,255,.055)!important;border-radius:2px;background:rgba(255,255,255,.012)!important;
+}
+.sithari-stat-row>span{grid-column:1/-1;color:#686864!important;font:900 7px var(--font-display)!important;letter-spacing:.1em}
+.sithari-stat-row>b{color:#d9d9d5!important;font:900 14px var(--font-display)!important}
+.sithari-stat-row>i{color:#454541!important;font-style:normal}
+.sithari-stat-row>strong{color:#f0f0ec!important;font:900 13px var(--font-display)!important}
+.sithari-stat-row>small{grid-column:1/-1;width:max-content;padding:3px 5px;border-radius:2px;font:900 6px var(--font-display)!important}
+.sithari-stat-row>small:before{content:"ÉCART ";opacity:.55}
+.sithari-stat-row>small.behind{color:var(--sa-red)!important;background:rgba(255,48,72,.07)!important;border:1px solid rgba(255,48,72,.15)}
+.sithari-stat-row>small.ahead{color:var(--sa-green)!important;background:rgba(104,224,163,.055)!important;border:1px solid rgba(104,224,163,.14)}
+.sithari-stat-row>b.behind{color:var(--sa-red)!important}.sithari-stat-row>b.ahead{color:var(--sa-green)!important}
+
+/* Action summary */
+.sithari-action-summary{margin-top:10px!important;padding:11px 13px!important;border-radius:2px!important;border-color:rgba(255,48,72,.18)!important;background:linear-gradient(90deg,rgba(255,48,72,.055),rgba(255,255,255,.012))!important}
+.sithari-action-icon{border-color:rgba(255,48,72,.38)!important;color:var(--sa-red)!important}
+.sithari-action-summary-main strong{color:#e7e7e3!important;font:900 9px var(--font-display)!important}
+.sithari-action-summary-main small{color:#6c6c68!important}
+.sithari-action-pills b{border-color:rgba(104,224,163,.22)!important;color:var(--sa-green)!important;background:rgba(104,224,163,.035)!important;border-radius:2px}
+.sithari-action-pills b:last-child{border-color:rgba(255,48,72,.25)!important;color:var(--sa-red)!important;background:rgba(255,48,72,.035)!important}
+
+/* Six slots: current vs Kyber */
+.sithari-slots{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;margin-top:10px!important}
+.sithari-slot-card{
+  position:relative;min-width:0;padding:12px!important;border-radius:2px!important;
+  border:1px solid rgba(255,255,255,.075)!important;background:linear-gradient(145deg,#0e0e0e,#080808)!important;box-shadow:none!important;
+}
+.sithari-slot-card:before{
+  position:absolute!important;top:9px!important;right:9px!important;padding:3px 5px!important;border-radius:2px;
+  font:900 6px/1 var(--font-display)!important;letter-spacing:.1em;
+}
+.sithari-slot-card.keep:before{content:"CONFORME";color:#7d7d78;border-color:rgba(255,255,255,.08);background:#101010}
+.sithari-slot-card.improve:before{content:"ÉCART À CORRIGER";color:var(--sa-gold);border-color:rgba(217,185,106,.22);background:rgba(217,185,106,.035)}
+.sithari-slot-card.replace:before{content:"MOD DISPONIBLE";color:var(--sa-green);border-color:rgba(104,224,163,.25);background:rgba(104,224,163,.035)}
+.sithari-slot-card.search:before,.sithari-slot-card.missing:before{content:"À TROUVER";color:var(--sa-red);border-color:rgba(255,48,72,.25);background:rgba(255,48,72,.035)}
+.sithari-slot-card.keep{border-left:2px solid #555!important}.sithari-slot-card.improve{border-left:2px solid var(--sa-gold)!important}
+.sithari-slot-card.replace{border-left:2px solid var(--sa-green)!important}.sithari-slot-card.search,.sithari-slot-card.missing{border-left:2px solid var(--sa-red)!important}
+.sithari-slot-card header{padding-right:105px;margin-bottom:9px}
+.sithari-slot-card header>span{color:#8a8a85!important;font:900 8px var(--font-display)!important}
+.sithari-slot-card header small{color:#555551!important}.sithari-slot-card header strong{color:#dddcd8!important;font:900 10px var(--font-display)!important}
+.sithari-slot-compare{display:grid!important;grid-template-columns:minmax(0,1.15fr) 28px minmax(0,1fr)!important;gap:7px!important;align-items:stretch}
+.sithari-current-mod,.sithari-kyber-ref{min-width:0;padding:8px!important;border:1px solid rgba(255,255,255,.055)!important;background:#0a0a0a!important;border-radius:2px}
+.sithari-kyber-ref{border-color:rgba(255,48,72,.14)!important;background:rgba(255,48,72,.018)!important}
+.sithari-current-mod>small,.sithari-kyber-ref>small{display:block;margin-bottom:6px;color:#5e5e5a!important;font:900 6px var(--font-display)!important;letter-spacing:.13em}
+.sithari-kyber-ref>small{color:var(--sa-red)!important}
+.sithari-mod-mini{gap:8px!important}.sithari-mod-copy{min-width:0}
+.sithari-mod-copy>b{color:#dddcd8!important;font:900 8px var(--font-display)!important}
+.sithari-mod-copy>strong{color:var(--sa-green)!important;font:900 8px var(--font-display)!important}
+.sithari-mod-copy>small{color:#686864!important;font-size:7px!important}
+.sithari-slot-arrow{min-width:28px;display:grid!important;place-items:center;color:#4f4f4b!important}
+.sithari-slot-arrow:after{content:"";width:1px;height:42px;background:linear-gradient(#222,rgba(255,48,72,.5),#222)}
+.sithari-kyber-ref p{display:flex;flex-direction:column;gap:2px;margin:4px 0!important;color:#777773!important;font:700 7px/1.3 var(--font-ui)!important}
+.sithari-kyber-ref p b{color:#50504c!important;font:900 6px var(--font-display)!important;letter-spacing:.1em}
+.sithari-kyber-ref p:nth-of-type(1) b,.sithari-kyber-ref p:nth-of-type(2) b{color:#bfbfba!important}
+.sithari-kyber-ref p:nth-of-type(1),.sithari-kyber-ref p:nth-of-type(2){color:#ededeb!important}
+
+/* Inventory replacement / search */
+.sithari-replacement{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:9px!important;align-items:center!important;
+  margin-top:7px!important;padding:7px 8px!important;border:1px solid rgba(104,224,163,.22)!important;background:rgba(104,224,163,.035)!important;border-radius:2px!important;
+}
+.sithari-replacement small{display:block;margin-bottom:5px;color:var(--sa-green)!important;font:900 6px var(--font-display)!important;letter-spacing:.11em}
+.sithari-replacement>strong{padding:6px 7px;border:1px solid rgba(104,224,163,.24);color:var(--sa-green);background:rgba(104,224,163,.045);font:900 7px var(--font-display);letter-spacing:.08em}
+.sithari-search-target{
+  margin-top:7px!important;padding:8px!important;border:1px solid rgba(255,48,72,.22)!important;background:rgba(255,48,72,.035)!important;border-radius:2px!important;
+}
+.sithari-search-target small{display:block;color:var(--sa-red)!important;font:900 6px var(--font-display)!important;letter-spacing:.12em}
+.sithari-search-target strong{display:block;margin-top:4px;color:#f0f0ed!important;font:900 9px var(--font-display)!important}
+.sithari-search-target span{display:block;margin-top:3px;color:#77736e!important;font:700 7px var(--font-ui)!important}
+
+/* Team matrix */
+.sithari-team-results{position:relative;z-index:2;margin-top:10px;padding:14px 18px}
+.sithari-team-results-grid{display:flex;flex-direction:column;gap:4px;margin-top:9px}
+.sithari-result-row{
+  min-height:58px;grid-template-columns:42px minmax(150px,1fr) repeat(3,minmax(120px,auto))!important;
+  gap:8px;padding:6px 8px!important;border:1px solid rgba(255,255,255,.055)!important;border-radius:2px!important;background:#090909!important;text-align:left;
+}
+.sithari-result-row:hover,.sithari-result-row.active{border-color:rgba(255,48,72,.35)!important;background:rgba(255,48,72,.035)!important}
+.sithari-result-row>span{width:42px!important;height:42px!important}
+.sithari-result-row strong{color:#e5e5e1!important;font:900 9px var(--font-display)!important}
+.sithari-result-row em{padding:6px 8px!important;border:1px solid rgba(255,255,255,.07);color:#73736f!important;background:#0c0c0c;font:900 6px var(--font-display)!important;font-style:normal}
+.sithari-result-row em:nth-last-child(2){color:var(--sa-green)!important;border-color:rgba(104,224,163,.18)!important;background:rgba(104,224,163,.035)!important}
+.sithari-result-row em:last-child{color:var(--sa-red)!important;border-color:rgba(255,48,72,.18)!important;background:rgba(255,48,72,.035)!important}
+
+/* Footer + responsive */
+.sithari-footer{position:relative;z-index:2;display:flex;justify-content:space-between;gap:15px;margin-top:18px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06);color:#555551;font:800 7px var(--font-display);letter-spacing:.14em}
+.sithari-footer strong{color:#777773}.sithari-footer small{color:#484844;font:700 7px var(--font-ui)}
+@media(max-width:1120px){
+  .sithari-page{padding-left:20px;padding-right:20px}
+  .sithari-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .sithari-workspace{grid-template-columns:1fr}
+  .sithari-roster-summary{position:static}
+  .sithari-team-tabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+}
+@media(max-width:780px){
+  .sithari-page{padding:18px 12px 45px}
+  .sithari-title-row{display:block}.sithari-state{margin-top:12px}
+  .sithari-filters{grid-template-columns:1fr}
+  .sithari-character-grid{grid-template-columns:1fr}
+  .sithari-analysis-head{display:block!important}
+  .sithari-analysis-kpis{justify-content:flex-start;margin-top:12px}
+  .sithari-slots{grid-template-columns:1fr!important}
+  .sithari-slot-compare{grid-template-columns:1fr!important}
+  .sithari-slot-arrow{min-height:22px}.sithari-slot-arrow:after{display:none}
+  .sithari-result-row{grid-template-columns:42px minmax(0,1fr)!important}
+  .sithari-result-row em{display:none}
+  .sithari-footer{display:block}.sithari-footer>*{display:block;margin-bottom:6px}
+}
+@media(max-width:520px){
+  .sithari-page{padding-left:8px;padding-right:8px}
+  .sithari-title-row h2{font-size:31px}
+  .sithari-stats-grid{grid-template-columns:1fr!important}
+  .sithari-analysis-kpis span{min-width:82px!important}
+  .sithari-character-heading{align-items:flex-start}
+  .sithari-analysis-portrait{width:62px!important;height:62px!important;flex-basis:62px}
+  .sithari-character-heading h3{font-size:18px!important}
+}
