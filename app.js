@@ -2766,7 +2766,8 @@ $('analysisMode')?.addEventListener('change',()=>{analysisMode=$('analysisMode')
 $('closeModDetail')?.addEventListener('click',closeModDetail);
 $('modDetailModal')?.addEventListener('click',e=>{if(e.target.id==='modDetailModal')closeModDetail();});
 
-document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{showPage(btn.dataset.page);if(btn.dataset.page==='data')renderDataTable();}));
+document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const page=String(btn.dataset.page||'').trim();if(!document.getElementById(page))return;showPage(page);if(page==='data')renderDataTable();}));
+document.addEventListener('click',e=>{const btn=e.target.closest?.('.sidebar .nav[data-page]');if(!btn)return;e.preventDefault();e.stopPropagation();const page=String(btn.dataset.page||'').trim();if(!document.getElementById(page))return;showPage(page);if(page==='data')renderDataTable();},{capture:true});
 
 document.getElementById('sithariAccess')?.addEventListener('click',()=>showPage('sithari'));
 $('sithariFaction')?.addEventListener('change',e=>{sithariFaction=e.target.value;sithariRenderAll();});

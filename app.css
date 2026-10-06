@@ -2560,3 +2560,8 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
   .sithari-page .sithari-result-row{grid-template-columns:34px minmax(0,1fr)}
   .sithari-page .sithari-result-row em{display:none}
 }
+
+
+/* V180 — navigation safety: sidebar always above page-specific visual layers */
+.sidebar{position:sticky;z-index:50}
+.sidebar .nav{position:relative;z-index:51}

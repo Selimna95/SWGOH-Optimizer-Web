@@ -1,0 +1,8 @@
+V180 — NAVIGATION FIX
+
+Base: V179 SITH'ARI.
+- Restored robust Command Deck navigation for Dashboard/Acolyte, Disciple, Seigneur Sith and Sith'Ari.
+- Explicit type=button on sidebar navigation.
+- Central capture-phase navigation handler with page validation.
+- Sidebar/nav z-index hardened so Sith'Ari visual layers cannot intercept clicks.
+- No GAC logic changed.
