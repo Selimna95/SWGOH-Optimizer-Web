@@ -2296,3 +2296,267 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 .sithari-page .sithari-team-results .sithari-panel-title em{color:#7f8784;font:6px var(--font-display);font-style:normal}
 .sithari-page .sithari-result-row{border-color:rgba(255,255,255,.07);background:rgba(255,255,255,.015)}
 .sithari-page .sithari-result-row.active{border-color:rgba(116,210,160,.45);background:rgba(35,95,68,.07)}
+
+
+/* =====================================================================
+   SITH'ARI // VISUAL PASS — LISIBILITÉ DES ÉCARTS & SOURCES
+   CSS only. Aucun comportement, donnée, calcul ou sélecteur JS modifié.
+   ---------------------------------------------------------------------
+   Lecture visuelle :
+   - NEUTRE  = état conforme / à surveiller
+   - VERT    = réaffectation possible depuis l'inventaire
+   - ROUGE   = mod à rechercher
+   - BLEU    = repère / cible de comparaison
+   ===================================================================== */
+
+.sithari-page{
+  --sa-ink:#f2f3f1;
+  --sa-muted:#87918f;
+  --sa-line:rgba(170,190,193,.16);
+  --sa-blue:#8fc4d6;
+  --sa-green:#66d6a0;
+  --sa-red:#e58d82;
+  --sa-gold:#d8b75e;
+}
+
+/* --- 1. Hiérarchie générale : moins de bruit, plus de respiration --- */
+.sithari-page .sithari-selector,
+.sithari-page .sithari-team-panel,
+.sithari-page .sithari-roster-summary,
+.sithari-page .sithari-character-analysis,
+.sithari-page .sithari-team-results{
+  border-color:var(--sa-line);
+  box-shadow:0 18px 42px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.018);
+}
+.sithari-page .sithari-selector{padding:20px}
+.sithari-page .sithari-selector-head h3{font-size:17px;letter-spacing:.025em}
+.sithari-page .sithari-help{font-size:9px;color:#969e9c}
+.sithari-page .sithari-selection-meta{border-top:1px solid rgba(255,255,255,.055);padding-top:12px}
+.sithari-page .sithari-character-card{
+  min-height:58px;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  gap:10px;
+  border-color:rgba(255,255,255,.07);
+  background:rgba(255,255,255,.022);
+}
+.sithari-page .sithari-character-card:hover{
+  border-color:rgba(143,196,214,.38);
+  background:rgba(143,196,214,.055);
+}
+.sithari-page .sithari-character-card.selected{
+  border-color:rgba(102,214,160,.62);
+  background:rgba(45,125,88,.10);
+  box-shadow:inset 3px 0 0 var(--sa-green);
+}
+.sithari-page .sithari-character-card.selected>i{color:var(--sa-green)}
+
+/* --- 2. Équipe : la sélection active doit être immédiatement identifiable --- */
+.sithari-page .sithari-selected-chip.active{
+  border-color:rgba(143,196,214,.62);
+  background:rgba(55,105,125,.14);
+  box-shadow:inset 3px 0 0 var(--sa-blue);
+}
+.sithari-page .sithari-team-tab{min-height:52px;border-color:rgba(255,255,255,.07)}
+.sithari-page .sithari-team-tab.active{
+  border-color:rgba(143,196,214,.58);
+  background:rgba(55,105,125,.11);
+  box-shadow:inset 3px 0 0 var(--sa-blue);
+}
+.sithari-page .sithari-team-tab small{font-size:7px;color:#87918f}
+
+/* --- 3. En-tête analyse : le personnage et les 2 décisions dominent --- */
+.sithari-page .sithari-analysis-head{padding-bottom:14px}
+.sithari-page .sithari-analysis-portrait{
+  width:70px;height:70px;flex-basis:70px;
+  border-color:rgba(143,196,214,.35);
+  box-shadow:0 0 0 4px rgba(143,196,214,.035),0 12px 24px rgba(0,0,0,.25);
+}
+.sithari-page .sithari-analysis-kpis{gap:7px}
+.sithari-page .sithari-analysis-kpis span{
+  min-width:94px;min-height:70px;justify-content:center;padding:9px 12px;
+}
+.sithari-page .sithari-analysis-kpis span b{font-size:24px}
+.sithari-page .sithari-analysis-kpis .kpi-replace{
+  border-color:rgba(102,214,160,.48);
+  background:rgba(45,125,88,.10);
+  box-shadow:inset 0 0 18px rgba(102,214,160,.035);
+}
+.sithari-page .sithari-analysis-kpis .kpi-search{
+  border-color:rgba(229,141,130,.42);
+  background:rgba(150,60,50,.08);
+  box-shadow:inset 0 0 18px rgba(229,141,130,.025);
+}
+
+/* --- 4. Comparaison des stats : CURRENT / ÉCART / KYBER --- */
+.sithari-page .sithari-stats-panel{
+  border-color:rgba(143,196,214,.20);
+  background:linear-gradient(145deg,rgba(12,24,30,.88),rgba(7,10,12,.96));
+}
+.sithari-page .sithari-stats-head>span{color:#8ca1a8;font-size:7px}
+.sithari-page .sithari-stats-grid{gap:7px}
+.sithari-page .sithari-stat-row{
+  position:relative;
+  min-height:82px;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  grid-template-rows:auto auto auto;
+  gap:5px 7px;
+  padding:10px;
+  border-color:rgba(255,255,255,.075);
+  background:rgba(255,255,255,.022);
+}
+.sithari-page .sithari-stat-row>span{
+  grid-column:1/-1;color:#9ba6a7;font-size:7px;
+}
+.sithari-page .sithari-stat-row>b{align-self:end;font-size:15px}
+.sithari-page .sithari-stat-row>i{align-self:end;color:#65757b}
+.sithari-page .sithari-stat-row>strong{align-self:end;color:#d9e5e8;font-size:13px}
+.sithari-page .sithari-stat-row>b.behind{color:var(--sa-red)}
+.sithari-page .sithari-stat-row>b.ahead{color:var(--sa-green)}
+.sithari-page .sithari-stat-row>small{
+  grid-column:1/-1;display:flex;align-items:center;gap:5px;
+  width:max-content;padding:3px 6px;border-radius:3px;font-size:7px;letter-spacing:.08em;
+}
+.sithari-page .sithari-stat-row>small:before{content:"ÉCART";opacity:.7}
+.sithari-page .sithari-stat-row>small.behind{
+  color:var(--sa-red);background:rgba(150,60,50,.12);
+  border:1px solid rgba(229,141,130,.18);
+}
+.sithari-page .sithari-stat-row>small.ahead{
+  color:var(--sa-green);background:rgba(45,125,88,.12);
+  border:1px solid rgba(102,214,160,.18);
+}
+
+/* --- 5. Cartes de slots : on sépare clairement les sources --- */
+.sithari-page .sithari-slots{gap:12px}
+.sithari-page .sithari-slot-card{
+  position:relative;padding:13px;
+  border-color:rgba(255,255,255,.085);
+  background:linear-gradient(145deg,rgba(13,16,18,.90),rgba(7,9,10,.96));
+}
+.sithari-page .sithari-slot-card:before{
+  position:absolute;top:10px;right:10px;padding:3px 6px;
+  font:900 6px/1 var(--font-display);letter-spacing:.12em;
+  border:1px solid rgba(255,255,255,.08);
+  color:#77817f;background:rgba(255,255,255,.02);
+}
+.sithari-page .sithari-slot-card.keep:before{content:"ÉQUIPÉ · CONFORME"}
+.sithari-page .sithari-slot-card.improve:before{
+  content:"ÉQUIPÉ · À AMÉLIORER";color:#c6b778;
+  border-color:rgba(198,183,120,.20);
+}
+.sithari-page .sithari-slot-card.replace:before{
+  content:"SOURCE : INVENTAIRE";color:var(--sa-green);
+  border-color:rgba(102,214,160,.28);background:rgba(45,125,88,.08);
+}
+.sithari-page .sithari-slot-card.search:before{
+  content:"SOURCE : RECHERCHE";color:var(--sa-red);
+  border-color:rgba(229,141,130,.25);background:rgba(150,60,50,.07);
+}
+.sithari-page .sithari-slot-card header{padding-right:125px;min-height:31px}
+.sithari-page .sithari-slot-card header>span{
+  width:25px;height:25px;display:grid;place-items:center;
+  border:1px solid rgba(216,183,94,.28);
+  background:rgba(216,183,94,.045);color:var(--sa-gold);
+}
+.sithari-page .sithari-slot-card header strong{font-size:11px}
+.sithari-page .sithari-slot-card header em{margin-left:auto;padding:5px 7px;z-index:1}
+
+/* --- 6. TON MOD vs RÉFÉRENCE KYBER --- */
+.sithari-page .sithari-slot-compare{
+  grid-template-columns:minmax(0,1fr) 34px minmax(0,1.25fr);
+  gap:10px;margin-top:12px;
+}
+.sithari-page .sithari-current-mod,
+.sithari-page .sithari-kyber-ref{
+  min-height:108px;padding:11px;border-radius:3px;
+}
+.sithari-page .sithari-current-mod{
+  border-color:rgba(143,196,214,.14);
+  background:linear-gradient(145deg,rgba(143,196,214,.045),rgba(255,255,255,.018));
+}
+.sithari-page .sithari-kyber-ref{
+  border-color:rgba(216,183,94,.17);
+  background:linear-gradient(145deg,rgba(216,183,94,.055),rgba(255,255,255,.015));
+}
+.sithari-page .sithari-current-mod>small,
+.sithari-page .sithari-kyber-ref>small{
+  display:flex;align-items:center;gap:5px;margin-bottom:4px;font-size:7px;letter-spacing:.14em;
+}
+.sithari-page .sithari-current-mod>small:before{content:"●";color:var(--sa-blue)}
+.sithari-page .sithari-kyber-ref>small:before{content:"◆";color:var(--sa-gold)}
+.sithari-page .sithari-slot-arrow{position:relative;font-size:19px;color:#72868d}
+.sithari-page .sithari-slot-arrow:after{
+  content:"ÉCART";position:absolute;top:calc(50% + 13px);
+  font:800 5px var(--font-display);letter-spacing:.12em;color:#65757a;
+}
+
+/* --- 7. Source de remplacement : inventaire = réserve disponible --- */
+.sithari-page .sithari-replacement{
+  position:relative;margin-top:10px;padding:11px 12px;
+  border-left:3px solid var(--sa-green);
+  border-top:1px solid rgba(102,214,160,.18);
+  border-right:1px solid rgba(102,214,160,.10);
+  border-bottom:1px solid rgba(102,214,160,.10);
+  background:linear-gradient(90deg,rgba(45,125,88,.13),rgba(45,125,88,.035));
+}
+.sithari-page .sithari-replacement>div>small{
+  display:block;margin-bottom:3px;color:var(--sa-green);font-size:7px;letter-spacing:.12em;
+}
+.sithari-page .sithari-replacement>div>small:before{
+  content:"INVENTAIRE DISPONIBLE  ·  ";opacity:.65;
+}
+.sithari-page .sithari-replacement>strong{
+  min-width:88px;text-align:center;color:var(--sa-green);
+  border-color:rgba(102,214,160,.45);background:rgba(45,125,88,.14);
+}
+
+/* --- 8. Source de recherche : cible explicite --- */
+.sithari-page .sithari-search-target{
+  position:relative;margin-top:10px;padding:11px 12px;
+  border-left:3px solid var(--sa-red);
+  border-top:1px solid rgba(229,141,130,.16);
+  border-right:1px solid rgba(229,141,130,.08);
+  border-bottom:1px solid rgba(229,141,130,.08);
+  background:linear-gradient(90deg,rgba(150,60,50,.11),rgba(150,60,50,.025));
+}
+.sithari-page .sithari-search-target>small{color:var(--sa-red);font-size:7px;letter-spacing:.12em}
+.sithari-page .sithari-search-target>small:before{content:"CIBLE KYBER  ·  ";opacity:.65}
+.sithari-page .sithari-search-target strong{font-size:10px}
+.sithari-page .sithari-search-target span{color:#a09b91;font-size:7px}
+
+/* --- 9. Résumé équipe --- */
+.sithari-page .sithari-result-row{
+  min-height:50px;
+  grid-template-columns:38px minmax(0,1fr) repeat(3,minmax(105px,auto));
+  border-color:rgba(255,255,255,.07);
+}
+.sithari-page .sithari-result-row em{font-size:7px;padding:7px 9px}
+.sithari-page .sithari-result-row em:nth-last-child(2){
+  color:var(--sa-green);border-color:rgba(102,214,160,.25);background:rgba(45,125,88,.08);
+}
+.sithari-page .sithari-result-row em:last-child{
+  color:var(--sa-red);border-color:rgba(229,141,130,.22);background:rgba(150,60,50,.06);
+}
+
+/* --- 10. Légende permanente --- */
+.sithari-page .sithari-team-results .sithari-panel-title em{font-size:0}
+.sithari-page .sithari-team-results .sithari-panel-title em:before{
+  content:"VERT = INVENTAIRE  ·  ROUGE = RECHERCHE  ·  GRIS = CONFORME";
+  color:#7f8a88;font:800 6px var(--font-display);font-style:normal;letter-spacing:.10em;
+}
+
+/* --- 11. Responsive --- */
+@media(max-width:1100px){
+  .sithari-page .sithari-slots{grid-template-columns:1fr 1fr}
+  .sithari-page .sithari-result-row{grid-template-columns:38px minmax(0,1fr) repeat(3,minmax(88px,auto))}
+}
+@media(max-width:760px){
+  .sithari-page .sithari-slots{grid-template-columns:1fr}
+  .sithari-page .sithari-slot-card header{padding-right:0;flex-wrap:wrap}
+  .sithari-page .sithari-slot-card:before{position:static;display:inline-block;margin-bottom:8px}
+  .sithari-page .sithari-slot-compare{grid-template-columns:1fr}
+  .sithari-page .sithari-slot-arrow{min-height:22px}
+  .sithari-page .sithari-slot-arrow:after{display:none}
+  .sithari-page .sithari-result-row{grid-template-columns:34px minmax(0,1fr)}
+  .sithari-page .sithari-result-row em{display:none}
+}
