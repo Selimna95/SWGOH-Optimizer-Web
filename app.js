@@ -2766,8 +2766,23 @@ $('analysisMode')?.addEventListener('change',()=>{analysisMode=$('analysisMode')
 $('closeModDetail')?.addEventListener('click',closeModDetail);
 $('modDetailModal')?.addEventListener('click',e=>{if(e.target.id==='modDetailModal')closeModDetail();});
 
-document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const page=String(btn.dataset.page||'').trim();if(!document.getElementById(page))return;showPage(page);if(page==='data')renderDataTable();}));
-document.addEventListener('click',e=>{const btn=e.target.closest?.('.sidebar .nav[data-page]');if(!btn)return;e.preventDefault();e.stopPropagation();const page=String(btn.dataset.page||'').trim();if(!document.getElementById(page))return;showPage(page);if(page==='data')renderDataTable();},{capture:true});
+function navigateToPageFromElement(btn){
+  if(!btn)return;
+  const page=String(btn.dataset.page||'').trim();
+  if(!page || !document.getElementById(page))return;
+  showPage(page);
+  if(page==='data')renderDataTable();
+}
+
+// Navigation principale + boutons du Command Deck.
+// Un seul gestionnaire pour éviter les doubles clics et les routages contradictoires.
+document.addEventListener('click',e=>{
+  const btn=e.target.closest?.('[data-page]');
+  if(!btn)return;
+  e.preventDefault();
+  e.stopPropagation();
+  navigateToPageFromElement(btn);
+});
 
 document.getElementById('sithariAccess')?.addEventListener('click',()=>showPage('sithari'));
 $('sithariFaction')?.addEventListener('change',e=>{sithariFaction=e.target.value;sithariRenderAll();});

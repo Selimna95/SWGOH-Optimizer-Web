@@ -1,0 +1,11 @@
+SWGOH OPTIMIZER V181 - SITH'ARI NAVIGATION FIX
+
+Corrections:
+- Sith'Ari is hidden by default like every other .page.
+- Sith'Ari is displayed only when #sithari has .active.
+- Removed the conflicting Sith'Ari page forced display:block rule.
+- Command Deck central buttons now use the same navigation router as the sidebar.
+- Sidebar and central navigation now share one delegated click handler.
+- Verified all data-page targets have a corresponding page id:
+  dashboard, top-changes, mods-analysis, optimizer, data, sithari.
+- No GAC code changed.
