@@ -1240,31 +1240,36 @@ function sithariModSecondaryMap(m){
   for(let i=1;i<=4;i++){const stat=String(m?.[`secondary_${i}_stat`]||'').trim();if(stat)out[stat]=Number(m?.[`secondary_${i}_value`]||0)||0;}
   return out;
 }
+function sithariCanonicalSet(value){
+  const k=compactKey(value);
+  const aliases={
+    HEALTH:'HEALTH', OFFENSE:'OFFENSE', DEFENSE:'DEFENSE', SPEED:'SPEED',
+    POTENCY:'POTENCY', TENACITY:'TENACITY', CRITCHANCE:'CRITICALCHANCE',
+    CRITICALCHANCE:'CRITICALCHANCE', CRITDAMAGE:'CRITICALDAMAGE',
+    CRITICALDAMAGE:'CRITICALDAMAGE'
+  };
+  return aliases[k]||k;
+}
 function sithariKyberSetRules(p){
-  const specific=Array.isArray(p?.specific_sets)?p.specific_sets:[];
-  if(specific.length){
-    return specific.map(x=>({name:String(x.name||''),counts:x.counts||{},weight:Number(x.weight||0)}))
-      .filter(x=>Object.keys(x.counts).length)
-      .sort((a,b)=>b.weight-a.weight);
+  // Kyber's set section is a list of valid set choices. Do NOT turn that list
+  // into an artificial 6-piece composition: a character with 4 Offense + 2
+  // Health is valid when both Offense and Health are among Kyber's choices.
+  const out=[]; const seen=new Set();
+  const add=(name,weight,counts)=>{
+    const canonical=sithariCanonicalSet(name); if(!canonical||seen.has(canonical))return;
+    seen.add(canonical); out.push({name:String(name||'').replace(/^Double\s+|^Triple\s+/i,'').trim(),counts:counts||{[String(name).replace(/^Double\s+|^Triple\s+/i,'').trim()]:1},weight:Number(weight||0)});
+  };
+  for(const x of (Array.isArray(p?.specific_sets)?p.specific_sets:[])){
+    for(const name of Object.keys(x?.counts||{})) add(name,x.weight,x.counts);
   }
-  const generic=(Array.isArray(p?.sets)?p.sets:[]).slice().sort((a,b)=>Number(b.weight||0)-Number(a.weight||0));
-  const rules=[];
-  for(const x of generic){
-    const raw=String(x.name||'').trim();
-    const base=raw.replace(/^Triple\s+/i,'').replace(/^Double\s+/i,'').trim();
-    const n=Number(x.count||0);
-    if(!base||!n)continue;
-    if(n===6) rules.push({name:`${base} ×6`,counts:{[base]:6},weight:Number(x.weight||0)});
+  for(const x of (Array.isArray(p?.sets)?p.sets:[])){
+    const raw=String(x?.name||'').trim(); if(!raw)continue;
+    add(raw.replace(/^Double\s+|^Triple\s+/i,''),x.weight);
   }
-  const fours=generic.filter(x=>Number(x.count||0)===4).map(x=>({name:String(x.name||'').replace(/^Double\s+/i,'').trim(),weight:Number(x.weight||0)}));
-  const twos=generic.filter(x=>Number(x.count||0)===2).map(x=>({name:String(x.name||'').trim(),weight:Number(x.weight||0)}));
-  for(const a of fours){
-    for(const b of twos){
-      if(!a.name||!b.name||compactKey(a.name)===compactKey(b.name))continue;
-      rules.push({name:`${a.name} + ${b.name}`,counts:{[a.name]:4,[b.name]:2},weight:a.weight*b.weight});
-    }
-  }
-  return rules.sort((a,b)=>b.weight-a.weight);
+  return out.sort((a,b)=>b.weight-a.weight);
+}
+function sithariKyberSetChoices(p){
+  return sithariKyberSetRules(p).map(x=>x.name).filter(Boolean);
 }
 function sithariTopKyberSets(p){
   const rules=sithariKyberSetRules(p);
@@ -1276,25 +1281,9 @@ function sithariPrimaryRefs(p,slot){
   if(SITHARI_FIXED_PRIMARY[slot]) return [{name:SITHARI_FIXED_PRIMARY[slot],weight:1}];
   return Object.entries(p?.slots?.[slot]?.primaries||{}).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name,weight])=>({name,weight}));
 }
-function sithariEquippedSetCounts(c){
-  const counts={};
-  for(const m of sithariCharacterMods(c)){const set=String(m?.set_name||'').trim();if(set)counts[set]=(counts[set]||0)+1;}
-  return counts;
-}
-function sithariSetCompositionMatch(c,p){
-  const rules=sithariKyberSetRules(p); const actual=sithariEquippedSetCounts(c);
-  const total=Object.values(actual).reduce((a,b)=>a+b,0);
-  if(total!==6 || !rules.length)return false;
-  return rules.some(rule=>{
-    const expected={}; for(const [name,n] of Object.entries(rule.counts||{}))expected[compactKey(name)]=Number(n||0);
-    const actualKeys=Object.keys(actual).map(k=>compactKey(k));
-    if(actualKeys.length!==Object.keys(expected).length)return false;
-    return Object.entries(expected).every(([k,n])=>{const found=Object.entries(actual).find(([name])=>compactKey(name)===k);return found&&Number(found[1])===n;});
-  });
-}
 function sithariSetMatch(m,p,c){
-  if(c)return sithariSetCompositionMatch(c,p);
-  const set=compactKey(m?.set_name); return sithariKyberSetRules(p).some(r=>Object.keys(r.counts||{}).some(name=>compactKey(name)===set));
+  const set=sithariCanonicalSet(m?.set_name);
+  return !!set && sithariKyberSetRules(p).some(r=>sithariCanonicalSet(r.name)===set);
 }
 function sithariPrimaryMatch(m,p,slot){
   return sithariPrimaryRefs(p,slot).some(x=>compactKey(x.name)===compactKey(m?.primary_stat));
@@ -1303,14 +1292,11 @@ function sithariPrimaryReference(p,slot){
   return sithariPrimaryRefs(p,slot)[0]?.name||'';
 }
 function sithariSetReference(p){
-  const rule=sithariKyberSetRules(p)[0];
-  if(rule?.counts)return Object.entries(rule.counts).map(([name,n])=>`${name} ×${n}`).join(' + ');
-  return sithariTopKyberSets(p)[0]?.name||'';
+  const choices=sithariKyberSetChoices(p);
+  return choices.length?choices.join(' / '):'—';
 }
 function sithariCalibrationSetChoices(p){
-  const rule=sithariKyberSetRules(p)[0];
-  if(rule?.counts)return Object.keys(rule.counts);
-  return sithariTopKyberSets(p).map(x=>x.name);
+  return sithariKyberSetChoices(p);
 }
 function sithariOwnerRaw(value){
   if(value==null)return '';
@@ -1327,21 +1313,6 @@ function sithariEquippedOwner(m){
   const hit=rosterCharacters.find(c=>[c?.name,c?.character,c?.baseId,c?.base_id,c?.unitId,c?.unit_id].some(v=>compactKey(v)===key));
   return hit?characterKey(hit):key;
 }
-function sithariCharacterMods(c){
-  if(!c)return [];
-  const targetKey=characterKey(c);
-  const targetNames=new Set([targetKey,compactKey(c?.name),compactKey(c?.baseId),compactKey(c?.base_id)].filter(Boolean));
-  const bySlot=new Map();
-  mods.map((raw,i)=>({...normalizeModForDisplay(raw),_index:i})).forEach(m=>{
-    const owner=sithariEquippedOwner(m);
-    if(!owner || !targetNames.has(owner))return;
-    const slot=modSlotLabel(m?.slot); if(!SITHARI_SLOT_ORDER.includes(slot))return;
-    const prev=bySlot.get(slot);
-    const score=x=>Number(Boolean(x?.primary_stat))*4+Number(Boolean(x?.secondary_1_stat))*2+Number(x?.level||0)/100+Number(x?.game_id&&!String(x.game_id).startsWith('gg-'));
-    if(!prev || score(m)>score(prev))bySlot.set(slot,m);
-  });
-  return [...bySlot.values()].sort((a,b)=>SITHARI_SLOT_ORDER.indexOf(a.slot)-SITHARI_SLOT_ORDER.indexOf(b.slot));
-}
 function sithariSecondaryScore(m,p){
   const focus=p?.secondary_focus||{}; const sec=sithariModSecondaryMap(m); let score=0,count=0;
   for(const [stat,ref] of Object.entries(focus)){const v=Number(sec[stat]||0);if(v>0&&Number(ref)>0){score+=Math.min(1,v/Number(ref));count++;}}
@@ -1350,11 +1321,7 @@ function sithariSecondaryScore(m,p){
   return count?score/count:0;
 }
 function sithariReferenceText(p,slot){
-  const rules=sithariKyberSetRules(p);
-  const sets=rules.slice(0,5).map(r=>{
-    const parts=Object.entries(r.counts||{}).map(([name,n])=>`${name} ×${n}`);
-    return parts.join(' + ');
-  }).join('  /  ')||sithariTopKyberSets(p).map(x=>x.name).join(' / ')||'—';
+  const sets=sithariKyberSetChoices(p).join(' / ')||'—';
   const prim=sithariPrimaryRefs(p,slot).map(x=>`${x.name} ${Math.round(Number(x.weight||0)*100)}%`).join(' / ')||'—';
   const focus=p?.secondary_focus||{};
   const sec=Object.entries(focus).slice(0,4).map(([k,v])=>`${k} ${num(v,1)}`).join(' · ')||'—';
@@ -1362,8 +1329,7 @@ function sithariReferenceText(p,slot){
 }
 function sithariSecondaryNames(){
   const names=new Map();
-  for(const raw of (Array.isArray(mods)?mods:[])){
-    const m=normalizeModForDisplay(raw);
+  for(const m of sithariEnsureModCache().items){
     for(let i=1;i<=4;i++){
       const stat=m?.[`secondary_${i}_stat`];
       if(stat){
@@ -1373,13 +1339,6 @@ function sithariSecondaryNames(){
     }
   }
   return [...names.values()].sort((a,b)=>a.localeCompare(b,'fr'));
-}
-function sithariSourceStatus(mod){
-  if(!mod)return null;
-  const ownerKey=sithariEquippedOwner(mod);
-  if(!ownerKey)return 'LIBRE';
-  const owner=rosterCharacters.find(c=>characterKey(c)===ownerKey);
-  return owner?v176ModStatus(sithariCharacterMods(owner)).status:'LIBRE';
 }
 function sithariSourceAllowed(status,scope){
   if(scope==='ALL')return true;
@@ -1403,19 +1362,58 @@ function sithariScopeLabel(){
   const scope=sithariScopeState();
   return scope==='ALL'?'TOUT LE ROSTER':(scope.length?scope.join(' + '):'AUCUNE SOURCE');
 }
+let sithariModCache={signature:'',items:[],byOwner:new Map(),statusByOwner:new Map()};
+function sithariEnsureModCache(){
+  const signature=`${Array.isArray(mods)?mods.length:0}|${Array.isArray(rosterCharacters)?rosterCharacters.length:0}|${mods?.[0]?.game_id||mods?.[0]?.id||''}|${mods?.[mods.length-1]?.game_id||mods?.[mods.length-1]?.id||''}`;
+  if(sithariModCache.signature===signature)return sithariModCache;
+  const aliases=new Map();
+  for(const c of rosterCharacters||[]){
+    const key=characterKey(c);
+    for(const v of [key,c?.name,c?.character,c?.baseId,c?.base_id,c?.unitId,c?.unit_id]){
+      const a=compactKey(v); if(a)aliases.set(a,key);
+    }
+  }
+  const items=[]; const byOwner=new Map();
+  for(let i=0;i<(mods||[]).length;i++){
+    const m={...normalizeModForDisplay(mods[i]),_index:i};
+    const raw=sithariOwnerRaw(m.character)||sithariOwnerRaw(m.characterName)||sithariOwnerRaw(m.equippedTo)||sithariOwnerRaw(m.equipped_to)||sithariOwnerRaw(m.unit_equiped)||sithariOwnerRaw(m.unitEquiped)||sithariOwnerRaw(m.location)||sithariOwnerRaw(m.usingIn)||sithariOwnerRaw(m.baseId)||sithariOwnerRaw(m.base_id)||sithariOwnerRaw(m.characterId)||sithariOwnerRaw(m.character_id);
+    const owner=aliases.get(compactKey(raw))||'';
+    m._sithariOwner=owner;
+    items.push(m);
+    if(owner){if(!byOwner.has(owner))byOwner.set(owner,[]);byOwner.get(owner).push(m);}
+  }
+  const statusByOwner=new Map();
+  for(const [owner,arr] of byOwner){
+    const unique=[...new Map(arr.map(m=>[String(m.game_id||m.id||m._index),m])).values()];
+    statusByOwner.set(owner,v176ModStatus(unique.sort((a,b)=>SITHARI_SLOT_ORDER.indexOf(a.slot)-SITHARI_SLOT_ORDER.indexOf(b.slot))).status);
+  }
+  sithariModCache={signature,items,byOwner,statusByOwner};
+  return sithariModCache;
+}
+function sithariCharacterMods(c){
+  if(!c)return [];
+  const owner=characterKey(c); const cache=sithariEnsureModCache();
+  const arr=cache.byOwner.get(owner)||[]; const bySlot=new Map();
+  const score=x=>Number(Boolean(x?.primary_stat))*4+Number(Boolean(x?.secondary_1_stat))*2+Number(x?.level||0)/100;
+  for(const m of arr){const slot=modSlotLabel(m?.slot);if(!SITHARI_SLOT_ORDER.includes(slot))continue;const prev=bySlot.get(slot);if(!prev||score(m)>score(prev))bySlot.set(slot,m);}
+  return SITHARI_SLOT_ORDER.map(slot=>bySlot.get(slot)).filter(Boolean);
+}
+function sithariSourceStatus(mod){
+  if(!mod)return null;
+  const owner=mod._sithariOwner||sithariEquippedOwner(mod);
+  if(!owner)return 'LIBRE';
+  return sithariEnsureModCache().statusByOwner.get(owner)||'LIBRE';
+}
 function sithariCandidatePool(slot,setName,primaryName,current,excludeCharacterKey=''){
-  const currentId=String(current?.game_id||current?.id||'');
-  const pool=[];
-  for(const raw of (Array.isArray(mods)?mods:[])){
-    const m=normalizeModForDisplay(raw);
+  const cache=sithariEnsureModCache();
+  const currentId=String(current?.game_id||current?.id||''); const scope=sithariScopeState(); const pool=[];
+  for(const m of cache.items){
     if(String(m.slot||'')!==String(slot||''))continue;
     if(currentId && String(m.game_id||m.id||'')===currentId)continue;
-    if(setName && compactKey(m.set_name)!==compactKey(setName))continue;
+    if(setName && sithariCanonicalSet(m.set_name)!==sithariCanonicalSet(setName))continue;
     if(primaryName && compactKey(m.primary_stat)!==compactKey(primaryName))continue;
-    const owner=sithariEquippedOwner(m);
-    if(excludeCharacterKey && owner===excludeCharacterKey)continue;
+    if(excludeCharacterKey && m._sithariOwner===excludeCharacterKey)continue;
     const status=sithariSourceStatus(m);
-    const scope=sithariScopeState();
     if(scope!=='ALL' && (!Array.isArray(scope)||!scope.includes(status)))continue;
     pool.push(m);
   }
@@ -1598,21 +1596,21 @@ function sithariRenderCharacter(){
   ${loading?'<div class="sithari-no-reference">Récupération de la référence Kyber pour ce personnage…</div>':!p?'<div class="sithari-no-reference">Référence Kyber indisponible pour ce personnage.</div>':`<div class="sithari-action-summary"><div class="sithari-action-summary-main"><span class="sithari-action-icon">✧</span><div><strong>${reinforcement?`ACTION : ${reinforcement} renforcement${reinforcement>1?'s':''} possible${reinforcement>1?'s':''}`:'AUCUN RENFORCEMENT DISPONIBLE'}</strong><small>Set + primaire conformes = RENFORCEMENT. Sinon = CALIBRAGE avec la référence Kyber.</small></div></div><div class="sithari-action-pills"><b>${reinforcement} RENFORCEMENTS</b><b>${calibration} CALIBRAGES</b></div></div><div class="sithari-slots">${states.map((x,i)=>sithariSlotCard(x,i)).join('')}</div>`}`;
   sithariBindActionControls(box);
 }
-function sithariEnsureProfilesForTeam(){
+async function sithariEnsureProfilesForTeam(){
   const targets=sithariSelectedKeys.map(sithariCharacterByKey).filter(Boolean);
+  const pending=[];
   for(const c of targets){
     const key=characterKey(c);
     if(sithariProfileForCharacter(c)||sithariKyberLoading[key]||sithariKyberAttempted[key])continue;
     sithariKyberLoading[key]=true;
-    fetchKyberProfile(c).then(()=>{
+    pending.push(Promise.resolve(fetchKyberProfile(c)).catch(()=>null).finally(()=>{
       sithariKyberAttempted[key]=true;
       delete sithariKyberLoading[key];
-      sithariRenderAll(false);
-    }).catch(()=>{
-      sithariKyberAttempted[key]=true;
-      delete sithariKyberLoading[key];
-      sithariRenderAll(false);
-    });
+    }));
+  }
+  if(pending.length){
+    await Promise.all(pending);
+    sithariRenderAll(false);
   }
 }
 function sithariSlotCard(x,i){
