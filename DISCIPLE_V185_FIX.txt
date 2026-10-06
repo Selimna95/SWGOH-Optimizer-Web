@@ -1,0 +1,11 @@
+SWGOH OPTIMIZER V185 - DISCIPLE ENGINE FIX
+
+Disciple search rewritten at engine level.
+- One-pass normalized mod owner index.
+- Direct search over normalized mods for slot/set/primary/secondary.
+- Direct button/onchange safety handlers.
+- Search errors are rendered instead of leaving the result area blank.
+- If no compatible mod exists: "LANCEZ-VOUS DANS LA QUÊTE DE CE MOD".
+- Sources remain only INCOMPLETS / TRÈS FAIBLES / FAIBLES.
+- MOYENS and TOUT LE ROSTER are not available in Disciple.
+- Navigation and Sith'Ari unchanged.

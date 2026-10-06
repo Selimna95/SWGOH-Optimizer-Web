@@ -2242,31 +2242,59 @@ function reallocationCandidateSecondary(candidate,secondaryKey){
 function reallocationSourceRows(selected){
   const rows=[];
   const selectedId=String(selected?.game_id||selected?.id||'');
-  const selectedOwner=compactKey(selected?.character||'');
+  const selectedOwner=modOwnerKey(selected);
   const selectedKeys=discipleModKeys(selected);
-  const sourceCharacters=[];
-  for(const c of rosterCharacters){
-    const ck=characterKey(c), nk=compactKey(c?.name);
-    if(selectedOwner&&(selectedOwner===ck||selectedOwner===nk))continue;
-    const cm=getCharacterMods(c), st=v176ModStatus(cm);
-    if(!reallocationStatusAllowed(st.status))continue;
-    sourceCharacters.push({character:c,mods:cm,status:st});
+  if(!selectedKeys.slot||!selectedKeys.set||!selectedKeys.primary)return rows;
+
+  // One-pass owner index. This is both faster and safer than rebuilding
+  // getCharacterMods(character) for every character and every search.
+  const normalizedMods=mods.map(raw=>normalizeModForDisplay(raw));
+  const ownerBuckets=new Map();
+  for(const m of normalizedMods){
+    const owner=modOwnerKey(m);
+    if(!owner)continue;
+    const bucket=ownerBuckets.get(owner)||[];
+    bucket.push(m);
+    ownerBuckets.set(owner,bucket);
   }
-  for(const group of sourceCharacters){
-    for(const raw of group.mods){
-      const m=normalizeModForDisplay(raw), id=String(m.game_id||m.id||'');
-      if(selectedId&&id===selectedId)continue;
-      const keys=discipleModKeys(m);
-      if(keys.slot!==selectedKeys.slot)continue;
-      if(keys.set!==selectedKeys.set)continue;
-      if(keys.primary!==selectedKeys.primary)continue;
-      rows.push({character:group.character,mod:m,status:group.status.status,class:group.status.class,speed:modTotalSpeed(m)});
+
+  const characterByKey=new Map();
+  const allowedOwners=new Map();
+  for(const c of rosterCharacters){
+    const variants=[characterKey(c),compactKey(c?.name),compactKey(c?.baseId),compactKey(c?.base_id),compactKey(c?.characterId),compactKey(c?.character_id)].filter(Boolean);
+    const unique=[...new Set(variants)];
+    const cm=[];
+    for(const [owner,bucket] of ownerBuckets){
+      if(unique.some(k=>owner===k || owner.includes(k) || k.includes(owner)))cm.push(...bucket);
     }
+    const ck=characterKey(c);
+    characterByKey.set(ck,c);
+    const st=v176ModStatus(cm);
+    if(reallocationStatusAllowed(st.status))allowedOwners.set(ck,st);
+  }
+
+  for(const m of normalizedMods){
+    const id=String(m.game_id||m.id||'');
+    if(selectedId&&id===selectedId)continue;
+    const keys=discipleModKeys(m);
+    if(keys.slot!==selectedKeys.slot || keys.set!==selectedKeys.set || keys.primary!==selectedKeys.primary)continue;
+    const owner=modOwnerKey(m);
+    if(!owner)continue;
+    let ownerKey='';
+    for(const [ck,c] of characterByKey){
+      const variants=[ck,compactKey(c?.name),compactKey(c?.baseId),compactKey(c?.base_id),compactKey(c?.characterId),compactKey(c?.character_id)].filter(Boolean);
+      if(variants.some(k=>owner===k || owner.includes(k) || k.includes(owner))){ownerKey=ck;break;}
+    }
+    if(!ownerKey || (selectedOwner && owner===selectedOwner))continue;
+    const st=allowedOwners.get(ownerKey);
+    if(!st)continue;
+    rows.push({character:characterByKey.get(ownerKey),mod:m,status:st.status,class:st.class,speed:modTotalSpeed(m)});
   }
   return rows;
 }
 function renderReallocationResults(){
   const box=$('reallocationResults');if(!box)return;
+  try {
   const selected=selectedReallocationMod();
   if(!selected){box.innerHTML='<div class="empty">Sélectionnez d’abord le mod à remplacer.</div>';return;}
   const secondaryValue=$('reallocationSecondary')?.value||'';
@@ -2283,6 +2311,10 @@ function renderReallocationResults(){
     box.innerHTML=`<div class="disciple-result-summary"><div><span>PÉRIMÈTRE</span><b>${esc(scope)}</b><small>mods des personnages ciblés</small></div><div><span>RÉFÉRENCE CONSERVÉE</span><b>${esc(reference)}</b><small>slot · set · primaire</small></div><div><span>COMPATIBLES</span><b>0</b><small>aucune secondaire ${esc(secondaryDisplayName(secondaryValue))}</small></div></div><div class="disciple-no-result disciple-quest-result"><b>LANCEZ-VOUS DANS LA QUÊTE DE CE MOD</b><span>Aucun mod du roster ne correspond à <strong>${esc(selectedKeys.slot)}</strong> + <strong>${esc(selectedKeys.set)}</strong> + <strong>${esc(selectedKeys.primary)}</strong> avec la secondaire <strong>${esc(secondaryDisplayName(secondaryValue))}</strong>.</span><small>Recherche limitée aux mods incomplets, très faibles et faibles des autres personnages.</small></div>`;return;
   }
   box.innerHTML=`<div class="disciple-result-summary"><div><span>RÉFÉRENCE CONSERVÉE</span><b>${esc(reference)}</b><small>slot · set · primaire</small></div><div><span>ARSENAL COMPATIBLE</span><b>${sourceRows.length}</b><small>mod(s)</small></div><div><span>OPTIONS</span><b>${topRows.length}</b><small>maximum 5</small></div><div><span>SECONDAIRE</span><b>${rows.length}</b><small>candidat(s)</small></div></div><div class="disciple-candidate-list">${topRows.map((r,i)=>{const m=r.mod,ownerName=String(r.character?.name||r.character?.baseId||m.character||'Libre'),ownerPortrait=disciplePortraitHtml(r.character||{name:ownerName}),other=[];for(let j=1;j<=4;j++){const stat=m[`secondary_${j}_stat`];if(stat&&discipleCanonicalStat(secondaryDisplayName(stat))!==secondaryKey)other.push(`${secondaryDisplayName(stat)} ${num(m[`secondary_${j}_value`],1)}`);}return `<article class="disciple-candidate"><div class="disciple-candidate-rank"><span>OPTION</span><b>${String(i+1).padStart(2,'0')}</b></div><div class="disciple-candidate-owner">${ownerPortrait}<div><strong>${esc(ownerName)}</strong><span class="audit-badge ${r.class}">${esc(r.status)}</span></div></div><div class="disciple-candidate-mod"><div class="disciple-candidate-icon">${modIconHtml(m,'54')}</div><div><span>${esc(m.slot||'Mod')} · ${esc(m.set_name||'—')}</span><strong>${esc(m.primary_stat||'—')} ${num(m.primary_value,1)}</strong><small>${esc(other.join(' · ')||'Aucune autre secondaire')}</small></div></div><div class="disciple-candidate-speed"><span>VITESSE</span><b>${num(r.speed)}</b><small>secondaire totale</small></div><div class="disciple-candidate-match"><span>${esc(secondaryDisplayName(secondaryValue))}</span><b>+${num(r.value,1)}</b><small>secondaire recherchée</small></div></article>`;}).join('')}</div>`;
+  } catch (err) {
+    console.error('DISCIPLE search error', err);
+    box.innerHTML=`<div class="disciple-no-result disciple-quest-result"><b>LANCEZ-VOUS DANS LA QUÊTE DE CE MOD</b><span>La recherche n’a pas pu produire de proposition. Le moteur Disciple a rencontré une erreur de recherche.</span><small>${esc(err?.message||String(err))}</small></div>`;
+  }
 }
 
 function renderReallocationPanel(){
@@ -2829,3 +2861,23 @@ $('sithariClearSelection')?.addEventListener('click',()=>{sithariSelectedKeys=[]
 renderGalacticPower();
 renderSithariNexus();
 boot();
+
+
+// DISCIPLE ENGINE SAFETY NET V185
+// Direct handlers ensure the result area is always updated even if another
+// legacy listener was attached earlier or a dynamically rebuilt panel replaced
+// the original element. Select elements fire `change` on committed choices.
+function discipleForceSearch(){
+  try { renderReallocationResults(); }
+  catch(err){
+    const box=$('reallocationResults');
+    if(box)box.innerHTML=`<div class="disciple-no-result disciple-quest-result"><b>LANCEZ-VOUS DANS LA QUÊTE DE CE MOD</b><span>Impossible d’exécuter la recherche Disciple.</span><small>${esc(err?.message||String(err))}</small></div>`;
+  }
+}
+function discipleBindLiveControls(){
+  const run=$('runReallocation'); if(run)run.onclick=discipleForceSearch;
+  const sec=$('reallocationSecondary'); if(sec)sec.onchange=discipleForceSearch;
+  const ids=['reallocationIncomplete','reallocationVeryLow','reallocationLow'];
+  ids.forEach(id=>{const el=$(id);if(el)el.onchange=discipleForceSearch;});
+}
+discipleBindLiveControls();
