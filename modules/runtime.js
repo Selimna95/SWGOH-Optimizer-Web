@@ -23,11 +23,20 @@ $('reallocationModSelect')?.addEventListener('change',()=>{
   if(Number.isFinite(n) && mods[n]) setReallocationMod(n);
   else { reallocationSelectedModIndex=null; renderReallocationSelectionVisual(null); renderReallocationSecondaryOptions(''); renderReallocationResults(); }
 });
-$('reallocationSecondary')?.addEventListener('change',renderReallocationResults);
-$('reallocationIncomplete')?.addEventListener('change',renderReallocationResults);
-$('reallocationVeryLow')?.addEventListener('change',renderReallocationResults);
-$('reallocationLow')?.addEventListener('change',renderReallocationResults);
-$('runReallocation')?.addEventListener('click',renderReallocationResults);
+function discipleHandleSearchEvent(event){
+  // Disciple owns these controls. Prevent legacy/global handlers from
+  // rebuilding the analysis panel and wiping the result immediately after it
+  // was rendered.
+  if(!event?.target?.matches?.('#reallocationSecondary,#reallocationIncomplete,#reallocationVeryLow,#reallocationLow,#runReallocation'))return;
+  event.stopPropagation();
+  if(event.type==='click' && event.target.id==='runReallocation') event.preventDefault();
+  discipleForceSearch();
+}
+$('reallocationSecondary')?.addEventListener('change',discipleHandleSearchEvent);
+$('reallocationIncomplete')?.addEventListener('change',discipleHandleSearchEvent);
+$('reallocationVeryLow')?.addEventListener('change',discipleHandleSearchEvent);
+$('reallocationLow')?.addEventListener('change',discipleHandleSearchEvent);
+$('runReallocation')?.addEventListener('click',discipleHandleSearchEvent);
 $('clearData').addEventListener('click',()=>{currentData=null;mods=[];modFiltersReady=false;const mf=$('modFilters'),ms=$('modSummary');if(mf)mf.hidden=true;if(ms)ms.hidden=true;rosterCharacters=[];rosterShips=[];factionMap={};analysisSelectedCharacter='';analysisFaction='';analysisSide='ALL';analysisStatus='TOUS';analysisAuditSpeed='TOUS';analysisAuditSort='priority';updateRosterCounts([],[]);fillCharacters([]);if($('v18DashboardSpeed'))$('v18DashboardSpeed').innerHTML='';$('results').textContent='Chargez d’abord vos données.';$('dataInfo').textContent='Aucune donnée.';if($('playerName'))$('playerName').textContent='Profil non chargé';if($('playerAlly'))$('playerAlly').textContent='—';if($('heroPlayerName'))$('heroPlayerName').textContent='Profil non chargé';if($('heroPlayerAlly'))$('heroPlayerAlly').textContent='—';if($('heroProfileState'))$('heroProfileState').textContent='EN ATTENTE';$('dataTableMeta').textContent='Aucune donnée.';$('dataTable').innerHTML='<div class="empty">Chargez un profil pour afficher les données.</div>';$('log').textContent='Données effacées.';renderSithariNexus();});
 
 document.querySelectorAll('.analysis-tab').forEach(btn=>btn.addEventListener('click',()=>setAnalysisTab(btn.dataset.analysisTab)));
@@ -81,9 +90,8 @@ function discipleForceSearch(){
   }
 }
 function discipleBindLiveControls(){
-  const run=$('runReallocation'); if(run)run.onclick=discipleForceSearch;
-  const sec=$('reallocationSecondary'); if(sec)sec.onchange=discipleForceSearch;
-  const ids=['reallocationIncomplete','reallocationVeryLow','reallocationLow'];
-  ids.forEach(id=>{const el=$(id);if(el)el.onchange=discipleForceSearch;});
+  // Listener registration is handled once above; do not assign .onclick/.onchange
+  // here because that creates a second rendering path on mobile.
+
 }
 discipleBindLiveControls();

@@ -508,7 +508,8 @@ function setReallocationMod(index){
   renderReallocationModSelector();
   renderReallocationSelectionVisual(selected);
   // Disciple = one secondary only. Never auto-select a secondary from the current mod.
-  renderReallocationSecondaryOptions('');
+  const currentSecondary=$('reallocationSecondary')?.value||'';
+  renderReallocationSecondaryOptions(currentSecondary);
   renderReallocationResults();
 }
 function reallocationStatusAllowed(status){
@@ -627,12 +628,17 @@ function renderReallocationResults(){
 }
 
 function renderReallocationPanel(){
+  // IMPORTANT: rebuilding the Disciple panel must NEVER reset the user's
+  // current search. Mobile browsers can cause the analysis view to be rebuilt
+  // after a select change; the previous implementation then erased the
+  // secondary and the results immediately after displaying them.
+  const previousSecondary = $('reallocationSecondary')?.value || '';
   renderReallocationSpeedTierChoices();
   renderReallocationCharacterChoices();
   renderReallocationModSelector();
   const selected=selectedReallocationMod();
   renderReallocationSelectionVisual(selected);
-  renderReallocationSecondaryOptions('');
+  renderReallocationSecondaryOptions(previousSecondary);
   renderReallocationResults();
 }
 function openReallocation(index){
