@@ -287,9 +287,12 @@ function reallocationSpeedTierMatch(mod,tier){
   const x=modSpeedMetrics(mod);
   const speed=Number(x?.secondary);
   const hasSecondary=Number.isFinite(speed) && speed>0;
-  if(tier==='no_speed')return !hasSecondary;
-  if(tier==='speed_1_5')return hasSecondary && speed>=1 && speed<=5;
-  if(tier==='speed_6_9')return hasSecondary && speed>=6 && speed<=9;
+  // Une flèche à primaire Speed possède bien de la vitesse. Elle ne doit
+  // jamais être classée dans "SANS VITESSE", même si elle n'a aucune
+  // Speed en secondaire. Les primaires Speed sont traitées séparément.
+  if(tier==='no_speed')return !x.primary && !hasSecondary;
+  if(tier==='speed_1_5')return !x.primary && hasSecondary && speed>=1 && speed<=5;
+  if(tier==='speed_6_9')return !x.primary && hasSecondary && speed>=6 && speed<=9;
   return false;
 }
 // DISCIPLE ONLY — portrait resolver.
