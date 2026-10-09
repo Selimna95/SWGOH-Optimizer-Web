@@ -1,0 +1,21 @@
+SWGOH OPTIMIZER / HOLOCRON — V189 UX NAVIGATION
+================================================
+Base: SWGOH-Optimizer-V188-DISCIPLE-SPEED-FIX
+
+CHANGES
+- Reorganized sidebar hierarchy around the Sanctuary, the four Sith learning spaces, the Roster Codex, and System & Help.
+- Renamed visible navigation labels for clearer purpose while preserving existing page IDs and routing.
+- Renamed the dashboard to “Le Sanctuaire” and clarified its roster/account/mod summaries.
+- Reframed default empty-state copy as the Sith guardian's guidance.
+- Made the existing Codex and Help pages explicit destinations in the main navigation.
+- Preserved the dark Star Wars/Sith visual language; only additive scoped CSS was added.
+
+SCOPE / SAFETY
+- No business logic, optimizer calculations, account retrieval, profile parsing, or mod allocation rules changed.
+- No GAC functionality was changed.
+- Existing page IDs, DOM control IDs, module files, and navigation entry points were retained.
+
+VALIDATION
+- HTML structure and navigation references checked by script.
+- JavaScript files unchanged; runtime routing retained.
+- Browser-based interactive regression tests still recommended before deployment.

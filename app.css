@@ -2565,3 +2565,18 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 /* V180 — navigation safety: sidebar always above page-specific visual layers */
 .sidebar{position:sticky;z-index:50}
 .sidebar .nav{position:relative;z-index:51}
+
+
+/* V189 UX NAV — clearer Holocron hierarchy; existing page IDs and behavior preserved. */
+.sidebar{overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(150,160,180,.25) transparent}
+.phase-nav-label.sanctuary{color:#d8c7a1;text-shadow:0 0 10px rgba(224,194,119,.12)}
+.phase-nav-label.sanctuary span{color:#f4d98b}
+.phase-nav-label.codex{color:#a8b9d1}
+.phase-nav-label.codex span{color:#9dc8f1}
+.phase-nav-label.system{color:#8e939e}
+.phase-nav-label.system span{color:#c0c5d0}
+.nav[data-page="data"] .nav-icon{color:#9dc8f1}
+.nav[data-page="help"] .nav-icon{color:#b6bac5}
+.nav[data-page="data"].active{background:linear-gradient(90deg,rgba(47,95,150,.26),rgba(13,32,53,.12));border-color:rgba(110,170,225,.38);box-shadow:inset 3px 0 0 #8dbbea}
+.nav[data-page="help"].active{background:rgba(160,166,180,.09);border-color:rgba(160,166,180,.3);box-shadow:inset 3px 0 0 #a9afbb}
+@media(max-height:760px){.sidebar .phase-nav-label{margin-top:9px}.sidebar .nav{min-height:34px;padding-top:6px;padding-bottom:6px}.sidebar .side-note{margin-top:8px}}

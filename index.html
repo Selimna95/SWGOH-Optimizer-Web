@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#07111f">
   <meta name="description" content="Selimna’s Holocron — Transforme ton inventaire de mods en décisions optimales">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="app.css?v=2.2.11">
+<link rel="stylesheet" href="app.css?v=2.2.12">
 <link rel="stylesheet" href="sithari.css">
 
 
 
-<title>Selimna’s Holocron — V2.2.11</title>
+<title>Selimna’s Holocron — V2.2.12</title>
 
 
 
@@ -60,7 +60,7 @@
 
 <div id="appShell" class="app-shell" hidden>
 <header class="topbar">
-  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V2.2.11</span></div>
+  <div class="top-brand"><span class="brand-mark">✦</span><div><span class="brand">SELIMNA’S</span><span class="accent">HOLOCRON</span></div><span class="version">HOLOCRON // V2.2.12</span></div>
   <div class="top-status-group">
     <div class="top-pill"><span class="status-dot"></span><span>PROFIL</span><b id="topProfileState">EN ATTENTE</b></div>
     <div class="top-pill account-pill"><span class="pill-icon">♙</span><span>COMPTE</span><b id="topAccountName">—</b></div>
@@ -70,26 +70,33 @@
 </header>
 <main class="layout">
   <aside class="sidebar">
+    <div class="phase-nav-label sanctuary"><span>⌂</span> SANCTUAIRE <small>ACCUEIL</small></div>
+    <button type="button" class="nav active" data-page="dashboard"><span class="nav-icon">⌂</span><span>LE SANCTUAIRE</span></button>
+
     <div class="phase-nav-label acolyte"><span>Ⅰ</span> ACOLYTE <small>VOIR</small></div>
-    <button type="button" class="nav active" data-page="dashboard"><span class="nav-icon">⌂</span><span>COMMAND DECK</span></button>
-    <button type="button" class="nav" data-page="top-changes"><span class="nav-icon">⇄</span><span>PRIORITÉS</span></button>
+    <button type="button" class="nav" data-page="top-changes"><span class="nav-icon">⇄</span><span>ACOLYTE — PRIORITÉS</span></button>
 
     <div class="phase-nav-label disciple"><span>Ⅱ</span> DISCIPLE <small>COMPRENDRE</small></div>
-    <button type="button" class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>DISCIPLE // RÉAFFECTATION</span></button>
+    <button type="button" class="nav" data-page="mods-analysis"><span class="nav-icon">◈</span><span>RÉAFFECTATION DES MODS</span></button>
 
     <div class="phase-nav-label lord"><span>Ⅲ</span> SEIGNEUR SITH <small>MAÎTRISER</small></div>
-    <button type="button" class="nav nav-phase-entry nav-lord" data-page="optimizer"><span class="nav-icon">✦</span><span>SEIGNEUR SITH</span><small>MAÎTRISER</small></button>
-    <button type="button" class="nav" data-page="data"><span class="nav-icon">▦</span><span>ARCHIVES / DONNÉES</span></button>
+    <button type="button" class="nav nav-phase-entry nav-lord" data-page="optimizer"><span class="nav-icon">✦</span><span>FORGE PERSONNAGE</span><small>MAÎTRISER</small></button>
+
+    <div class="phase-nav-label codex"><span>▦</span> CODEX DU ROSTER <small>CONSULTER</small></div>
+    <button type="button" class="nav" data-page="data"><span class="nav-icon">▦</span><span>PERSONNAGES · VAISSEAUX · MODS</span></button>
 
     <div class="phase-nav-label sithari"><span>✧</span> SITH’ARI <small>TRANSCENDER</small></div>
-    <button type="button" class="nav nav-sithari" data-page="sithari"><span class="nav-icon">◈</span><span>NEXUS // SITH’ARI</span></button>
+    <button type="button" class="nav nav-sithari" data-page="sithari"><span class="nav-icon">◈</span><span>OPTIMISATION KYBER</span></button>
+
+    <div class="phase-nav-label system"><span>⚙</span> SYSTÈME <small>AIDE</small></div>
+    <button type="button" class="nav" data-page="help"><span class="nav-icon">?</span><span>SYSTÈME &amp; AIDE</span></button>
     <div class="side-note">100% navigateur<br>aucun PC serveur</div>
   </aside>
   <section class="content">
     <section id="dashboard" class="page active decision-page">
       <div class="decision-header">
-        <div class="decision-brand"><span class="eyebrow">SELIMNA’S HOLOCRON</span><h1>CENTRE DE DÉCISION</h1><p><span class="phase-inline acolyte">ACOLYTE // VOIR</span><span class="phase-inline disciple">DISCIPLE // COMPRENDRE</span><span class="phase-inline lord">SEIGNEUR SITH // MAÎTRISER</span><span class="phase-inline sithari">SITH’ARI // TRANSCENDER</span></p></div>
-        <div class="decision-status"><span class="status-dot"></span><span>ROSTER SYNCHRONISÉ</span></div>
+        <div class="decision-brand"><span class="eyebrow">SELIMNA’S HOLOCRON</span><h1>LE SANCTUAIRE</h1><p><span class="phase-inline acolyte">ACOLYTE // VOIR</span><span class="phase-inline disciple">DISCIPLE // COMPRENDRE</span><span class="phase-inline lord">SEIGNEUR SITH // MAÎTRISER</span><span class="phase-inline sithari">SITH’ARI // TRANSCENDER</span></p></div>
+        <div class="decision-status"><span class="status-dot"></span><span>ÉTAT DU ROSTER</span></div>
       </div>
 
       <div class="decision-stage" aria-label="Centre de décision Holocron">
@@ -97,7 +104,7 @@
 
         <article class="decision-card unit-card dashboard-info-card">
           <div class="decision-card-head"><span class="card-icon">♙</span><div><span>PERSONNAGES</span><strong id="charsCount">0</strong><small>UNITÉS TOTALES</small></div><em id="unitsDelta">—</em></div>
-          <div class="decision-card-title">INFORMATION DU ROSTER</div>
+          <div class="decision-card-title">CODEX · VUE D’ENSEMBLE</div>
           <div class="decision-bars" id="unitVentilation"></div>
           <div class="decision-legend" id="unitLegend"></div>
           <small class="dashboard-info-note">DÉTAILS : NIVEAU SEIGNEUR SITH</small>
@@ -105,7 +112,7 @@
 
         <article class="decision-card gp-card dashboard-info-card">
           <div class="decision-card-head"><span class="card-icon">✦</span><div><span>PUISSANCE GALACTIQUE</span><strong id="gpTotal">0</strong><small>PUISSANCE TOTALE</small></div><em id="gpDelta">—</em></div>
-          <div class="decision-card-title">INFORMATION DU COMPTE</div>
+          <div class="decision-card-title">ÉTAT DU COMPTE</div>
           <div class="decision-detail-list"><div><span>Personnages</span><strong id="gpCharacters">0</strong><i id="gpCharPct">0%</i></div><div><span>Vaisseaux</span><strong id="gpShips">0</strong><i id="gpShipPct">0%</i></div></div>
           <div class="decision-gp-track"><span id="gpCharBar"></span><span id="gpShipBar"></span></div>
           <small class="dashboard-info-note">ANALYSE : NIVEAU SEIGNEUR SITH</small>
@@ -128,7 +135,7 @@
 
         <article class="decision-card mod-card dashboard-info-card">
           <div class="decision-card-head"><span class="card-icon">◈</span><div><span>MODS</span><strong id="modsCount">0</strong><small>MODS ÉQUIPÉS</small></div><em id="modsDelta">—</em></div>
-          <div class="decision-card-title">INFORMATION MODS</div>
+          <div class="decision-card-title">ÉTAT DES MODS</div>
           <div class="decision-bars mods-bars" id="modVentilation"></div>
           <div class="decision-legend" id="modLegend"></div>
           <small class="dashboard-info-note">ANALYSE : NIVEAU SEIGNEUR SITH</small>
@@ -136,11 +143,11 @@
 
         <div class="holocron-verdict" id="holocronVerdict" aria-live="polite">
           <div class="holocron-verdict-head"><span class="status-dot"></span><span>HOLOCRON // VERDICT</span><b id="holocronVerdictState">EN ATTENTE</b></div>
-          <div class="holocron-verdict-main"><strong id="holocronVerdictTitle">Le Holocron attend le scan du roster.</strong><small id="holocronVerdictAction">Charge le profil pour faire émerger les décisions.</small></div>
+          <div class="holocron-verdict-main"><strong id="holocronVerdictTitle">Le gardien attend le scan du roster.</strong><small id="holocronVerdictAction">Active le profil pour révéler les premières pistes.</small></div>
           <div class="holocron-verdict-metrics"><span><b id="holocronVerdictCount">0</b> verdicts actifs</span><span><b id="holocronUrgentCount">0</b> actions urgentes</span><span><b id="holocronOpportunityCount">0</b> opportunités</span></div>
         </div>
         <div class="decision-bottom-status"><span class="status-dot"></span><div><b>ROSTER SYNCHRONISÉ</b><small id="decisionLastUpdate">Données chargées depuis le profil</small></div></div>
-        <div class="decision-slogan">DE MEILLEURES DÉCISIONS<br><span>POUR UNE GALAXIE PLUS FORTE</span></div>
+        <div class="decision-slogan">L’HOLOCRON RÉVÈLE SON SAVOIR<br><span>LE GARDIEN GUIDE · LE MAÎTRE DÉCIDE</span></div>
       </div>
 
       <!-- Compatibilité avec le moteur existant : éléments de données conservés mais masqués. -->
@@ -421,7 +428,7 @@
 
     <section id="data" class="page">
       <div class="panel data-toolbar">
-        <div class="panel-title">SEIGNEUR SITH // ARCHIVES DU ROSTER</div>
+        <div class="panel-title">CODEX DU ROSTER // PERSONNAGES · VAISSEAUX · MODS</div>
         <div class="data-tabs">
           <button class="data-tab active" data-dataset="characters">PERSONNAGES <span id="tabCharsCount">0</span></button>
           <button class="data-tab" data-dataset="ships">VAISSEAUX <span id="tabShipsCount">0</span></button>
@@ -435,20 +442,20 @@
         <input id="dataSearch" class="data-search" type="search" placeholder="Rechercher un personnage, un vaisseau, un mod, un set…">
       </div>
       <div class="panel table-panel"><div id="dataTableMeta" class="table-meta">Aucune donnée.</div><div id="dataTable" class="data-table-wrap"><div class="empty">Chargez un profil pour afficher les données.</div></div></div>
-      <div class="panel"><div class="panel-title">ARCHIVES // SOURCE & DIAGNOSTIC</div><pre id="dataInfo">Aucune donnée.</pre></div>
+      <div class="panel"><div class="panel-title">CODEX // SOURCE & DIAGNOSTIC DES DONNÉES</div><pre id="dataInfo">Aucune donnée.</pre></div>
       <div class="panel"><button id="clearData" class="danger">EFFACER LES DONNÉES</button></div>
     </section>
 
     <section id="help" class="page">
       <div class="panel help">
-        <div class="panel-title">RELAIS CLOUDFLARE</div>
+        <div class="panel-title">SYSTÈME & AIDE // RELAIS DE DONNÉES</div>
         <p>Le navigateur bloque la lecture directe de SWGOH.GG à cause du CORS. Le Worker Cloudflare sert uniquement de relais public vers SWGOH.GG.</p>
         <label>URL DU WORKER<input id="relayUrl" value="https://swgoh-optimizer-relay.lorg75017.workers.dev" placeholder="https://swgoh-optimizer-relay.votre-compte.workers.dev"></label>
         <button id="saveRelay" class="primary save-relay">ENREGISTRER LE RELAIS</button>
         <div id="relayState" class="relay-state">RELAIS PRÉCONFIGURÉ</div>
       </div>
       <div class="panel help">
-        <div class="panel-title">ARCHITECTURE V25</div>
+        <div class="panel-title">COMMENT FONCTIONNE L’HOLOCRON</div>
         <ul>
           <li>GitHub Pages : interface statique.</li>
           <li>Cloudflare Worker : relais vers SWGOH.GG.</li>
@@ -459,7 +466,7 @@
         </ul>
       </div>
       <div class="panel help">
-        <div class="panel-title">LIEN SWGOH.GG</div>
+        <div class="panel-title">SOURCE PUBLIQUE SWGOH.GG</div>
         <p>Vous pouvez vérifier manuellement votre page publique : <a id="swgohLink" href="https://swgoh.gg/" target="_blank" rel="noopener">SWGOH.GG</a>.</p>
       </div>
     </section>
