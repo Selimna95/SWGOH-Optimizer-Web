@@ -2580,3 +2580,39 @@ button,a,input,select,textarea{touch-action:manipulation}img,svg,canvas,video{ma
 .nav[data-page="data"].active{background:linear-gradient(90deg,rgba(47,95,150,.26),rgba(13,32,53,.12));border-color:rgba(110,170,225,.38);box-shadow:inset 3px 0 0 #8dbbea}
 .nav[data-page="help"].active{background:rgba(160,166,180,.09);border-color:rgba(160,166,180,.3);box-shadow:inset 3px 0 0 #a9afbb}
 @media(max-height:760px){.sidebar .phase-nav-label{margin-top:9px}.sidebar .nav{min-height:34px;padding-top:6px;padding-bottom:6px}.sidebar .side-note{margin-top:8px}}
+
+
+/* V190 — UX visible: guided path cards and stronger navigation hierarchy.
+   Presentation only: existing data-page IDs and business logic remain unchanged. */
+.holocron-path{position:relative;margin:22px 0 28px;padding:22px 22px 20px;border:1px solid rgba(218,174,104,.27);border-radius:16px;background:linear-gradient(115deg,rgba(31,20,24,.96),rgba(11,16,27,.96) 56%,rgba(22,17,28,.96));box-shadow:0 18px 50px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.025);overflow:hidden}
+.holocron-path:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(180deg,#e7c88e,#9d2535 55%,transparent);box-shadow:0 0 18px rgba(216,55,69,.24)}
+.holocron-path:after{content:"HOLOCRON // PARCOURS CONSEILLÉ";position:absolute;right:18px;top:16px;color:rgba(213,190,150,.42);font:800 8px Inter,sans-serif;letter-spacing:.18em}
+.holocron-path-intro{display:flex;align-items:center;gap:15px;margin-bottom:19px;padding-right:190px}
+.guardian-seal{display:grid;place-items:center;flex:none;width:48px;height:48px;border:1px solid rgba(222,182,116,.42);border-radius:50%;color:#edc98b;font-size:23px;background:radial-gradient(circle,rgba(167,38,50,.22),rgba(10,12,20,.7));box-shadow:0 0 25px rgba(194,45,58,.12)}
+.holocron-path-intro .eyebrow{display:block;margin-bottom:5px;color:#d2aa72;font-size:8px;letter-spacing:.2em;font-weight:800}
+.holocron-path-intro h2{margin:0;color:#f0e8da;font-size:clamp(16px,1.45vw,22px);font-weight:650;letter-spacing:.015em}
+.holocron-path-intro p{margin:6px 0 0;color:#9c9ba5;font-size:11px;line-height:1.5}
+.holocron-path-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.path-card{position:relative;display:flex;flex-direction:column;align-items:flex-start;min-width:0;min-height:164px;padding:13px 13px 12px;text-align:left;border:1px solid rgba(255,255,255,.085);border-radius:10px;background:linear-gradient(155deg,rgba(34,35,45,.76),rgba(13,16,25,.96));color:#eee9e1;cursor:pointer;transition:transform .2s,border-color .2s,background .2s,box-shadow .2s;overflow:hidden}
+.path-card:before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--path-color,#d0ad78);opacity:.7}
+.path-card:hover,.path-card:focus-visible{transform:translateY(-3px);border-color:var(--path-color,#d0ad78);background:linear-gradient(155deg,rgba(54,42,48,.95),rgba(15,17,27,.98));box-shadow:0 12px 28px rgba(0,0,0,.25),0 0 20px color-mix(in srgb,var(--path-color,#d0ad78) 10%,transparent);outline:none}
+.path-step{display:flex;justify-content:space-between;align-items:center;width:100%;gap:5px;color:var(--path-color,#d0ad78);font:800 8px Inter,sans-serif;letter-spacing:.12em}
+.path-step i{font-style:normal;color:#82818b;font-size:7px;text-align:right}
+.path-glyph{display:grid;place-items:center;width:32px;height:32px;margin:13px 0 9px;border:1px solid color-mix(in srgb,var(--path-color,#d0ad78) 35%,transparent);border-radius:8px;background:color-mix(in srgb,var(--path-color,#d0ad78) 9%,transparent);color:var(--path-color,#d0ad78);font-size:20px}
+.path-card>strong{font-size:13px;font-weight:750;line-height:1.25}
+.path-description{margin-top:6px;color:#9b9ba6;font-size:10px;line-height:1.45;min-height:29px}
+.path-action{display:flex;align-items:center;justify-content:space-between;gap:5px;width:100%;margin-top:auto;padding-top:12px;color:#c7c3bd;font-size:7px;font-weight:850;letter-spacing:.08em}
+.path-action b{color:var(--path-color,#d0ad78);font-size:14px;font-weight:400}
+.path-acolyte{--path-color:#d9b77c}.path-disciple{--path-color:#c3a2ed}.path-lord{--path-color:#e68a8e}.path-sithari{--path-color:#8bd7bf}.path-codex{--path-color:#91bce8}
+/* Sidebar now reads as grouped destinations rather than a long command list. */
+.sidebar:before{content:"LES PORTES DE L’HOLOCRON";color:#b49a74;font-size:9px;letter-spacing:.19em;padding:0 11px 15px}
+.sidebar .phase-nav-label{padding-top:13px;padding-bottom:6px;margin-top:8px;border-top:1px solid rgba(255,255,255,.055);font-size:8px;letter-spacing:.16em}
+.sidebar .phase-nav-label small{font-size:7px;letter-spacing:.13em}
+.sidebar .nav{min-height:43px;height:auto;line-height:1.35;padding:11px 12px;font-size:10px;letter-spacing:.045em;border-radius:7px}
+.sidebar .nav-icon{flex:none;width:26px;height:26px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.07);border-radius:6px;background:rgba(255,255,255,.025);font-size:15px}
+.sidebar .nav.active .nav-icon{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14)}
+.sidebar .nav[data-page="data"]{color:#b6cde4}
+.sidebar .nav[data-page="help"]{color:#a7a9b3}
+@media(max-width:1250px){.holocron-path-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.path-card{min-height:150px}}
+@media(max-width:760px){.holocron-path{margin:15px 0 20px;padding:17px 13px}.holocron-path:after{position:static;display:block;margin:0 0 12px;text-align:right}.holocron-path-intro{padding-right:0;align-items:flex-start}.guardian-seal{width:39px;height:39px}.holocron-path-intro h2{font-size:16px}.holocron-path-grid{grid-template-columns:1fr 1fr;gap:8px}.path-card{padding:11px;min-height:155px}.path-card:last-child{grid-column:1/-1}.path-glyph{margin:10px 0 7px}.path-action{font-size:6px}.sidebar .phase-nav-label{margin-top:8px}}
+@media(prefers-reduced-motion:reduce){.path-card{transition:none}.path-card:hover{transform:none}}

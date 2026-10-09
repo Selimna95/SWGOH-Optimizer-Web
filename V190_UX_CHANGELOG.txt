@@ -1,0 +1,22 @@
+SWGOH OPTIMIZER — V190 UX HOLOCRON PATH
+======================================
+Base: V188 DISCIPLE SPEED FIX, including V189 navigation labels.
+
+VISIBLE UX CHANGES
+- Added a prominent guided-path section on the Sanctuary dashboard.
+- Added five direct-entry cards: Acolyte, Disciple, Seigneur Sith, Sith'Ari, and Codex du roster.
+- Each card explains its purpose and has a clear action label.
+- Added a Sith guardian introduction that recommends a path while explicitly preserving free navigation.
+- Strengthened visual grouping and readability in the sidebar.
+- Added responsive layouts for the new path cards.
+
+SCOPE
+- Presentation and navigation affordances only.
+- Existing page IDs, module files, calculation logic, import logic, mod-allocation rules, and optimizer behavior preserved.
+- No GAC changes.
+
+VALIDATION
+- HTML page targets and duplicate IDs checked.
+- CSS delimiter balance checked.
+- JavaScript/module files unchanged from V189 working tree.
+- Manual browser interaction test still required before production use.
